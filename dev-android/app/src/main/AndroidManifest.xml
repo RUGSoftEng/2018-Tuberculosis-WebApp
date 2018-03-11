@@ -30,12 +30,12 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MainActivity" />
         </activity>
-        <activity
-            android:name=".LoginActivity"
-            android:label="@string/title_activity_login" />
-        <activity
-            android:name=".Main2Activity"
-            android:label="@string/title_activity_main2"></activity>
+        <activity android:name=".SignInActivity" />
+        <activity android:name=".CalendarActivity" />
+        <activity android:name=".InfoActivity" />
+        <activity android:name=".SetMedicineTimeActivity" />
+        <activity android:name=".QuizActivity" />
+        <activity android:name=".ContactDoctorActivity"></activity>
     </application>
 
 </manifest>
