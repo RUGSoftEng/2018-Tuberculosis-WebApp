@@ -48,10 +48,18 @@ CREATE TABLE Note(
 
 );
 
+CREATE TABLE Medicine(
+
+   Id INT NOT NULL PRIMARY KEY,
+
+   Med_Name VARCHAR(50) NOT NULL
+
+);
+
 CREATE TABLE Dosage(
 
   Id INT NOT NULL PRIMARY KEY,
-
+  
   Amount TINYINT NOT NULL,
 
   Patient_Id INT NOT NULL,
@@ -63,13 +71,5 @@ CREATE TABLE Dosage(
   FOREIGN KEY (Medicine_Id) REFERENCES Medicine(Id)
 
   
-
-);
-
-CREATE TABLE Medicine(
-
-   Id INT NOT NULL PRIMARY KEY,
-
-   Med_Name VARCHAR(50) NOT NULL
 
 );
