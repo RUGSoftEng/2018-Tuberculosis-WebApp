@@ -1,0 +1,75 @@
+CREATE TABLE Account(
+
+  Id INT NOT NULL PRIMARY KEY,
+
+  Name VARCHAR(200) NOT NULL,
+
+  Username VARCHAR(200) NOT NULL,
+
+  Pass_hash VARCHAR(200) NOT NULL,
+
+  Role VARCHAR(10) NOT NULL 
+
+);
+
+CREATE TABLE Physician(
+
+  
+
+  Id INT NOT NULL PRIMARY KEY,
+
+  Email VARCHAR(200) NOT NULL,
+
+  Token VARCHAR(8) NOT NULL,
+
+  FOREIGN KEY (Id) REFERENCES Account(Id)
+
+);
+
+CREATE TABLE Patient(
+
+  Id INT NOT NULL PRIMARY KEY,
+
+  FOREIGN KEY (Id) REFERENCES Account(Id)
+
+);
+
+CREATE TABLE Note(
+
+  Id INT NOT NULL PRIMARY KEY,
+
+  Patient_Id INT NOT nULL, 
+
+  Question TEXT NOT NULL,
+
+  Day DATE NOT NULL,
+
+  FOREIGN KEY (Patient_Id) REFERENCES Patient(Id)
+
+);
+
+CREATE TABLE Dosage(
+
+  Id INT NOT NULL PRIMARY KEY,
+
+  Amount TINYINT NOT NULL,
+
+  Patient_Id INT NOT NULL,
+
+  Medicine_Id INT NOT NULL,
+
+  FOREIGN KEY (Patient_Id) REFERENCES Patient(Id),
+
+  FOREIGN KEY (Medicine_Id) REFERENCES Medicine(Id)
+
+  
+
+);
+
+CREATE TABLE Medicine(
+
+   Id INT NOT NULL PRIMARY KEY,
+
+   Med_Name VARCHAR(50) NOT NULL
+
+);
