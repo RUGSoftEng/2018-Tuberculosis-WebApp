@@ -25,6 +25,7 @@ func main() {
 	router := mux.NewRouter()
 	router.Handle("/api/your extension", handlerWrapper(exampleHandler))
 	router.Handle("/api/pushPatient", handlerWrapper(pushPatient))
+	router.Handle("/api/deletePatient", handlerWrapper(deletePatient))
 	http.ListenAndServe("portNumber", router)
 }
 
@@ -148,6 +149,27 @@ func pushPatient(r *http.Request, responseChan chan []byte, errorChan chan error
 	}
 
 	errorChan <- tx.Commit()//actually commits the changes to the database
+}
+
+func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan error){
+  Id := r.URL.Query().Get("id")
+  tx, err := db.Begin()
+  if err != nil {
+	  errorChan <- errors.Wrap(err, "failed to start transaction")
+	  return
+	}
+	_ , err = tx.Exec(`DELETE FROM patient WHERE id=?`,Id )
+	if err != nil{
+		errorChan <- err
+		tx.Rollback()
+	}
+	_, err = tx.Exec(`DELETE FROM account WHERE id=?`, Id)
+	if err != nil{
+		errorChan <- err
+		tx.Rollback()
+	}
+
+	errorChan <- tx.Commit()
 }
 
 // placeHolderFunction
