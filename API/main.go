@@ -26,6 +26,7 @@ func main() {
 	router.Handle("/api/your extension", handlerWrapper(exampleHandler))
 	router.Handle("/api/pushPatient", handlerWrapper(pushPatient))
 	router.Handle("/api/deletePatient", handlerWrapper(deletePatient))
+	router.Handle("/api/modifyPatient", handlerWrapper(modifyPatient))
 	http.ListenAndServe("portNumber", router)
 }
 
@@ -63,10 +64,10 @@ func exampleHandler(r *http.Request, responseChan chan []byte, errorChan chan er
 
 	// This is a join example for a patient call, change to physician it is a call only a physician can make
 	// remove join part if it is a call able for both
-	err := db.QueryRow(`	SELECT account_id 
+	err := db.QueryRow(`	SELECT id 
 								FROM patient AS pa 
 									INNER JOIN account AS acc 
-									ON pa.id == acc.id  
+									ON pa.id = acc.id  
 								WHERE acc.api_token = ?`,
 		apiToken).Scan(ID)
 	if err != nil {
@@ -98,7 +99,7 @@ func pushPatient(r *http.Request, responseChan chan []byte, errorChan chan error
 	physicianToken := r.URL.Query().Get("physician_token")
 
 	// In general this will check the api_token
-	err := db.QueryRow(`	SELECT account_id 
+	err := db.QueryRow(`	SELECT id 
 								FROM physician  
 								WHERE token = ?`,
 								physicianToken).Scan(physicianId)
@@ -134,14 +135,14 @@ func pushPatient(r *http.Request, responseChan chan []byte, errorChan chan error
 		errorChan <- errors.Wrap(err, "failed to start transaction")
 		return
 	}
-	result, err := tx.Exec(`INSERT  INTO account ("name", username, password) VALUES(?, ?, ?)`, patient.Name, patient.Username, patient.Password) // name is reserved keyword
+	result, err := tx.Exec(`INSERT  INTO account (name, username, pass_hash) VALUES(?, ?, ?)`, patient.Name, patient.Username, patient.Password) // name is reserved keyword
 	if err != nil {
 		errorChan <- err
 		tx.Rollback()
 		return
 	}
 	id, err := result.LastInsertId() //this gets the id that would be created for above insert
-	_, err = tx.Exec(`INSERT INTO patient (id, physician_id) (VALUES(?, ?)`,  id, physicianId) //physician is not necessery here, however, it is a be easier to read
+	_, err = tx.Exec(`INSERT INTO patient (id, physician_id) VALUES(?, ?)`,  id, physicianId) //physician is not necessery here, however, it is a be easier to read
 	if err != nil {
 		errorChan <- err
 		tx.Rollback()
@@ -170,6 +171,40 @@ func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan err
 	}
 
 	errorChan <- tx.Commit()
+}
+
+func modifyPatient(r *http.Request, responseChan chan []byte, errorChan chan error){
+	patient := Patient{}
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(patient)
+	if err  != nil {
+		errorChan <- err
+		return
+	}
+	patient.Password, err = HashPassword(patient.Password)
+	if err != nil{
+		errorChan <- errors.Wrap(err, "Hashing failed")
+		return
+	}
+
+	// Using a transaction because I don't know whether we are going to have to add
+	// query for a possible change of physician (or how to do that)
+	tx, err := db.Begin()
+	if err != nil {
+		errorChan <- errors.Wrap(err, "failed to start transaction")
+		return
+	}
+	tx.Exec(`UPDATE account SET 
+                 name = ?,
+                 username = ?,
+                 pass_hash = ?`, patient.Name, patient.Username, patient.Password )
+	if err != nil{
+		errorChan <- err
+		tx.Rollback()
+	}
+
+	errorChan <- tx.Commit()
+
 }
 
 // placeHolderFunction
