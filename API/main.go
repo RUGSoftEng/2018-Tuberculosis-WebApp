@@ -163,11 +163,13 @@ func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan err
 	if err != nil{
 		errorChan <- err
 		tx.Rollback()
+		return
 	}
 	_, err = tx.Exec(`DELETE FROM account WHERE id=?`, Id)
 	if err != nil{
 		errorChan <- err
 		tx.Rollback()
+		return
 	}
 
 	errorChan <- tx.Commit()
@@ -201,6 +203,7 @@ func modifyPatient(r *http.Request, responseChan chan []byte, errorChan chan err
 	if err != nil{
 		errorChan <- err
 		tx.Rollback()
+		return
 	}
 
 	errorChan <- tx.Commit()
