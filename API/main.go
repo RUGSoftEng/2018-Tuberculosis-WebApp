@@ -30,6 +30,7 @@ func main() {
 	router.Handle("/api/modifyPatient", handlerWrapper(modifyPatient))
 	router.Handle("/api/pushPhysician", handlerWrapper(pushPhysician))
 	router.Handle("/api/deletePhysician", handlerWrapper(deletePhysician))
+	router.Handle("/api/modifyPhysician", handlerWrapper(modifyPhysician))
 	http.ListenAndServe("portNumber", router)
 }
 
@@ -265,6 +266,46 @@ func modifyPatient(r *http.Request, responseChan chan []byte, errorChan chan err
                  name = ?,
                  username = ?,
                  pass_hash = ?`, patient.Name, patient.Username, patient.Password )
+	if err != nil{
+		errorChan <- err
+		tx.Rollback()
+		return
+	}
+
+	errorChan <- tx.Commit()
+
+}
+
+func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan error){
+	physician := Physician{}
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(physician)
+	if err  != nil {
+		errorChan <- err
+		return
+	}
+	physician.Password, err = HashPassword(physician.Password)
+	if err != nil{
+		errorChan <- errors.Wrap(err, "Hashing failed")
+		return
+	}
+	tx, err := db.Begin()
+	if err != nil {
+		errorChan <- errors.Wrap(err, "failed to start transaction")
+		return
+	}
+	_, err = tx.Exec(`UPDATE account SET
+                          name = ?,
+                          username = ?,
+                          pass_hash = ?`, physician.Name, physician.Username, physician.Password)
+	if err != nil{
+		errorChan <- err
+		tx.Rollback()
+		return
+	}
+	_, err = tx.Exec(`UPDATE physician SET
+                          email = ?,
+                          token = ?`, physician.Email, physician.CreationToken)
 	if err != nil{
 		errorChan <- err
 		tx.Rollback()
