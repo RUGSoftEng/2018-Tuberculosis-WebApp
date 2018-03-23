@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 	"encoding/json"
+  "go/token"
 )
 
 var (
@@ -28,6 +29,7 @@ func main() {
 	router.Handle("/api/deletePatient", handlerWrapper(deletePatient))
 	router.Handle("/api/modifyPatient", handlerWrapper(modifyPatient))
 	router.Handle("/api/pushPhysician", handlerWrapper(pushPhysician))
+	router.Handle("/api/deletePhysician", handlerWrapper(deletePhysician))
 	http.ListenAndServe("portNumber", router)
 }
 
@@ -213,6 +215,29 @@ func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan err
 	}
 
 	errorChan <- tx.Commit()
+}
+
+func deletePhysician(r *http.Request, responseChan chan []byte, errorChan chan error){
+  Id := r.URL.Query().Get("id")
+  tx, err := db.Begin()
+  if err != nil{
+    errorChan <- errors.Wrap(err, "Failed to start transaction")
+    return
+  }
+  _, err = tx.Exec(`DELETE FROM physician  WHERE id=?`, Id)
+  if err != nil{
+    errorChan <- err
+    tx.Rollback()
+    return
+  }
+  _, err = tx.Exec(`DELETE FROM account WHERE id=?`, Id)
+  if err != nil{
+    errorChan <- err
+    tx.Rollback()
+    return
+  }
+
+  errorChan <- tx.Commit()
 }
 
 func modifyPatient(r *http.Request, responseChan chan []byte, errorChan chan error){
