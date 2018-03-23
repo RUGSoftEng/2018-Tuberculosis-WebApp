@@ -27,6 +27,7 @@ func main() {
 	router.Handle("/api/pushPatient", handlerWrapper(pushPatient))
 	router.Handle("/api/deletePatient", handlerWrapper(deletePatient))
 	router.Handle("/api/modifyPatient", handlerWrapper(modifyPatient))
+	router.Handle("/api/pushPhysician", handlerWrapper(pushPhysician))
 	http.ListenAndServe("portNumber", router)
 }
 
@@ -152,6 +153,45 @@ func pushPatient(r *http.Request, responseChan chan []byte, errorChan chan error
 	errorChan <- tx.Commit()//actually commits the changes to the database
 }
 
+func pushPhysician(r *http.Request, responseChan chan []byte, errorChan chan error){
+  physician := Physician{}
+  dec := json.NewDecoder(r.Body)
+  err := dec.Decode(physician)
+  if err != nil{
+    errorChan <- errors.Wrap(err, "Failed to decode incoming JSON")
+    return
+  }
+  physician.Password, err = HashPassword(physician.Password)
+  if err != nil{
+    errorChan <- errors.Wrap(err, "Failed to hash password")
+    return
+  }
+  tx, err := db.Begin()
+  if err != nil{
+    errorChan <- errors.Wrap(err, "Failed to start transaction")
+    return
+  }
+  role := "physician"
+  result, err := tx.Exec(`INSERT INTO account (name, username, pass_hash, role)
+                                VALUES(?, ?, ?, ?)`, physician.Name, physician.Username, physician.Password, role)
+  if err != nil{
+    errorChan <- err
+    tx.Rollback()
+    return
+  }
+  id, err := result.LastInsertId()
+  _, err = tx.Exec(`INSERT INTO physician VALUES(?, ?, ?)`,
+                   id, physician.Email, physician.CreationToken)
+  if err != nil{
+    errorChan <- err
+    tx.Rollback()
+    return
+  }
+
+  errorChan <- tx.Commit()
+
+}
+
 func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan error){
   Id := r.URL.Query().Get("id")
   tx, err := db.Begin()
@@ -209,6 +249,8 @@ func modifyPatient(r *http.Request, responseChan chan []byte, errorChan chan err
 	errorChan <- tx.Commit()
 
 }
+
+
 
 // placeHolderFunction
 func HashPassword(password string) (string, error) {
