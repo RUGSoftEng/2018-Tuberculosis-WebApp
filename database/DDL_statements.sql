@@ -1,75 +1,91 @@
-CREATE TABLE Account(
+CREATE TABLE account(
 
-  Id INT NOT NULL PRIMARY KEY,
+  id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
 
-  Name VARCHAR(200) NOT NULL,
+  name VARCHAR(200) NOT NULL,
 
-  Username VARCHAR(200) NOT NULL,
+  username VARCHAR(200) NOT NULL,
 
-  Pass_hash VARCHAR(200) NOT NULL,
+  pass_hash VARCHAR(200) NOT NULL,
 
-  Role VARCHAR(10) NOT NULL 
+  role VARCHAR(10) NOT NULL, 
+
+  api_token VARCHAR(64)
 
 );
 
-CREATE TABLE Physician(
+CREATE TABLE physician(
 
+  id INT NOT NULL PRIMARY KEY,
+
+  email VARCHAR(200) NOT NULL,
+
+  token VARCHAR(8) NOT NULL,
+
+  FOREIGN KEY (id) REFERENCES account(id)
+
+);
+
+CREATE TABLE patient(
+
+  id INT NOT NULL PRIMARY KEY,
+
+  physician_id INT NOT NULL,
+
+  FOREIGN KEY (id) REFERENCES account(id),
+
+  FOREIGN KEY (physician_id) REFERENCES physician(id)
+
+);
+
+CREATE TABLE note(
+
+  id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+
+  patient_Id INT NOT nULL, 
+
+  question TEXT NOT NULL,
+
+  day DATE NOT NULL,
+
+  FOREIGN KEY (patient_Id) REFERENCES patient(id)
+
+);
+
+CREATE TABLE medicine(
+
+   id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+
+   med_name VARCHAR(50) NOT NULL	
+
+);
+
+CREATE TABLE dosage(
+
+  id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
   
+  amount TINYINT NOT NULL,
 
-  Id INT NOT NULL PRIMARY KEY,
+  patient_id INT NOT NULL,
 
-  Email VARCHAR(200) NOT NULL,
+  medicine_id INT NOT NULL,
 
-  Token VARCHAR(8) NOT NULL,
+  day DATE NOT NULL,
 
-  FOREIGN KEY (Id) REFERENCES Account(Id)
+  intake_time TIME NOT NULL,
 
-);
+  FOREIGN KEY (patient_id) REFERENCES patient(id),
 
-CREATE TABLE Patient(
-
-  Id INT NOT NULL PRIMARY KEY,
-
-  FOREIGN KEY (Id) REFERENCES Account(Id)
+  FOREIGN KEY (medicine_id) REFERENCES medicine(id)
 
 );
 
-CREATE TABLE Note(
-
-  Id INT NOT NULL PRIMARY KEY,
-
-  Patient_Id INT NOT nULL, 
-
-  Question TEXT NOT NULL,
-
-  Day DATE NOT NULL,
-
-  FOREIGN KEY (Patient_Id) REFERENCES Patient(Id)
-
+CREATE TABLE movie(
+  id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE Medicine(
-
-   Id INT NOT NULL PRIMARY KEY,
-
-   Med_Name VARCHAR(50) NOT NULL
-
-);
-
-CREATE TABLE Dosage(
-
-  Id INT NOT NULL PRIMARY KEY,
-  
-  Amount TINYINT NOT NULL,
-
-  Patient_Id INT NOT NULL,
-
-  Medicine_Id INT NOT NULL,
-
-  FOREIGN KEY (Patient_Id) REFERENCES Patient(Id),
-
-  FOREIGN KEY (Medicine_Id) REFERENCES Medicine(Id)
-
-  
-
+CREATE TABLE faq(
+  id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  question TEXT NOT NULL 
 );
