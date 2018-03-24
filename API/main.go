@@ -22,11 +22,11 @@ func main() {
 	var err error
 
 	rootpasswd, dbname, listen_location := "pass", "database", "localhost:8080" // just some values
-	fmt.Println("MySql Root Password: ")
+	fmt.Print("MySql Root Password: ")
 	fmt.Scanf("%s", &rootpasswd)
-	fmt.Println("MySql Database Name: ")
+	fmt.Print("\nMySql Database Name: ")
 	fmt.Scanf("%s", &dbname)
-	fmt.Println("Router Listen Location: ")
+	fmt.Print("\nRouter Listen Location: ")
 	fmt.Scanf("%s", &listen_location)
 	db, err = sql.Open("mysql", "root:" + rootpasswd + "@/" + dbname)
 	if err != nil {
@@ -334,17 +334,29 @@ func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan e
 //     start_date = [current_day]
 //     end_date   = start_date + 1 month
 func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error) {
-	patient_id := r.URL.Query().Get("patientID")
-
-	//start_date := r.URL.Query().Get("from")
-	//end_date   := r.URL.Query().Get("until")
-	// parse dates correctly ?
 	// verify patient ?
+	patient_id := r.URL.Query().Get("patient_id")
+
+	from  := r.URL.Query().Get("from")
+	until := r.URL.Query().Get("until")
+	const dform = "2006-01-02" // specifies YYYY-MM-DD format
+	start_date, err := time.Parse(dform, from)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error in parsing starting date")
+		return
+	}
+	end_date, err := time.Parse(dform, until)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error in parsing end time")
+		return
+	}
+	log.Println("S: " + start_date.Format(dform) + "|E: " + end_date.Format(dform))
 	rows, err := db.Query(`SELECT amount, med_name, day, intake_time 
                                FROM dosage JOIN medicine 
                                ON dosage.medicine_id = medicine.id
-                               WHERE patient_id = ?`,
-		patient_id) //add AND day BETWEEN ? AND ?
+                               WHERE patient_id = ? AND (day BETWEEN ? AND ?)
+                               `,
+		patient_id, start_date.Format(dform), end_date.Format(dform)) //add AND day BETWEEN ? AND ?
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error during query")
 		return
