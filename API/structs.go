@@ -3,7 +3,7 @@ package main
 import "time"
 
 type Dosage struct {
-  Day time.Weekday `json:"date"`
+	Day time.Weekday `json:"date"`
 	IntakeMoment time.Time `json:"intake_moment"`
 	NumberOfPills int `json:"amount"`
 	Medicine string `json:"medicine"`
@@ -33,5 +33,4 @@ type Physician struct {
 	ApiToken string `json:"api_token"`
 	Email string `json:"email"`
 	CreationToken string `json:"creation_token"`
-}                                                                                                                                                                                                                                                                                  
-                    
+}

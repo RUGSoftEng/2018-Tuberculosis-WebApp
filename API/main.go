@@ -31,7 +31,8 @@ func main() {
 	router.Handle("/api/pushPhysician", handlerWrapper(pushPhysician))
 	router.Handle("/api/deletePhysician", handlerWrapper(deletePhysician))
 	router.Handle("/api/modifyPhysician", handlerWrapper(modifyPhysician))
-	router.Handle("/api/getDosages", handlerWrapper(pushDosages))
+	router.Handle("/api/getDosages", handlerWrapper(getDosages))
+	router.Handle("/api/pushDosages", handlerWrapper(pushDosages))
 	http.ListenAndServe("portNumber", router)
 }
 
@@ -315,6 +316,49 @@ func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan e
 
 	errorChan <- tx.Commit()
 
+}
+
+// start/ end dates might be optional ?
+//  Possible defaults:
+//     start_date = [current_day]
+//     end_date   = start_date + 1 month
+func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error) {
+	patient_id := r.URL.Query().Get("patient_id")
+	//start_date := r.URL.Query().Get("from")
+	//end_date   := r.URL.Query().Get("until")
+	// parse dates correctly ?
+	// verify patient ?
+	rows, err := db.Query("SELECT * FROM dosage WHERE patient_id = ?", patient_id) //add AND day BETWEEN ? AND ?
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error during query")
+		return
+	}
+	
+	dosages := []Dosage{}
+	for rows.Next() {
+		var id, amount, medicine int
+		var day time.Date
+		var intake_time time.Time
+		err = rows.Scan(&id, &amount, &patient_id, &medicine, &day, &intake_time)
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
+			return
+		}
+		dosages = append(dosages, Dosage{day, intake_time, amount, medicine, false}) //false for now
+	}
+	if err = rows.Err(); err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
+		return
+	}
+
+	json_values, err := json.Marshal(dosages)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error when converting to JSON")
+		return
+	}
+	responseChan <- json_values
+	errorChan <- nil
+	return
 }
 
 func pushDosages(r *http.Request, responseChan chan []byte, errorChan chan error) {
