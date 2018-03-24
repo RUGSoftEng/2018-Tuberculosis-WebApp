@@ -10,6 +10,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"encoding/json"
   //"go/token"
+	"fmt"
+	_ "github.com/go-sql-driver/mysql" // anonymous import
 )
 
 var (
@@ -18,11 +20,20 @@ var (
 
 func main() {
 	var err error
-	db, err = sql.Open("mysql", "database info")
+
+	rootpasswd, dbname, listen_location := "pass", "database", "localhost:8080" // just some values
+	fmt.Println("MySql Root Password: ")
+	fmt.Scanf("%s", &rootpasswd)
+	fmt.Println("MySql Database Name: ")
+	fmt.Scanf("%s", &dbname)
+	fmt.Println("Router Listen Location: ")
+	fmt.Scanf("%s", &listen_location)
+	db, err = sql.Open("mysql", "root:" + rootpasswd + "@/" + dbname)
 	if err != nil {
 		log.Printf("encountered error while connecting to database: %v", err)
 	}
 
+	log.Printf("Connected to database '%s', and listening on '%s'...", dbname, listen_location)
 	router := mux.NewRouter()
 	router.Handle("/api/your extension", handlerWrapper(exampleHandler))
 	router.Handle("/api/pushPatient", handlerWrapper(pushPatient))
@@ -31,9 +42,9 @@ func main() {
 	router.Handle("/api/pushPhysician", handlerWrapper(pushPhysician))
 	router.Handle("/api/deletePhysician", handlerWrapper(deletePhysician))
 	router.Handle("/api/modifyPhysician", handlerWrapper(modifyPhysician))
-	router.Handle("/api/getDosages", handlerWrapper(getDosages))
+	router.Handle("/api/getDosages/", handlerWrapper(getDosages))
 	router.Handle("/api/pushDosages", handlerWrapper(pushDosages))
-	http.ListenAndServe("portNumber", router)
+	http.ListenAndServe(listen_location, router)
 }
 
 func handlerWrapper(handler func(r *http.Request, responseChan chan []byte, errorChan chan error)) http.Handler {
@@ -323,12 +334,17 @@ func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan e
 //     start_date = [current_day]
 //     end_date   = start_date + 1 month
 func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error) {
-	patient_id := r.URL.Query().Get("patient_id")
+	patient_id := r.URL.Query().Get("patientID")
+
 	//start_date := r.URL.Query().Get("from")
 	//end_date   := r.URL.Query().Get("until")
 	// parse dates correctly ?
 	// verify patient ?
-	rows, err := db.Query("SELECT * FROM dosage WHERE patient_id = ?", patient_id) //add AND day BETWEEN ? AND ?
+	rows, err := db.Query(`SELECT amount, med_name, day, intake_time 
+                               FROM dosage JOIN medicine 
+                               ON dosage.medicine_id = medicine.id
+                               WHERE patient_id = ?`,
+		patient_id) //add AND day BETWEEN ? AND ?
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error during query")
 		return
@@ -336,10 +352,9 @@ func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error)
 	
 	dosages := []Dosage{}
 	for rows.Next() {
-		var id, amount, medicine int
-		var day time.Date
-		var intake_time time.Time
-		err = rows.Scan(&id, &amount, &patient_id, &medicine, &day, &intake_time)
+		var amount int
+		var medicine, day, intake_time string
+		err = rows.Scan(&amount, &medicine, &day, &intake_time)
 		if err != nil {
 			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
 			return
