@@ -1,6 +1,6 @@
 package main
 
-import "time"
+//import "time"
 
 type Dosage struct {
 	Day string `json:"date"`
@@ -12,7 +12,7 @@ type Dosage struct {
 
 type Note struct {
 	Note string `json:"note"`
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt string `json:"created_at"`
 }
 
 type Patient struct {
