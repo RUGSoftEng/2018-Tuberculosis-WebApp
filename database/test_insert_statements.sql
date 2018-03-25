@@ -67,3 +67,16 @@ insert into dosage(amount, patient_id, medicine_id, day, intake_time) values(
        ADDDATE(CURDATE(), 50),
        ADDTIME(CURTIME(), "10:10:00")
 );
+
+insert into note(patient_Id, question, day) values(
+       2, "This is a test note", "2018-04-10"
+);
+
+insert into note(patient_Id, question, day) values(
+       2, "This is another test note", "2018-04-11"
+);
+
+
+insert into note(patient_Id, question, day) values(
+       2, "A NOTE", "2018-02-20"
+);

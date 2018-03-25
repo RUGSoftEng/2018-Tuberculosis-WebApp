@@ -44,6 +44,7 @@ func main() {
 	router.Handle("/api/modifyPhysician", handlerWrapper(modifyPhysician))
 	router.Handle("/api/getDosages/", handlerWrapper(getDosages))
 	router.Handle("/api/pushDosages", handlerWrapper(pushDosages))
+	router.Handle("/api/getNotes/", handlerWrapper(getNotes))
 	http.ListenAndServe(listen_location, router)
 }
 
@@ -379,6 +380,43 @@ func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error)
 	}
 
 	json_values, err := json.Marshal(dosages)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error when converting to JSON")
+		return
+	}
+	responseChan <- json_values
+	errorChan <- nil
+	return
+}
+
+// Possible to also add a time interval?
+// Or all 'untreated' notes
+func getNotes(r *http.Request, responseChan chan []byte, errorChan chan error) {
+	patient_id := r.URL.Query().Get("patient_id")
+	rows, err := db.Query(`SELECT question, day FROM note WHERE patient_Id = ?`, patient_id)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error during query")
+		return
+	}
+
+	const dform = "2006-01-02" // specifies YYYY-MM-DD format
+	notes := []Note{}
+	for rows.Next() {
+		var note, date string
+		err = rows.Scan(&note, &date)
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
+			return
+		}
+		day, _ := time.Parse(dform, date)
+		notes = append(notes, Note{note, day})
+	}
+	if err = rows.Err(); err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
+		return
+	}
+
+	json_values, err := json.Marshal(notes)
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error when converting to JSON")
 		return
