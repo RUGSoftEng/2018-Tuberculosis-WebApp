@@ -44,6 +44,8 @@ func main() {
 	router.Handle("/api/modifyPhysician", handlerWrapper(modifyPhysician))
 	router.Handle("/api/getDosages/", handlerWrapper(getDosages))
 	router.Handle("/api/pushDosages", handlerWrapper(pushDosages))
+	router.Handle("/api/getNotes/", handlerWrapper(getNotes))
+	router.Handle("/api/addNote/", handlerWrapper(addNote))
 	http.ListenAndServe(listen_location, router)
 }
 
@@ -385,6 +387,71 @@ func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error)
 	}
 	responseChan <- json_values
 	errorChan <- nil
+	return
+}
+
+// Possible to also add a time interval?
+// Or all 'untreated' notes
+func getNotes(r *http.Request, responseChan chan []byte, errorChan chan error) {
+	// verify patient
+	patient_id := r.URL.Query().Get("patient_id")
+	rows, err := db.Query(`SELECT question, day FROM note WHERE patient_Id = ?`, patient_id)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error during query")
+		return
+	}
+
+	notes := []Note{}
+	for rows.Next() {
+		var note, date string
+		err = rows.Scan(&note, &date)
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
+			return
+		}
+		notes = append(notes, Note{note, date})
+	}
+	if err = rows.Err(); err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
+		return
+	}
+
+	json_values, err := json.Marshal(notes)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error when converting to JSON")
+		return
+	}
+	responseChan <- json_values
+	errorChan <- nil
+	return
+}
+
+func addNote(r *http.Request, responseChan chan []byte, errorChan chan error) {
+	// verify patient
+
+	patient_id := r.URL.Query().Get("patient_id")
+	note := Note{}
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&note)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error during JSON decoding")
+		return
+	}
+	
+	trans, err := db.Begin()
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Failed to start new transaction")
+		return
+	}
+	_, err = trans.Exec(
+		`INSERT INTO note (patient_id, question, day) VALUES (?, ?, ?)`,
+		patient_id, note.Note, note.CreatedAt)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Failed to insert note into the database")
+		return
+	}
+
+	errorChan <- trans.Commit()
 	return
 }
 
