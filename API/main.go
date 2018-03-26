@@ -19,7 +19,7 @@ var (
 
 func main() {
 	var err error
-	db, err = sql.Open("mysql", "root:minomino@tcp(127.0.0.1:3306)/test")
+	db, err = sql.Open("mysql", "root:********@tcp(127.0.0.1:3306)/test")
 	if err != nil {
 		log.Printf("encountered error while connecting to database: %v", err)
 	}
