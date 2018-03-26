@@ -16,17 +16,13 @@ type Note struct {
 }
 
 type Patient struct {
-	Id int `json:"id"`
 	Username string `json:"username"`
 	Name string `json:"name"`
 	Password string `json:"password"`
 	ApiToken string `json:"api_token"`
-	Dosages []Dosage `json:"dosages"`
-	Notes []Note `json:"note"`
 }
 
 type Physician struct {
-	Id int `json:"id"`
 	Username string `json:"username"`
 	Name string `json:"name"`
 	Password string `json:"password"`
