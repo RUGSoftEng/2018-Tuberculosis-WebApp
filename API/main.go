@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 	"encoding/json"
+	_ "github.com/go-sql-driver/mysql" // anonymous import
   //"go/token"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql" // anonymous import
@@ -20,7 +21,6 @@ var (
 
 func main() {
 	var err error
-
 	rootpasswd, dbname, listen_location := "pass", "database", "localhost:8080" // just some values
 	fmt.Print("MySql Root Password: ")
 	fmt.Scanf("%s", &rootpasswd)
@@ -29,6 +29,7 @@ func main() {
 	fmt.Print("\nRouter Listen Location: ")
 	fmt.Scanf("%s", &listen_location)
 	db, err = sql.Open("mysql", "root:" + rootpasswd + "@/" + dbname)
+
 	if err != nil {
 		log.Printf("encountered error while connecting to database: %v", err)
 	}
@@ -174,7 +175,7 @@ func pushPatient(r *http.Request, responseChan chan []byte, errorChan chan error
 func pushPhysician(r *http.Request, responseChan chan []byte, errorChan chan error){
   physician := Physician{}
   dec := json.NewDecoder(r.Body)
-  err := dec.Decode(physician)
+  err := dec.Decode(&physician)
   if err != nil{
     errorChan <- errors.Wrap(err, "Failed to decode incoming JSON")
     return
@@ -259,7 +260,7 @@ func deletePhysician(r *http.Request, responseChan chan []byte, errorChan chan e
 func modifyPatient(r *http.Request, responseChan chan []byte, errorChan chan error){
 	patient := Patient{}
 	dec := json.NewDecoder(r.Body)
-	err := dec.Decode(patient)
+	err := dec.Decode(&patient)
 	if err  != nil {
 		errorChan <- err
 		return
@@ -279,8 +280,8 @@ func modifyPatient(r *http.Request, responseChan chan []byte, errorChan chan err
 	}
 	tx.Exec(`UPDATE account SET 
                  name = ?,
-                 username = ?,
-                 pass_hash = ?`, patient.Name, patient.Username, patient.Password )
+                 pass_hash = ?
+                 WHERE username = ?`, patient.Name, patient.Username, patient.Username)
 	if err != nil{
 		errorChan <- err
 		tx.Rollback()
@@ -294,7 +295,7 @@ func modifyPatient(r *http.Request, responseChan chan []byte, errorChan chan err
 func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan error){
 	physician := Physician{}
 	dec := json.NewDecoder(r.Body)
-	err := dec.Decode(physician)
+	err := dec.Decode(&physician)
 	if err  != nil {
 		errorChan <- err
 		return
@@ -309,10 +310,20 @@ func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan e
 		errorChan <- errors.Wrap(err, "failed to start transaction")
 		return
 	}
+	var id int
+	err = db.QueryRow("SELECT id FROM account WHERE username=?", physician.Username).Scan(&id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			errorChan <- errors.Wrap(err, "No matched rows")
+		} else {
+		errorChan <- errors.Wrap(err, "Database failure")
+		return
+  	}
+	}
 	_, err = tx.Exec(`UPDATE account SET
                           name = ?,
-                          username = ?,
-                          pass_hash = ?`, physician.Name, physician.Username, physician.Password)
+                          pass_hash = ?
+                          WHERE id=?`, physician.Name, physician.Password, id)
 	if err != nil{
 		errorChan <- err
 		tx.Rollback()
@@ -320,7 +331,8 @@ func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan e
 	}
 	_, err = tx.Exec(`UPDATE physician SET
                           email = ?,
-                          token = ?`, physician.Email, physician.CreationToken)
+                          token = ?
+                          WHERE id = ?`, physician.Email, physician.CreationToken, id)
 	if err != nil{
 		errorChan <- err
 		tx.Rollback()
@@ -460,7 +472,7 @@ func pushDosages(r *http.Request, responseChan chan []byte, errorChan chan error
   dosage := Dosage{}
   var medicine_id int
   dec := json.NewDecoder(r.Body)
-  err := dec.Decode(dosage)
+  err := dec.Decode(&dosage)
   if err != nil {
     errorChan <- errors.Wrap(err, "Failed to decode JSON")
     return
