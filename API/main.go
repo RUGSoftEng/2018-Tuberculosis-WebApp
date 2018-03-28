@@ -11,6 +11,8 @@ import (
 	"encoding/json"
 	_ "github.com/go-sql-driver/mysql" // anonymous import
   //"go/token"
+	"fmt"
+	_ "github.com/go-sql-driver/mysql" // anonymous import
 )
 
 var (
@@ -19,11 +21,20 @@ var (
 
 func main() {
 	var err error
-	db, err = sql.Open("mysql", "root:********@tcp(127.0.0.1:3306)/test")
+	rootpasswd, dbname, listen_location := "pass", "database", "localhost:8080" // just some values
+	fmt.Print("MySql Root Password: ")
+	fmt.Scanf("%s", &rootpasswd)
+	fmt.Print("\nMySql Database Name: ")
+	fmt.Scanf("%s", &dbname)
+	fmt.Print("\nRouter Listen Location: ")
+	fmt.Scanf("%s", &listen_location)
+	db, err = sql.Open("mysql", "root:" + rootpasswd + "@/" + dbname)
+
 	if err != nil {
 		log.Printf("encountered error while connecting to database: %v", err)
 	}
 
+	log.Printf("Connected to database '%s', and listening on '%s'...", dbname, listen_location)
 	router := mux.NewRouter()
 	router.Handle("/api/your extension", handlerWrapper(exampleHandler))
 	router.Handle("/api/pushPatient", handlerWrapper(pushPatient))
@@ -32,8 +43,11 @@ func main() {
 	router.Handle("/api/pushPhysician", handlerWrapper(pushPhysician))
 	router.Handle("/api/deletePhysician", handlerWrapper(deletePhysician))
 	router.Handle("/api/modifyPhysician", handlerWrapper(modifyPhysician))
-	router.Handle("/api/getDosages", handlerWrapper(pushDosages))
-	http.ListenAndServe(":8000", router)
+	router.Handle("/api/getDosages/", handlerWrapper(getDosages))
+	router.Handle("/api/pushDosages", handlerWrapper(pushDosages))
+	router.Handle("/api/getNotes/", handlerWrapper(getNotes))
+	router.Handle("/api/addNote/", handlerWrapper(addNote))
+	http.ListenAndServe(listen_location, router)
 }
 
 func handlerWrapper(handler func(r *http.Request, responseChan chan []byte, errorChan chan error)) http.Handler {
@@ -327,6 +341,130 @@ func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan e
 
 	errorChan <- tx.Commit()
 
+}
+
+// start/ end dates might be optional ?
+//  Possible defaults:
+//     start_date = [current_day]
+//     end_date   = start_date + 1 month
+func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error) {
+	// verify patient ?
+	patient_id := r.URL.Query().Get("patient_id")
+
+	from  := r.URL.Query().Get("from")
+	until := r.URL.Query().Get("until")
+	const dform = "2006-01-02" // specifies YYYY-MM-DD format
+	start_date, err := time.Parse(dform, from)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error in parsing starting date")
+		return
+	}
+	end_date, err := time.Parse(dform, until)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error in parsing end time")
+		return
+	}
+
+	rows, err := db.Query(`SELECT amount, med_name, day, intake_time 
+                               FROM dosage JOIN medicine 
+                               ON dosage.medicine_id = medicine.id
+                               WHERE patient_id = ? AND (day BETWEEN ? AND ?)
+                               `,
+		patient_id, start_date.Format(dform), end_date.Format(dform)) //add AND day BETWEEN ? AND ?
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error during query")
+		return
+	}
+	
+	dosages := []Dosage{}
+	for rows.Next() {
+		var amount int
+		var medicine, day, intake_time string
+		err = rows.Scan(&amount, &medicine, &day, &intake_time)
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
+			return
+		}
+		dosages = append(dosages, Dosage{day, intake_time, amount, medicine, false}) //false for now
+	}
+	if err = rows.Err(); err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
+		return
+	}
+
+	json_values, err := json.Marshal(dosages)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error when converting to JSON")
+		return
+	}
+	responseChan <- json_values
+	errorChan <- nil
+	return
+}
+
+// Possible to also add a time interval?
+// Or all 'untreated' notes
+func getNotes(r *http.Request, responseChan chan []byte, errorChan chan error) {
+	// verify patient
+	patient_id := r.URL.Query().Get("patient_id")
+	rows, err := db.Query(`SELECT question, day FROM note WHERE patient_Id = ?`, patient_id)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error during query")
+		return
+	}
+
+	notes := []Note{}
+	for rows.Next() {
+		var note, date string
+		err = rows.Scan(&note, &date)
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
+			return
+		}
+		notes = append(notes, Note{note, date})
+	}
+	if err = rows.Err(); err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
+		return
+	}
+
+	json_values, err := json.Marshal(notes)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error when converting to JSON")
+		return
+	}
+	responseChan <- json_values
+	errorChan <- nil
+	return
+}
+
+func addNote(r *http.Request, responseChan chan []byte, errorChan chan error) {
+	// verify patient
+
+	patient_id := r.URL.Query().Get("patient_id")
+	note := Note{}
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&note)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error during JSON decoding")
+		return
+	}
+	
+	trans, err := db.Begin()
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Failed to start new transaction")
+		return
+	}
+	_, err = trans.Exec(
+		`INSERT INTO note (patient_id, question, day) VALUES (?, ?, ?)`,
+		patient_id, note.Note, note.CreatedAt)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Failed to insert note into the database")
+		return
+	}
+
+	errorChan <- trans.Commit()
+	return
 }
 
 func pushDosages(r *http.Request, responseChan chan []byte, errorChan chan error) {

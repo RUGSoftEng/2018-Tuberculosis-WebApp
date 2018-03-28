@@ -1,10 +1,10 @@
 package main
 
-import "time"
+//import "time"
 
 type Dosage struct {
-  Day time.Weekday `json:"date"`
-	IntakeMoment time.Time `json:"intake_moment"`
+	Day string `json:"date"`
+	IntakeMoment string `json:"intake_moment"`
 	NumberOfPills int `json:"amount"`
 	Medicine string `json:"medicine"`
 	Taken bool `json:"taken"`
@@ -12,7 +12,7 @@ type Dosage struct {
 
 type Note struct {
 	Note string `json:"note"`
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt string `json:"created_at"`
 }
 
 type Patient struct {
@@ -29,5 +29,4 @@ type Physician struct {
 	ApiToken string `json:"api_token"`
 	Email string `json:"email"`
 	CreationToken string `json:"creation_token"`
-}                                                                                                                                                                                                                                                                                  
-                    
+}
