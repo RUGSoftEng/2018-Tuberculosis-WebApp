@@ -12,7 +12,6 @@ import (
 	_ "github.com/go-sql-driver/mysql" // anonymous import
   //"go/token"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql" // anonymous import
 )
 
 var (
@@ -37,16 +36,30 @@ func main() {
 	log.Printf("Connected to database '%s', and listening on '%s'...", dbname, listen_location)
 	router := mux.NewRouter()
 	router.Handle("/api/your extension", handlerWrapper(exampleHandler))
-	router.Handle("/api/pushPatient", handlerWrapper(pushPatient))
-	router.Handle("/api/deletePatient", handlerWrapper(deletePatient))
-	router.Handle("/api/modifyPatient", handlerWrapper(modifyPatient))
-	router.Handle("/api/pushPhysician", handlerWrapper(pushPhysician))
-	router.Handle("/api/deletePhysician", handlerWrapper(deletePhysician))
-	router.Handle("/api/modifyPhysician", handlerWrapper(modifyPhysician))
-	router.Handle("/api/getDosages/", handlerWrapper(getDosages))
-	router.Handle("/api/pushDosages", handlerWrapper(pushDosages))
-	router.Handle("/api/getNotes/", handlerWrapper(getNotes))
-	router.Handle("/api/addNote/", handlerWrapper(addNote))
+
+	// GET Requests for Retrieving
+	get_router := router.Methods("GET").Subrouter()
+	get_router.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(getDosages))
+	get_router.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(getNotes))
+
+	// POST Requests for Updating
+	post_router := router.Methods("POST").Subrouter()
+	post_router.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(modifyPatient))
+	post_router.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(modifyPhysician))
+
+	// PUT Requests for Creating
+	put_router := router.Methods("PUT").Subrouter()
+	put_router.Handle("/api/accounts/patients", handlerWrapper(pushPatient))
+	put_router.Handle("/api/accounts/physicians", handlerWrapper(pushPhysician))
+	put_router.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(pushDosages))
+	put_router.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(addNote))
+
+	// DELETE Requests for Deleting
+	delete_router := router.Methods("DELETE").Subrouter()
+	delete_router.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(deletePatient))	
+	delete_router.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(deletePhysician))
+
+	// Starting the router
 	http.ListenAndServe(listen_location, router)
 }
 
@@ -349,9 +362,10 @@ func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan e
 //     end_date   = start_date + 1 month
 func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	// verify patient ?
-	patient_id := r.URL.Query().Get("patient_id")
+	vars := mux.Vars(r)
+	patient_id := vars["id"]
 
-	from  := r.URL.Query().Get("from")
+	from  := r.URL.Query().Get("from") // maybe check if specified
 	until := r.URL.Query().Get("until")
 	const dform = "2006-01-02" // specifies YYYY-MM-DD format
 	start_date, err := time.Parse(dform, from)
@@ -406,7 +420,9 @@ func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error)
 // Or all 'untreated' notes
 func getNotes(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	// verify patient
-	patient_id := r.URL.Query().Get("patient_id")
+	vars := mux.Vars(r)
+	patient_id := vars["id"]
+	
 	rows, err := db.Query(`SELECT question, day FROM note WHERE patient_Id = ?`, patient_id)
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error during query")
@@ -440,8 +456,9 @@ func getNotes(r *http.Request, responseChan chan []byte, errorChan chan error) {
 
 func addNote(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	// verify patient
+	vars := mux.Vars(r)
+	patient_id := vars["id"]
 
-	patient_id := r.URL.Query().Get("patient_id")
 	note := Note{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&note)
