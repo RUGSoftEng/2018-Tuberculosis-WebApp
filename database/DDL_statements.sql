@@ -1,4 +1,4 @@
-CREATE TABLE account(
+CREATE TABLE Accounts(
 
   id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
 
@@ -14,7 +14,7 @@ CREATE TABLE account(
 
 );
 
-CREATE TABLE physician(
+CREATE TABLE Physicians(
 
   id INT NOT NULL PRIMARY KEY,
 
@@ -22,23 +22,23 @@ CREATE TABLE physician(
 
   token VARCHAR(8) NOT NULL,
 
-  FOREIGN KEY (id) REFERENCES account(id)
+  FOREIGN KEY (id) REFERENCES Accounts(id)
 
 );
 
-CREATE TABLE patient(
+CREATE TABLE Patients(
 
   id INT NOT NULL PRIMARY KEY,
 
   physician_id INT NOT NULL,
 
-  FOREIGN KEY (id) REFERENCES account(id),
+  FOREIGN KEY (id) REFERENCES Accounts(id),
 
-  FOREIGN KEY (physician_id) REFERENCES physician(id)
+  FOREIGN KEY (physician_id) REFERENCES Physicians(id)
 
 );
 
-CREATE TABLE note(
+CREATE TABLE Notes(
 
   id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
 
@@ -48,11 +48,11 @@ CREATE TABLE note(
 
   day DATE NOT NULL,
 
-  FOREIGN KEY (patient_Id) REFERENCES patient(id)
+  FOREIGN KEY (patient_Id) REFERENCES Patients(id)
 
 );
 
-CREATE TABLE medicine(
+CREATE TABLE Medicines(
 
    id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
 
@@ -60,7 +60,7 @@ CREATE TABLE medicine(
 
 );
 
-CREATE TABLE dosage(
+CREATE TABLE Dosages(
 
   id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
   
@@ -74,18 +74,18 @@ CREATE TABLE dosage(
 
   intake_time TIME NOT NULL,
 
-  FOREIGN KEY (patient_id) REFERENCES patient(id),
+  FOREIGN KEY (patient_id) REFERENCES Patients(id),
 
-  FOREIGN KEY (medicine_id) REFERENCES medicine(id)
+  FOREIGN KEY (medicine_id) REFERENCES Medicines(id)
 
 );
 
-CREATE TABLE movie(
+CREATE TABLE Movies(
   id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE faq(
+CREATE TABLE FAQ(
   id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
   question TEXT NOT NULL 
 );
