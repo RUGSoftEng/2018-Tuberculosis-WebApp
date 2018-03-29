@@ -9,6 +9,7 @@ Waring:
 Both the latest versions of:
 * [Vagrant](https://www.vagrantup.com/downloads.html)
 * [VirtualBox](https://www.virtualbox.org/wiki/Downloads)
+
 Note that for Debian distributions (Ubuntu, Mint etc.) the apt repositories do not contain the latest version of Vagrant and does not work.
 
 ### Starting
@@ -31,4 +32,4 @@ Starting the VM back up use `vagrant up`.
 Restaring can be done by running `vagrant reload`. This is similar to running halt and up.
 
 
-For a more complete introduction go to the [Vagrant introduction tab](https://www.vagrantup.com/intro/getting-started/index.html) or to the [documentation](https://www.vagrantup.com/docs/index.html)
+For a more complete introduction go to the Vagrant [introduction](https://www.vagrantup.com/intro/getting-started/index.html)  tab or to the [documentation](https://www.vagrantup.com/docs/index.html)
