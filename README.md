@@ -26,10 +26,16 @@ The directory `/vagrant` is a shared directory. It is the same as the project ro
 There are three options for closing the VM:
 * `vagrant suspend` Stops, but remembers the current state of the VM. This means it will use all the memory it was using, but will start up fast. It is similar to 'suspending' your own system (or closing the lid of your laptop).
 * `vagrant halt` Closes down the VM, similar as to when you would shut down your system. Takes up less memory than suspending, but also will start up slower.
-* `vagrant destroy` This completely shuts down the VM and removes all the used resources. It will not leave any memory in use. This is generally what you want to do if you are done.
+* `vagrant destroy` This completely shuts down the VM and removes all the used resources. It will not leave any memory in use.
 
 Starting the VM back up use `vagrant up`.
 Restaring can be done by running `vagrant reload`. This is similar to running halt and up.
 
 
 For a more complete introduction go to the Vagrant [introduction](https://www.vagrantup.com/intro/getting-started/index.html)  tab or to the [documentation](https://www.vagrantup.com/docs/index.html)
+
+## API
+### Starting
+Starting the API is currently done by ssh-ing to the VM and run `start_api` in the shell. The API will be started and listening on location (ip:port) `192.168.50.4:2002`.
+
+Note that the API is definitely not fully finished, so don't expect the smoothest behaviour. Please make an Issue or something if you want to report an error.

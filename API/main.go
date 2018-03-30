@@ -22,11 +22,8 @@ var (
 func main() {
 	var err error
 	rootpasswd, dbname, listen_location := "pass", "database", "localhost:8080" // just some values
-	fmt.Print("MySql Root Password: ")
 	fmt.Scanf("%s", &rootpasswd)
-	fmt.Print("\nMySql Database Name: ")
 	fmt.Scanf("%s", &dbname)
-	fmt.Print("\nRouter Listen Location: ")
 	fmt.Scanf("%s", &listen_location)
 	db, err = sql.Open("mysql", "root:" + rootpasswd + "@/" + dbname)
 
