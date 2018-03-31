@@ -30,3 +30,9 @@ type Physician struct {
 	Email string `json:"email"`
 	CreationToken string `json:"creation_token"`
 }
+
+type Video struct {
+	Topic string `json:"topic"`
+	Title string `json:"title"`
+	Reference string `json:"reference"`
+}
