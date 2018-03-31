@@ -51,7 +51,8 @@ func main() {
 	put_router.Handle("/api/accounts/physicians", handlerWrapper(pushPhysician))
 	put_router.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(pushDosages))
 	put_router.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(addNote))
-
+	put_router.Handle("/api/general/videos", handlerWrapper(addVideo))
+	
 	// DELETE Requests for Deleting
 	delete_router := router.Methods("DELETE").Subrouter()
 	delete_router.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(deletePatient))	
@@ -551,6 +552,31 @@ func getVideoByTopic(r *http.Request, responseChan chan []byte, errorChan chan e
 	}
 	responseChan <- json_values
 	errorChan <- nil
+	return
+}
+
+func addVideo(r *http.Request, responseChan chan []byte, errorChan chan error) {
+	video := Video{}
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&video)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error during JSON decoding")
+		return
+	}
+	
+	trans, err := db.Begin()
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Failed to start new transaction")
+		return
+	}
+	_, err = trans.Exec(`INSERT INTO Videos (topic, title, reference) VALUES (?, ?, ?)`,
+		video.Topic, video.Title, video.Reference)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Failed to insert video into the database")
+		return
+	}
+
+	errorChan <- trans.Commit()
 	return
 }
 
