@@ -110,4 +110,3 @@ _To be added_
 | **Path**      | `/api/general/videos/{topic}` |
 | **Variables** | topic: String                 |
 | **Body**      | -                             |
-| **Return**    | List of JSON Videos           |
