@@ -33,8 +33,8 @@ _To be documented_
 Include the note (in JSON) in the body of the request:
 ```json
 {
-	"note": [String: The message of the note],
-	"created_at": [Date: YYYY-MM-DD]
+	"note": "String: The message of the note",
+	"created_at": "Date: YYYY-MM-DD"
 }
 ```
 ### Retrieving
@@ -45,8 +45,8 @@ Include the note (in JSON) in the body of the request:
 List of notes in JSON format:
 ```json
 {
-	"note": [String: The message of the note],
-	"created_at": [Date: YYYY-MM-DD]
+	"note": "String: The message of the note",
+	"created_at": "Date: YYYY-MM-DD"
 }
 ```
 
@@ -69,11 +69,11 @@ You also need to query the interval with the variables:
 List of dosages in JSON format:
 ```json
 {
-	"date": [Date: YYYY-MM-DD],
-	"intake_moment": [Time: HH-MM-SS],
-	"amount": [Integer],
-	"medicine": [String: Name of the medicine which needs to be taken],
-	"taken": [Boolean]
+	"date": "Date: YYYY-MM-DD",
+	"intake_moment": "Time: HH-MM-SS",
+	"amount": "Integer",
+	"medicine": "String: Name of the medicine which needs to be taken",
+	"taken": "Boolean"
 }
 ```
 ### Updating
@@ -88,9 +88,9 @@ _To be added_
 Include the video (in JSON) in the body of the request:
 ```json
 {
-	"topic": [String],
-	"title": [String],
-	"reference": [String: url]
+	"topic": "String",
+	"title": "String",
+	"reference": "String: url"
 }
 ```
 ### Retrieving
@@ -101,14 +101,8 @@ Include the video (in JSON) in the body of the request:
 List of videos in JSON format:
 ```json
 {
-	"topic": [String],
-	"title": [String],
-	"reference": [String: url]
+	"topic": "String",
+	"title": "String",
+	"reference": "String: url"
 }
 ```
-
-
-### Updating
-_To be added_
-### Deleting
-_To be added_
