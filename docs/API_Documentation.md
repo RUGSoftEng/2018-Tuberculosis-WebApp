@@ -95,7 +95,7 @@ Include the video (in JSON) in the body of the request:
 ```
 ### Retrieving
 #### Retrieving all videos with a certain topic
-**GET** `/api/general/videos/{topic}
+**GET** `/api/general/videos/{topic}`
 
 ##### Returns:
 List of videos in JSON format:
