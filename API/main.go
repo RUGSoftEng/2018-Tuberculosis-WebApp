@@ -12,7 +12,6 @@ import (
 	_ "github.com/go-sql-driver/mysql" // anonymous import
   //"go/token"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql" // anonymous import
 )
 
 var (
@@ -34,16 +33,30 @@ func main() {
 	log.Printf("Connected to database '%s', and listening on '%s'...", dbname, listen_location)
 	router := mux.NewRouter()
 	router.Handle("/api/your extension", handlerWrapper(exampleHandler))
-	router.Handle("/api/pushPatient", handlerWrapper(pushPatient))
-	router.Handle("/api/deletePatient", handlerWrapper(deletePatient))
-	router.Handle("/api/modifyPatient", handlerWrapper(modifyPatient))
-	router.Handle("/api/pushPhysician", handlerWrapper(pushPhysician))
-	router.Handle("/api/deletePhysician", handlerWrapper(deletePhysician))
-	router.Handle("/api/modifyPhysician", handlerWrapper(modifyPhysician))
-	router.Handle("/api/getDosages/", handlerWrapper(getDosages))
-	router.Handle("/api/pushDosages", handlerWrapper(pushDosages))
-	router.Handle("/api/getNotes/", handlerWrapper(getNotes))
-	router.Handle("/api/addNote/", handlerWrapper(addNote))
+
+	// GET Requests for Retrieving
+	get_router := router.Methods("GET").Subrouter()
+	get_router.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(getDosages))
+	get_router.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(getNotes))
+
+	// POST Requests for Updating
+	post_router := router.Methods("POST").Subrouter()
+	post_router.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(modifyPatient))
+	post_router.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(modifyPhysician))
+
+	// PUT Requests for Creating
+	put_router := router.Methods("PUT").Subrouter()
+	put_router.Handle("/api/accounts/patients", handlerWrapper(pushPatient))
+	put_router.Handle("/api/accounts/physicians", handlerWrapper(pushPhysician))
+	put_router.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(pushDosages))
+	put_router.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(addNote))
+
+	// DELETE Requests for Deleting
+	delete_router := router.Methods("DELETE").Subrouter()
+	delete_router.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(deletePatient))	
+	delete_router.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(deletePhysician))
+
+	// Starting the router
 	http.ListenAndServe(listen_location, router)
 }
 
@@ -82,8 +95,8 @@ func exampleHandler(r *http.Request, responseChan chan []byte, errorChan chan er
 	// This is a join example for a patient call, change to physician it is a call only a physician can make
 	// remove join part if it is a call able for both
 	err := db.QueryRow(`	SELECT id 
-								FROM patient AS pa 
-									INNER JOIN account AS acc 
+								FROM Patients AS pa 
+									INNER JOIN Accounts AS acc 
 									ON pa.id = acc.id  
 								WHERE acc.api_token = ?`,
 		apiToken).Scan(ID)
@@ -117,7 +130,7 @@ func pushPatient(r *http.Request, responseChan chan []byte, errorChan chan error
 
 	// In general this will check the api_token
 	err := db.QueryRow(`	SELECT id 
-								FROM physician  
+								FROM Physicians  
 								WHERE token = ?`,
 								physicianToken).Scan(physicianId)
 	if err != nil{
@@ -152,14 +165,14 @@ func pushPatient(r *http.Request, responseChan chan []byte, errorChan chan error
 		errorChan <- errors.Wrap(err, "failed to start transaction")
 		return
 	}
-	result, err := tx.Exec(`INSERT  INTO account (name, username, pass_hash) VALUES(?, ?, ?)`, patient.Name, patient.Username, patient.Password) // name is reserved keyword
+	result, err := tx.Exec(`INSERT  INTO Accounts (name, username, pass_hash) VALUES(?, ?, ?)`, patient.Name, patient.Username, patient.Password) // name is reserved keyword
 	if err != nil {
 		errorChan <- err
 		tx.Rollback()
 		return
 	}
 	id, err := result.LastInsertId() //this gets the id that would be created for above insert
-	_, err = tx.Exec(`INSERT INTO patient (id, physician_id) VALUES(?, ?)`,  id, physicianId) //physician is not necessery here, however, it is a be easier to read
+	_, err = tx.Exec(`INSERT INTO Patients (id, physician_id) VALUES(?, ?)`,  id, physicianId) //physician is not necessery here, however, it is a be easier to read
 	if err != nil {
 		errorChan <- err
 		tx.Rollback()
@@ -188,7 +201,7 @@ func pushPhysician(r *http.Request, responseChan chan []byte, errorChan chan err
     return
   }
   role := "physician"
-  result, err := tx.Exec(`INSERT INTO account (name, username, pass_hash, role)
+  result, err := tx.Exec(`INSERT INTO Accounts (name, username, pass_hash, role)
                                 VALUES(?, ?, ?, ?)`, physician.Name, physician.Username, physician.Password, role)
   if err != nil{
     errorChan <- err
@@ -196,7 +209,7 @@ func pushPhysician(r *http.Request, responseChan chan []byte, errorChan chan err
     return
   }
   id, err := result.LastInsertId()
-  _, err = tx.Exec(`INSERT INTO physician VALUES(?, ?, ?)`,
+  _, err = tx.Exec(`INSERT INTO Physicians VALUES(?, ?, ?)`,
                    id, physician.Email, physician.CreationToken)
   if err != nil{
     errorChan <- err
@@ -215,13 +228,13 @@ func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan err
 	  errorChan <- errors.Wrap(err, "failed to start transaction")
 	  return
 	}
-	_ , err = tx.Exec(`DELETE FROM patient WHERE id=?`,Id )
+	_ , err = tx.Exec(`DELETE FROM Patients WHERE id=?`,Id )
 	if err != nil{
 		errorChan <- err
 		tx.Rollback()
 		return
 	}
-	_, err = tx.Exec(`DELETE FROM account WHERE id=?`, Id)
+	_, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, Id)
 	if err != nil{
 		errorChan <- err
 		tx.Rollback()
@@ -275,7 +288,7 @@ func modifyPatient(r *http.Request, responseChan chan []byte, errorChan chan err
 		errorChan <- errors.Wrap(err, "failed to start transaction")
 		return
 	}
-	tx.Exec(`UPDATE account SET 
+	tx.Exec(`UPDATE Accounts SET 
                  name = ?,
                  pass_hash = ?
                  WHERE username = ?`, patient.Name, patient.Username, patient.Username)
@@ -308,7 +321,7 @@ func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan e
 		return
 	}
 	var id int
-	err = db.QueryRow("SELECT id FROM account WHERE username=?", physician.Username).Scan(&id)
+	err = db.QueryRow("SELECT id FROM Accounts WHERE username=?", physician.Username).Scan(&id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			errorChan <- errors.Wrap(err, "No matched rows")
@@ -317,7 +330,7 @@ func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan e
 		return
   	}
 	}
-	_, err = tx.Exec(`UPDATE account SET
+	_, err = tx.Exec(`UPDATE Accounts SET
                           name = ?,
                           pass_hash = ?
                           WHERE id=?`, physician.Name, physician.Password, id)
@@ -326,7 +339,7 @@ func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan e
 		tx.Rollback()
 		return
 	}
-	_, err = tx.Exec(`UPDATE physician SET
+	_, err = tx.Exec(`UPDATE Physicians SET
                           email = ?,
                           token = ?
                           WHERE id = ?`, physician.Email, physician.CreationToken, id)
@@ -346,9 +359,10 @@ func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan e
 //     end_date   = start_date + 1 month
 func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	// verify patient ?
-	patient_id := r.URL.Query().Get("patient_id")
+	vars := mux.Vars(r)
+	patient_id := vars["id"]
 
-	from  := r.URL.Query().Get("from")
+	from  := r.URL.Query().Get("from") // maybe check if specified
 	until := r.URL.Query().Get("until")
 	const dform = "2006-01-02" // specifies YYYY-MM-DD format
 	start_date, err := time.Parse(dform, from)
@@ -363,8 +377,8 @@ func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error)
 	}
 
 	rows, err := db.Query(`SELECT amount, med_name, day, intake_time 
-                               FROM dosage JOIN medicine 
-                               ON dosage.medicine_id = medicine.id
+                               FROM Dosages JOIN Medicines 
+                               ON Dosages.medicine_id = Medicines.id
                                WHERE patient_id = ? AND (day BETWEEN ? AND ?)
                                `,
 		patient_id, start_date.Format(dform), end_date.Format(dform)) //add AND day BETWEEN ? AND ?
@@ -403,8 +417,10 @@ func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error)
 // Or all 'untreated' notes
 func getNotes(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	// verify patient
-	patient_id := r.URL.Query().Get("patient_id")
-	rows, err := db.Query(`SELECT question, day FROM note WHERE patient_Id = ?`, patient_id)
+	vars := mux.Vars(r)
+	patient_id := vars["id"]
+	
+	rows, err := db.Query(`SELECT question, day FROM Notes WHERE patient_Id = ?`, patient_id)
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error during query")
 		return
@@ -437,8 +453,9 @@ func getNotes(r *http.Request, responseChan chan []byte, errorChan chan error) {
 
 func addNote(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	// verify patient
+	vars := mux.Vars(r)
+	patient_id := vars["id"]
 
-	patient_id := r.URL.Query().Get("patient_id")
 	note := Note{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&note)
@@ -453,7 +470,7 @@ func addNote(r *http.Request, responseChan chan []byte, errorChan chan error) {
 		return
 	}
 	_, err = trans.Exec(
-		`INSERT INTO note (patient_id, question, day) VALUES (?, ?, ?)`,
+		`INSERT INTO Notes (patient_id, question, day) VALUES (?, ?, ?)`,
 		patient_id, note.Note, note.CreatedAt)
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Failed to insert note into the database")
@@ -479,7 +496,7 @@ func pushDosages(r *http.Request, responseChan chan []byte, errorChan chan error
     errorChan <- errors.Wrap(err, "failed to start transaction")
     return
   }
-  err = tx.QueryRow(`SELECT id FROM medicine WHERE med_name = ?`, dosage.Medicine).Scan(&medicine_id)
+  err = tx.QueryRow(`SELECT id FROM Medicines WHERE med_name = ?`, dosage.Medicine).Scan(&medicine_id)
   if err != nil{
     if err == sql.ErrNoRows{
       errorChan <- errors.Wrap(err, "Unknown medicine")
@@ -489,7 +506,7 @@ func pushDosages(r *http.Request, responseChan chan []byte, errorChan chan error
     tx.Rollback()
     return
   }
-  _, err = tx.Exec(`INSERT INTO dosage (amount, patient_id, medicine_id, day, intake_time) VALUES (?, ?, ?, ?, ?)`,
+  _, err = tx.Exec(`INSERT INTO Dosages (amount, patient_id, medicine_id, day, intake_time) VALUES (?, ?, ?, ?, ?)`,
                                               dosage.NumberOfPills, patient_id, medicine_id, dosage.Day, dosage.IntakeMoment)
   if err != nil{
     errorChan <- err
