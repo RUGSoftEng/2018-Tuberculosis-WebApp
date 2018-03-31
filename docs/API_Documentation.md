@@ -7,6 +7,7 @@
 * [Dosages](#dosages)
 * [Videos](#videos)
 
+
 ## Physicians
 ### Creating
 _To be documented_
@@ -26,47 +27,35 @@ _To be documented_
 ### Deleting
 _To be documented_
 ## Notes
+### JSON
+```json
+{
+	"note": "String: The message of the note",
+	"created_at": "Date: YYYY-MM-DD"
+}
+```
 ### Creating
 #### Adding a note for a specified patient
-**PUT** `/api/accounts/patients/{id}/notes` 
-
-Include the note (in JSON) in the body of the request:
-```json
-{
-	"note": "String: The message of the note",
-	"created_at": "Date: YYYY-MM-DD"
-}
-```
+|---------------|-------------------------------------|
+| **Type**      | PUT                                 |
+| **Path**      | `/api/accounts/patients/{id}/notes` |
+| **Variables** | id: Integer                         |
+| **Body**      | JSON: Note                          |
+| **Return**    | -                                   |
 ### Retrieving
 #### Retrieving all notes from a specified patient
-**GET** `/api/accounts/patients/{id}/notes`
-
-##### Returns:
-List of notes in JSON format:
-```json
-{
-	"note": "String: The message of the note",
-	"created_at": "Date: YYYY-MM-DD"
-}
-```
-
+|---------------|-------------------------------------|
+| **Type**      | GET                                 |
+| **Path**      | `/api/accounts/patients/{id}/notes` |
+| **Variables** | id: Integer                         |
+| **Body**      | -                                   |
+| **Return**    | List of JSON Notes                  |
 ### Updating
 _To be added_
 ### Deleting
 _To be added_
 ## Dosages
-### Creating
-_To be documented_
-### Retrieving
-#### Retrieving all dosages from a patient in an inverval
-**GET** `/api/account/patients/{id}/dosages`
-
-You also need to query the interval with the variables:
-* `from=YYYY-MM-DD`
-* `until=YYYY-MM-DD`
-
-##### Returns
-List of dosages in JSON format:
+### JSON
 ```json
 {
 	"date": "Date: YYYY-MM-DD",
@@ -76,33 +65,49 @@ List of dosages in JSON format:
 	"taken": "Boolean"
 }
 ```
+### Creating
+|---------------|---------------------------------------|
+| **Type**      | PUT                                   |
+| **Path**      | `/api/accounts/patients/{id}/dosages` |
+| **Variables** | id: Integer                           |
+| **Body**      | JSON Dosage                           |
+| **Return**    | -                                     |
+### Retrieving
+#### Retrieving all dosages from a patient in an inverval
+|---------------|---------------------------------------|
+| **Type**      | GET                                   |
+| **Path**      | `/api/accounts/patients/{id}/dosages` |
+| **Variables** | id: Integer                           |
+|               | ?from: YYYY-MM-DD                     |
+|               | ?until: YYYY-MM-DD                    |
+| **Body**      | -                                     |
+| **Return**    | List of JSON Dosages                  |
 ### Updating
 _To be added_
 ### Deleting
 _To be added_
 ## Videos
+### JSON
+```json
+{
+	"topic": "String",
+	"title": "String",
+	"reference": "String: url"
+}
+```
 ### Creating
 #### Adding a new video
-**PUT** `/api/general/videos`
-
-Include the video (in JSON) in the body of the request:
-```json
-{
-	"topic": "String",
-	"title": "String",
-	"reference": "String: url"
-}
-```
+|---------------|-----------------------|
+| **Type**      | PUT                   |
+| **Path**      | `/api/general/videos` |
+| **Variables** | -                     |
+| **Body**      | JSON Video            |
+| **Return**    | -                     |
 ### Retrieving
 #### Retrieving all videos with a certain topic
-**GET** `/api/general/videos/{topic}
-
-##### Returns:
-List of videos in JSON format:
-```json
-{
-	"topic": "String",
-	"title": "String",
-	"reference": "String: url"
-}
-```
+|---------------|-------------------------------|
+| **Type**      | GET                           |
+| **Path**      | `/api/general/videos/{topic}` |
+| **Variables** | topic: String                 |
+| **Body**      | -                             |
+| **Return**    | List of JSON Videos           |
