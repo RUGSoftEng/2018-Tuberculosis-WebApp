@@ -38,7 +38,8 @@ func main() {
 	get_router := router.Methods("GET").Subrouter()
 	get_router.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(getDosages))
 	get_router.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(getNotes))
-
+	get_router.Handle("/api/general/videos/{topic}", handlerWrapper(getVideoByTopic))
+	
 	// POST Requests for Updating
 	post_router := router.Methods("POST").Subrouter()
 	post_router.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(modifyPatient))
@@ -50,7 +51,8 @@ func main() {
 	put_router.Handle("/api/accounts/physicians", handlerWrapper(pushPhysician))
 	put_router.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(pushDosages))
 	put_router.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(addNote))
-
+	put_router.Handle("/api/general/videos", handlerWrapper(addVideo))
+	
 	// DELETE Requests for Deleting
 	delete_router := router.Methods("DELETE").Subrouter()
 	delete_router.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(deletePatient))	
@@ -517,6 +519,66 @@ func pushDosages(r *http.Request, responseChan chan []byte, errorChan chan error
   errorChan <- tx.Commit()
 }
 
+
+func getVideoByTopic(r *http.Request, responseChan chan []byte, errorChan chan error) {
+	vars := mux.Vars(r)
+	topic := vars["topic"]
+
+	rows, err := db.Query(`SELECT topic, title, reference FROM Videos WHERE topic = ?`, topic)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error when querying the database")
+		return
+	}
+
+	videos := []Video{}
+	for rows.Next() {
+		var topic, title, reference string
+		err = rows.Scan(&topic, &title, &reference)
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
+			return
+		}
+		videos = append(videos, Video{topic, title, reference})
+	}
+	if err = rows.Err(); err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
+		return
+	}
+
+	json_values, err := json.Marshal(videos)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error when converting to JSON")
+		return
+	}
+	responseChan <- json_values
+	errorChan <- nil
+	return
+}
+
+func addVideo(r *http.Request, responseChan chan []byte, errorChan chan error) {
+	video := Video{}
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&video)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error during JSON decoding")
+		return
+	}
+	
+	trans, err := db.Begin()
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Failed to start new transaction")
+		return
+	}
+	_, err = trans.Exec(`INSERT INTO Videos (topic, title, reference) VALUES (?, ?, ?)`,
+		video.Topic, video.Title, video.Reference)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Failed to insert video into the database")
+		return
+	}
+
+	errorChan <- trans.Commit()
+	return
+}
 
 // placeHolderFunction
 func HashPassword(password string) (string, error) {

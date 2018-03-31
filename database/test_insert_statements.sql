@@ -80,3 +80,21 @@ insert into Notes(patient_Id, question, day) values(
 insert into Notes(patient_Id, question, day) values(
        2, "A NOTE", "2018-02-20"
 );
+
+insert into Videos(topic, title, reference) values(
+       "GoTutorials",
+       "Golang REST API With Mux",
+       "https://www.youtube.com/watch?v=SonwZ6MF5BE"
+);
+
+insert into Videos(topic, title, reference) values(
+       "GoTutorials",
+       "Introduction - Go Lang Practical Programming Tutorial p.1",
+       "https://www.youtube.com/watch?v=G3PvTWRIhZA"
+);
+
+insert into Videos(topic, title, reference) values(
+       "Linux",
+       "The Complete Linux Course: Beginner to Power User",
+       "https://www.youtube.com/watch?v=wBp0Rb-ZJak"
+);
