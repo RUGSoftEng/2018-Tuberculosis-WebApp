@@ -125,62 +125,50 @@ func exampleHandler(r *http.Request, responseChan chan []byte, errorChan chan er
 
 // expects a json file containing the new patient and a url encoded physician token
 func pushPatient(r *http.Request, responseChan chan []byte, errorChan chan error){
-	physicianId := 0
-	physicianToken := r.URL.Query().Get("physician_token")
-
-	// In general this will check the api_token
-	err := db.QueryRow(`	SELECT id 
-								FROM Physicians  
-								WHERE token = ?`,
-								physicianToken).Scan(physicianId)
-	if err != nil{
-		if err == sql.ErrNoRows {
-			log.Printf("Physician not found")
-			return
-		}
-		errorChan <- errors.Wrap(err, "Encountered database problem")
-		return
-	}
-
-	patient := Patient{}
-	dec := json.NewDecoder(r.Body)
-	err = dec.Decode(patient)
-	if err  != nil {
-		errorChan <- err
-		return
-	}
-
-	patient.Password, err = HashPassword(patient.Password)
-	if err != nil{
-		errorChan <- errors.Wrap(err, "Hashing failed")
-		return
-	}
-
-	// If you are going to do multiple (on each other depending) execs it is better to first start a transaction.
-	// This insure that if one of them fail the others won't be done
-	// Ill add a example here
-	// Also don't forget to check errors.
-	tx, err := db.Begin()
-	if err != nil {
-		errorChan <- errors.Wrap(err, "failed to start transaction")
-		return
-	}
-	result, err := tx.Exec(`INSERT  INTO Accounts (name, username, pass_hash) VALUES(?, ?, ?)`, patient.Name, patient.Username, patient.Password) // name is reserved keyword
-	if err != nil {
-		errorChan <- err
-		tx.Rollback()
-		return
-	}
-	id, err := result.LastInsertId() //this gets the id that would be created for above insert
-	_, err = tx.Exec(`INSERT INTO Patients (id, physician_id) VALUES(?, ?)`,  id, physicianId) //physician is not necessery here, however, it is a be easier to read
-	if err != nil {
-		errorChan <- err
-		tx.Rollback()
-		return
-	}
-
-	errorChan <- tx.Commit()//actually commits the changes to the database
-}
+  patient := Patient{}
+  dec := json.NewDecoder(r.Body)
+  err := dec.Decode(&patient)
+  if err != nil{
+    errorChan <- errors.Wrap(err, "Failed to decode incoming JSON")
+    return
+  }
+  patient.Password, err = HashPassword(patient.Password)
+  if err != nil{
+    errorChan <- errors.Wrap(err, "Failed to hash password")
+    return
+  }
+  tx, err := db.Begin()
+  if err != nil{
+    errorChan <- errors.Wrap(err, "Failed to start transaction")
+    return
+  }
+  role := "patient"
+  result, err := tx.Exec(`INSERT INTO Accounts (name, username, pass_hash, role)
+                                VALUES(?, ?, ?, ?)`, patient.Name, patient.Username, patient.Password, role)
+  if err != nil{
+    errorChan <- err
+    tx.Rollback()
+    return
+  }
+  id, err := result.LastInsertId()
+  creation_token := r.URL.Query().Get("token")
+  log.Println(creation_token)
+  var physician_id int
+  err = tx.QueryRow(`SELECT id FROM Physicians WHERE token=?`, creation_token).Scan(&physician_id)
+  if err != nil{
+    errorChan <- err
+    tx.Rollback()
+    return
+  }
+  log.Println(physician_id)
+  _, err = tx.Exec(`INSERT INTO Patients VALUES(?,?)`, id, physician_id)
+  if err != nil{
+    errorChan <- err
+    tx.Rollback()
+    return
+  }
+  errorChan <- tx.Commit()
+ }
 
 func pushPhysician(r *http.Request, responseChan chan []byte, errorChan chan error){
   physician := Physician{}
@@ -222,13 +210,26 @@ func pushPhysician(r *http.Request, responseChan chan []byte, errorChan chan err
 }
 
 func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan error){
-  Id := r.URL.Query().Get("id")
+  vars := mux.Vars(r)
+  Id := vars["id"]
   tx, err := db.Begin()
   if err != nil {
 	  errorChan <- errors.Wrap(err, "failed to start transaction")
 	  return
 	}
-	_ , err = tx.Exec(`DELETE FROM Patients WHERE id=?`,Id )
+  _ , err = tx.Exec(`DELETE FROM Notes WHERE patient_Id=?`,Id )
+  if err != nil{
+    errorChan <- err
+    tx.Rollback()
+    return
+  }
+  _ , err = tx.Exec(`DELETE FROM Dosages WHERE patient_id=?`,Id )
+  if err != nil{
+    errorChan <- err
+    tx.Rollback()
+    return
+  }
+  _ , err = tx.Exec(`DELETE FROM Patients WHERE id=?`,Id )
 	if err != nil{
 		errorChan <- err
 		tx.Rollback()
@@ -245,19 +246,21 @@ func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan err
 }
 
 func deletePhysician(r *http.Request, responseChan chan []byte, errorChan chan error){
-  Id := r.URL.Query().Get("id")
+  vars := mux.Vars(r)
+  Id := vars["id"]
+  log.Println(Id)
   tx, err := db.Begin()
   if err != nil{
     errorChan <- errors.Wrap(err, "Failed to start transaction")
     return
   }
-  _, err = tx.Exec(`DELETE FROM physician  WHERE id=?`, Id)
+  _, err = tx.Exec(`DELETE FROM Physicians  WHERE id=?`, Id)
   if err != nil{
     errorChan <- err
     tx.Rollback()
     return
   }
-  _, err = tx.Exec(`DELETE FROM account WHERE id=?`, Id)
+  _, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, Id)
   if err != nil{
     errorChan <- err
     tx.Rollback()
@@ -268,6 +271,8 @@ func deletePhysician(r *http.Request, responseChan chan []byte, errorChan chan e
 }
 
 func modifyPatient(r *http.Request, responseChan chan []byte, errorChan chan error){
+  vars := mux.Vars(r)
+  id := vars["id"]
 	patient := Patient{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&patient)
@@ -291,7 +296,7 @@ func modifyPatient(r *http.Request, responseChan chan []byte, errorChan chan err
 	tx.Exec(`UPDATE Accounts SET 
                  name = ?,
                  pass_hash = ?
-                 WHERE username = ?`, patient.Name, patient.Username, patient.Username)
+                 WHERE id = ?`, patient.Name, patient.Password, id)
 	if err != nil{
 		errorChan <- err
 		tx.Rollback()
@@ -303,6 +308,8 @@ func modifyPatient(r *http.Request, responseChan chan []byte, errorChan chan err
 }
 
 func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan error){
+  vars := mux.Vars(r)
+  id := vars["id"]
 	physician := Physician{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&physician)
@@ -319,16 +326,6 @@ func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan e
 	if err != nil {
 		errorChan <- errors.Wrap(err, "failed to start transaction")
 		return
-	}
-	var id int
-	err = db.QueryRow("SELECT id FROM Accounts WHERE username=?", physician.Username).Scan(&id)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			errorChan <- errors.Wrap(err, "No matched rows")
-		} else {
-		errorChan <- errors.Wrap(err, "Database failure")
-		return
-  	}
 	}
 	_, err = tx.Exec(`UPDATE Accounts SET
                           name = ?,
