@@ -66,3 +66,5 @@
 - Working version of automated vagrant setup + api connection
 - Adding / Retrieving Videos
 - Adding / Retrieving Videos
+- New reloading database while vagrant VM is running
+- New reloading database while vagrant VM is running
