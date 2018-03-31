@@ -61,4 +61,10 @@ mysql -u root --password=root <<< 'create database TestDB' \
 # Command for automatically starting the API
 echo "alias start_api='echo -e \"root\nTestDB\n192.168.50.4:2002\" | go run $PROJROOT/API/main.go $PROJROOT/API/structs.go'" >> /home/vagrant/.bashrc
 
+# Command for completely reloading the Database
+echo "alias reload_db='mysql -u root --password=root <<< \"drop database TestDB\" \\
+    && mysql -u root --password=root <<< \"create database TestDB\" \\
+    && mysql -u root --password=root TestDB < $PROJROOT/database/DDL_statements.sql \\
+    && mysql -u root --password=root TestDB < $PROJROOT/database/test_insert_statements.sql'" >> /home/vagrant/.bashrc
+
 echo -e '------------------\n| Finished Setup |\n------------------'
