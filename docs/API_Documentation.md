@@ -67,6 +67,7 @@ _To be added_
 }
 ```
 ### Creating
+#### Adding a new dosage for a specified patient
 | **Type**      | PUT                                   |
 |---------------|---------------------------------------|
 | **Path**      | `/api/accounts/patients/{id}/dosages` |
