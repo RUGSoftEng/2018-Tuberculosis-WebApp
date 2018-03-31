@@ -1,5 +1,11 @@
 # 2018-Tuberculosis
 
+* [Vagrant](#vagrant)
+* [API](#api)
+* [Database](#database)
+---
+
+
 ## Vagrant
 Waring: 
 * Some commands may only availible for bash and not for the 'amazing ;)' command prompt from Windows. It might be better to use 'PowerShell' instead.
@@ -39,3 +45,8 @@ For a more complete introduction go to the Vagrant [introduction](https://www.va
 Starting the API is currently done by ssh-ing to the VM and run `start_api` in the shell. The API will be started and listening on location (ip:port) `192.168.50.4:2002`.
 
 Note that the API is definitely not fully finished, so don't expect the smoothest behaviour. Please make an Issue or something if you want to report an error.
+
+## Database
+The database TestDB automatically gets created when the Vagrant VM setup is ran. To avoid having to rerun the complete setup every time the database needs to be reset, it is possible to reset the database manually:
+
+In the VM run `reload_db`. This essentially destroys the current database, recreates a new one and runs all the DDL and Insert statements.
