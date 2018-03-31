@@ -36,16 +36,17 @@ _To be documented_
 ```
 ### Creating
 #### Adding a note for a specified patient
-|---------------|-------------------------------------|
+
 | **Type**      | PUT                                 |
+|---------------|-------------------------------------|
 | **Path**      | `/api/accounts/patients/{id}/notes` |
 | **Variables** | id: Integer                         |
 | **Body**      | JSON: Note                          |
 | **Return**    | -                                   |
 ### Retrieving
 #### Retrieving all notes from a specified patient
-|---------------|-------------------------------------|
 | **Type**      | GET                                 |
+|---------------|-------------------------------------|
 | **Path**      | `/api/accounts/patients/{id}/notes` |
 | **Variables** | id: Integer                         |
 | **Body**      | -                                   |
@@ -66,16 +67,16 @@ _To be added_
 }
 ```
 ### Creating
-|---------------|---------------------------------------|
 | **Type**      | PUT                                   |
+|---------------|---------------------------------------|
 | **Path**      | `/api/accounts/patients/{id}/dosages` |
 | **Variables** | id: Integer                           |
 | **Body**      | JSON Dosage                           |
 | **Return**    | -                                     |
 ### Retrieving
 #### Retrieving all dosages from a patient in an inverval
-|---------------|---------------------------------------|
 | **Type**      | GET                                   |
+|---------------|---------------------------------------|
 | **Path**      | `/api/accounts/patients/{id}/dosages` |
 | **Variables** | id: Integer                           |
 |               | ?from: YYYY-MM-DD                     |
@@ -97,16 +98,16 @@ _To be added_
 ```
 ### Creating
 #### Adding a new video
-|---------------|-----------------------|
 | **Type**      | PUT                   |
+|---------------|-----------------------|
 | **Path**      | `/api/general/videos` |
 | **Variables** | -                     |
 | **Body**      | JSON Video            |
 | **Return**    | -                     |
 ### Retrieving
 #### Retrieving all videos with a certain topic
-|---------------|-------------------------------|
 | **Type**      | GET                           |
+|---------------|-------------------------------|
 | **Path**      | `/api/general/videos/{topic}` |
 | **Variables** | topic: String                 |
 | **Body**      | -                             |
