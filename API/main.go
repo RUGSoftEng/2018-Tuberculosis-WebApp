@@ -579,7 +579,8 @@ func addVideo(r *http.Request, responseChan chan []byte, errorChan chan error) {
 
 // placeHolderFunction
 func HashPassword(password string) (string, error) {
-	return password, nil
+  bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+  return string(bytes), err
 }
 
 // See slack message
