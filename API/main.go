@@ -38,7 +38,8 @@ func main() {
 	get_router := router.Methods("GET").Subrouter()
 	get_router.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(getDosages))
 	get_router.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(getNotes))
-
+	get_router.Handle("/api/general/videos/{topic}", handlerWrapper(getVideoByTopic))
+	
 	// POST Requests for Updating
 	post_router := router.Methods("POST").Subrouter()
 	post_router.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(modifyPatient))
@@ -517,6 +518,41 @@ func pushDosages(r *http.Request, responseChan chan []byte, errorChan chan error
   errorChan <- tx.Commit()
 }
 
+
+func getVideoByTopic(r *http.Request, responseChan chan []byte, errorChan chan error) {
+	vars := mux.Vars()
+	topic := vars["topic"]
+
+	rows, err := db.Query(`SELECT topic, reference FROM Videos WHERE topic = ?`, topic)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error when querying the database")
+		return
+	}
+
+	videos := []Video{}
+	for rows.Next() {
+		var topic, name, reference string
+		err = rows.Scan(&topic, &name, &reference)
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
+			return
+		}
+		videos = append(videos, Video{topic, title, reference})
+	}
+	if err = rows.Err(); err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
+		return
+	}
+
+	json_values, err := json.Marshal(videos)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error when converting to JSON")
+		return
+	}
+	responseChan <- json_values
+	errorChan <- nil
+	return	
+}
 
 // placeHolderFunction
 func HashPassword(password string) (string, error) {
