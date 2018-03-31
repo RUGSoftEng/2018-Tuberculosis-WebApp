@@ -10,7 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"encoding/json"
 	_ "github.com/go-sql-driver/mysql" // anonymous import
-  //"go/token"
+  "github.com/dgrijalva/jwt-go"
 	"fmt"
 )
 
@@ -44,6 +44,7 @@ func main() {
 	post_router := router.Methods("POST").Subrouter()
 	post_router.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(modifyPatient))
 	post_router.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(modifyPhysician))
+	post_router.Handle("/api/accounts/login", handlerWrapper(login))
 
 	// PUT Requests for Creating
 	put_router := router.Methods("PUT").Subrouter()
@@ -588,4 +589,47 @@ func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	// it's better to return the error here. otherwise you know there was a error, but you don't have the error message
 	return err == nil
+}
+
+//This function validates a password against a specific user, and issues a JWT Token
+
+func login(r *http.Request, responseChan chan []byte, errorChan chan error){
+  cred := UserValidation{}
+  err := json.NewDecoder(r.Body).Decode(&cred)
+  if err != nil {
+    errorChan <- errors.Wrap(err, "Failed to decode user credentials")
+    return
+  }
+  var password string
+  tx, err := db.Begin()
+  if err != nil {
+    errorChan <- errors.Wrap(err, "Failed to start new transaction")
+    return
+  }
+  err = tx.QueryRow(`SELECT pass_hash FROM Accounts WHERE username=?`, cred.Username).Scan(password)
+  if err != nil {
+    errorChan <- errors.Wrap(err, "Database failure")
+    return
+  }
+  cred.Password, err = HashPassword(cred.Password)
+  if err != nil {
+    errorChan <- errors.Wrap(err, "Failed to hash the password")
+    return
+  }
+  if(cred.Password != password){
+    log.Println("Mismatching credentials")
+    return
+  }
+  token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+                 "username": cred.Username,
+                 "password": cred.Password,})
+  tokenString, error := token.SignedString([]byte("secret"))
+  if error != nil {
+    errorChan <- errors.Wrap(err, "Failed to generate JWT token")
+  }
+  jsonToSend,err := json.Marshal(JWToken{Token:tokenString})
+  if error != nil {
+    errorChan <- errors.Wrap(err, "Failed to encode token")
+  }
+  responseChan <- jsonToSend
 }
