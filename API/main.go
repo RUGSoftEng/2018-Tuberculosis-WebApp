@@ -21,10 +21,10 @@ var (
 
 func main() {
 	var err error
-	rootpasswd, dbname, listen_location := "pass", "database", "localhost:8080" // just some values
-	fmt.Scanf("%s", &rootpasswd)
-	fmt.Scanf("%s", &dbname)
-	fmt.Scanf("%s", &listen_location)
+	rootpasswd, dbname, listen_location := "minomino", "TestDB", "localhost:8080" // just some values
+//	fmt.Scanf("%s", &rootpasswd)
+//	fmt.Scanf("%s", &dbname)
+//	fmt.Scanf("%s", &listen_location)
 	db, err = sql.Open("mysql", "root:" + rootpasswd + "@/" + dbname)
 
 	if err != nil {
@@ -46,6 +46,7 @@ func main() {
 	post_router.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(modifyPatient))
 	post_router.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(modifyPhysician))
   post_router.Handle("/api/accounts/login", handlerWrapper(login))
+	post_router.Handle("/api/accounts/authenticate", handlerWrapper(authenticate))
 
 	// PUT Requests for Creating
 	put_router := router.Methods("PUT").Subrouter()
@@ -75,7 +76,6 @@ func handlerWrapper(handler func(r *http.Request, responseChan chan []byte, erro
 
 		select {
 		case body := <- responseChan:
-			log.Println("We here?")
 			w.Header().Set("Content-Type", "application/json")
 			w.Write(body)
 		case err := <- errorChan:
@@ -642,16 +642,20 @@ func parseToken(in JWToken, errorChan chan error, responseChan chan []byte){
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		var user UserValidation
 		mapstructure.Decode(claims, &user)
-		ret, err := json.Marshal(UserValidation{user.Username, user.Password})
+		var pwd string
+		err := db.QueryRow(`SELECT pass_hash FROM Accounts WHERE username=?`, user.Username).Scan(&pwd)
 		if err != nil{
-			errorChan <- errors.Wrap(err, "Error while encoding")
+			errorChan <- errors.Wrap(err, "Database failure")
 			return
 		}
-		responseChan <- ret
-		errorChan <- nil
+		if !CheckPasswordHash(user.Password, pwd){
+			responseChan <- []byte("Invalid token")
+		}else{
+			responseChan <- []byte("You're authenticated")
+		}
 		return
 	} else {
-		log.Println("Invalid token")
+		responseChan <- []byte("Invalid token")
 	}
 }
 

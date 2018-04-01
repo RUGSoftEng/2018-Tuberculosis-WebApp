@@ -43,5 +43,5 @@ type UserValidation struct{
 }
 
 type JWToken struct{
-  Token string `json:"message"`
+  Token string `json:"token"`
 }
