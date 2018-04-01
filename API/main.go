@@ -481,39 +481,40 @@ func addNote(r *http.Request, responseChan chan []byte, errorChan chan error) {
 }
 
 func pushDosages(r *http.Request, responseChan chan []byte, errorChan chan error) {
-  patient_id := r.URL.Query().Get("patient_id")
-  dosage := Dosage{}
-  var medicine_id int
-  dec := json.NewDecoder(r.Body)
-  err := dec.Decode(&dosage)
-  if err != nil {
-    errorChan <- errors.Wrap(err, "Failed to decode JSON")
-    return
-  }
-  tx, err := db.Begin()
-  if err != nil {
-    errorChan <- errors.Wrap(err, "failed to start transaction")
-    return
-  }
-  err = tx.QueryRow(`SELECT id FROM Medicines WHERE med_name = ?`, dosage.Medicine).Scan(&medicine_id)
-  if err != nil{
-    if err == sql.ErrNoRows{
-      errorChan <- errors.Wrap(err, "Unknown medicine")
-    } else{
-      errorChan <- errors.Wrap(err, "Failed to execute query")
-    }
-    tx.Rollback()
-    return
-  }
-  _, err = tx.Exec(`INSERT INTO Dosages (amount, patient_id, medicine_id, day, intake_time) VALUES (?, ?, ?, ?, ?)`,
-                                              dosage.NumberOfPills, patient_id, medicine_id, dosage.Day, dosage.IntakeMoment)
-  if err != nil{
-    errorChan <- err
-    tx.Rollback()
-    return
-  }
-
-  errorChan <- tx.Commit()
+	vars := mux.Vars(r)
+	patient_id := vars["id"]
+	dosage := Dosage{}
+	var medicine_id int
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&dosage)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Failed to decode JSON")
+		return
+	}
+	tx, err := db.Begin()
+	if err != nil {
+		errorChan <- errors.Wrap(err, "failed to start transaction")
+		return
+	}
+	err = tx.QueryRow(`SELECT id FROM Medicines WHERE med_name = ?`, dosage.Medicine).Scan(&medicine_id)
+	if err != nil{
+		if err == sql.ErrNoRows{
+			errorChan <- errors.Wrap(err, "Unknown medicine")
+		} else{
+			errorChan <- errors.Wrap(err, "Failed to execute query")
+		}
+		tx.Rollback()
+		return
+	}
+	_, err = tx.Exec(`INSERT INTO Dosages (amount, patient_id, medicine_id, day, intake_time) VALUES (?, ?, ?, ?, ?)`,
+		dosage.NumberOfPills, patient_id, medicine_id, dosage.Day, dosage.IntakeMoment)
+	if err != nil{
+		errorChan <- err
+		tx.Rollback()
+		return
+	}
+	
+	errorChan <- tx.Commit()
 }
 
 
