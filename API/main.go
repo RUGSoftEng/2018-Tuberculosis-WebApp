@@ -606,30 +606,30 @@ func login(r *http.Request, responseChan chan []byte, errorChan chan error){
     errorChan <- errors.Wrap(err, "Failed to start new transaction")
     return
   }
-  err = tx.QueryRow(`SELECT pass_hash FROM Accounts WHERE username=?`, cred.Username).Scan(password)
+  err = tx.QueryRow(`SELECT pass_hash FROM Accounts WHERE username=?`, cred.Username).Scan(&password)
   if err != nil {
     errorChan <- errors.Wrap(err, "Database failure")
     return
   }
-  cred.Password, err = HashPassword(cred.Password)
-  if err != nil {
-    errorChan <- errors.Wrap(err, "Failed to hash the password")
-    return
-  }
-  if(cred.Password != password){
+  if !CheckPasswordHash(cred.Password, password){
     log.Println("Mismatching credentials")
     return
   }
   token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
                  "username": cred.Username,
                  "password": cred.Password,})
-  tokenString, error := token.SignedString([]byte("secret"))
-  if error != nil {
+  tokenString, err := token.SignedString([]byte("secret"))
+  if err != nil {
     errorChan <- errors.Wrap(err, "Failed to generate JWT token")
+    return
   }
   jsonToSend,err := json.Marshal(JWToken{Token:tokenString})
-  if error != nil {
+  if err != nil {
     errorChan <- errors.Wrap(err, "Failed to encode token")
+    return
   }
   responseChan <- jsonToSend
+	log.Println("We're good")
+  errorChan <- nil
+  return
 }
