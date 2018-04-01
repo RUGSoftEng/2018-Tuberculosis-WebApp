@@ -96,11 +96,11 @@ func exampleHandler(r *http.Request, responseChan chan []byte, errorChan chan er
 
 	// This is a join example for a patient call, change to physician it is a call only a physician can make
 	// remove join part if it is a call able for both
-	err := db.QueryRow(`	SELECT id 
-								FROM Patients AS pa 
-									INNER JOIN Accounts AS acc 
-									ON pa.id = acc.id  
-								WHERE acc.api_token = ?`,
+	err := db.QueryRow(`SELECT id
+			   FROM Patients AS pa 
+			   INNER JOIN Accounts AS acc 
+			   ON pa.id = acc.id  
+			   WHERE acc.api_token = ?`,
 		apiToken).Scan(ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -146,7 +146,7 @@ func pushPatient(r *http.Request, responseChan chan []byte, errorChan chan error
   }
   role := "patient"
   result, err := tx.Exec(`INSERT INTO Accounts (name, username, pass_hash, role)
-                                VALUES(?, ?, ?, ?)`, patient.Name, patient.Username, patient.Password, role)
+                         VALUES(?, ?, ?, ?)`, patient.Name, patient.Username, patient.Password, role)
   if err != nil{
     errorChan <- err
     tx.Rollback()
@@ -192,7 +192,7 @@ func pushPhysician(r *http.Request, responseChan chan []byte, errorChan chan err
   }
   role := "physician"
   result, err := tx.Exec(`INSERT INTO Accounts (name, username, pass_hash, role)
-                                VALUES(?, ?, ?, ?)`, physician.Name, physician.Username, physician.Password, role)
+                         VALUES(?, ?, ?, ?)`, physician.Name, physician.Username, physician.Password, role)
   if err != nil{
     errorChan <- err
     tx.Rollback()
@@ -219,7 +219,7 @@ func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan err
 	  errorChan <- errors.Wrap(err, "failed to start transaction")
 	  return
 	}
-  _ , err = tx.Exec(`DELETE FROM Notes WHERE patient_Id=?`,Id )
+  _ , err = tx.Exec(`DELETE FROM Notes WHERE patient_id=?`,Id )
   if err != nil{
     errorChan <- err
     tx.Rollback()
@@ -419,7 +419,7 @@ func getNotes(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	vars := mux.Vars(r)
 	patient_id := vars["id"]
 	
-	rows, err := db.Query(`SELECT question, day FROM Notes WHERE patient_Id = ?`, patient_id)
+	rows, err := db.Query(`SELECT question, day FROM Notes WHERE patient_id = ?`, patient_id)
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error during query")
 		return
