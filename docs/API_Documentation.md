@@ -105,13 +105,29 @@ _To be added_
 
 ## Dosages
 ### JSON
+
+**ScheduledDosage**
 ```json
 {
+	"dosage": "JSON Dosage",
 	"date": "Date: YYYY-MM-DD",
+	"taken": "Boolean"
+}
+```
+
+**Dosage**
+```json
+{
 	"intake_moment": "Time: HH-MM-SS",
 	"amount": "Integer",
-	"medicine": "String: Name of the medicine which needs to be taken",
-	"taken": "Boolean"
+	"medicine": "JSON Medicine"	
+}
+```
+
+**Medicine**
+```json
+{
+	"name": "String"
 }
 ```
 ### Creating
@@ -123,7 +139,7 @@ _To be added_
 | **Body**      | JSON Dosage                           |
 | **Return**    | -                                     |
 ### Retrieving
-#### Retrieving all dosages from a patient in an inverval
+#### Retrieving all scheduled dosages from a patient in an inverval
 | **Type**      | GET                                   |
 |---------------|---------------------------------------|
 | **Path**      | `/api/accounts/patients/{id}/dosages` |
