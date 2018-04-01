@@ -12,6 +12,7 @@ import (
 	_ "github.com/go-sql-driver/mysql" // anonymous import
   "github.com/dgrijalva/jwt-go"
 	"fmt"
+	"github.com/mitchellh/mapstructure"
 )
 
 var (
@@ -628,4 +629,44 @@ func login(r *http.Request, responseChan chan []byte, errorChan chan error){
   responseChan <- jsonToSend
   errorChan <- nil
   return
+}
+
+func parseToken(in JWToken, errorChan chan error, responseChan chan []byte){
+	content := in.Token
+	token, _ := jwt.Parse(content, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("There was an error")
+		}
+		return []byte("secret"), nil
+	})
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		var user UserValidation
+		mapstructure.Decode(claims, &user)
+		ret, err := json.Marshal(UserValidation{user.Username, user.Password})
+		if err != nil{
+			errorChan <- errors.Wrap(err, "Error while encoding")
+			return
+		}
+		responseChan <- ret
+		errorChan <- nil
+		return
+	} else {
+		log.Println("Invalid token")
+	}
+}
+
+
+// Token authentication will probably be embedded in all the request that are give access
+// to restricted contents, this functions is only for test purposes, but it uses the
+// tokenParse() function that will do the core of the work
+
+func authenticate(r *http.Request, responseChan chan []byte, errorChan chan error){
+	pass := JWToken{}
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&pass)
+	if err != nil{
+		errorChan <- errors.Wrap(err, "Error while decoding")
+	}
+	parseToken(pass, errorChan, responseChan)
+	return
 }
