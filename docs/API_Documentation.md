@@ -10,20 +10,60 @@
 
 ## Physicians
 ### Creating
-_To be documented_
+#### Creating a new physician account
+
+| **Type**      | PUT                                 |
+|---------------|-------------------------------------|
+| **Path**      | `/api/accounts/physicians`          |
+| **Variables** | -                                   |
+| **Body**      | JSON: Physician                     |
+| **Return**    | -                                   |
+
 ### Retrieving
 _To be added_
 ### Updating
-_To be documented_
+#### Modifying an existing physician account
+
+| **Type**      | POST                                |
+|---------------|-------------------------------------|
+| **Path**      | `/api/accounts/physicians/{id}`     |
+| **Variables** | id: Integer                         |
+| **Body**      | JSON: Physician                     |
+| **Return**    | -                                   |
+
 ### Deleting
-_To be documented_
+#### Deleting a physician account
+
+| **Type**      | DELETE                              |
+|---------------|-------------------------------------|
+| **Path**      | `/api/accounts/physicians/{id}`     |
+| **Variables** | id: Integer                         |
+| **Body**      | -                                   |
+| **Return**    | -                                   |
+
 ## Patients
 ### Creating
-_To be documented_
+#### Creating a new patient account
+
+| **Type**      | PUT                                 |
+|---------------|-------------------------------------|
+| **Path**      | `/api/accounts/patients  `          |
+| **Variables** | token: String                       |
+| **Body**      | JSON: Patient                       |
+| **Return**    | -                                   |
+
 ### Retrieving
 _To be added_
 ### Updating
-_To be documented_
+#### Modifying an exixting  patient account
+
+| **Type**      | POST                                |
+|---------------|-------------------------------------|
+| **Path**      | `/api/accounts/patients/{id}`       |
+| **Variables** | id: Integer                         |
+| **Body**      | JSON: Patient                       |
+| **Return**    | -                                   |
+
 ### Deleting
 _To be documented_
 ## Notes
@@ -54,7 +94,15 @@ _To be documented_
 ### Updating
 _To be added_
 ### Deleting
-_To be added_
+#### Deleting a patient account
+
+| **Type**      | DELETE                              |
+|---------------|-------------------------------------|
+| **Path**      | `/api/accounts/patients/{id}`       |
+| **Variables** | id: Integer                         |
+| **Body**      | -                                   |
+| **Return**    | -                                   |
+
 ## Dosages
 ### JSON
 ```json
