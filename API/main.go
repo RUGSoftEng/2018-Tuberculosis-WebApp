@@ -84,7 +84,7 @@ func handlerWrapper(handler func(r *http.Request, responseChan chan []byte, erro
 			}
 			w.WriteHeader(http.StatusAccepted)
 			http.Error(w, http.StatusText(http.StatusAccepted), http.StatusAccepted)
-		case <- time.After(1 * time.Millisecond):
+		case <- time.After(5 * time.Second):
 			log.Printf("Response timeout")
 		}
 		return
@@ -630,7 +630,6 @@ func login(r *http.Request, responseChan chan []byte, errorChan chan error){
     return
   }
   responseChan <- jsonToSend
-	log.Println("We're good")
   errorChan <- nil
   return
 }
