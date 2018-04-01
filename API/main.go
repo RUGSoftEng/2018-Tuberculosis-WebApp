@@ -49,7 +49,7 @@ func main() {
 	putRouter := router.Methods("PUT").Subrouter()
 	putRouter.Handle("/api/accounts/patients", handlerWrapper(pushPatient))
 	putRouter.Handle("/api/accounts/physicians", handlerWrapper(pushPhysician))
-	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(pushDosages))
+	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(pushDosage))
 	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(addNote))
 	putRouter.Handle("/api/general/videos", handlerWrapper(addVideo))
 
@@ -412,27 +412,35 @@ func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error)
 		return
 	}
 
-	rows, err := db.Query(`SELECT amount, med_name, day, intake_time 
-                               FROM Dosages JOIN Medicines 
-                               ON Dosages.medicine_id = Medicines.id
-                               WHERE patient_id = ? AND (day BETWEEN ? AND ?)
-                               `,
-		patientID, startDate.Format(dform), endDate.Format(dform)) //add AND day BETWEEN ? AND ?
+	rows, err := db.Query(`SELECT amount, med_name, day, intake_time, taken
+                               FROM ScheduledDosages as SD JOIN 
+                                 (SELECT Dosages.id, amount, intake_time 
+                                  FROM Dosages JOIN Medicines 
+                                     ON Dosages.medicine_id = Medicines.id
+                                  WHERE patient_id = ?) as DM
+                               ON SD.dosage = DM.id
+                               WHERE date BETWEEN ? AND ?`,
+		patientID, startDate.Format(dform), endDate.Format(dform))
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error during query")
 		return
 	}
 
-	dosages := []Dosage{}
+	dosages := []SchedulesDosage{}
 	for rows.Next() {
 		var amount int
 		var medicine, day, intakeTime string
-		err = rows.Scan(&amount, &medicine, &day, &intakeTime)
+		var taken bool
+		err = rows.Scan(&amount, &medicine, &day, &intakeTime, &bool)
 		if err != nil {
 			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
 			return
 		}
-		dosages = append(dosages, Dosage{day, intakeTime, amount, medicine, false}) //false for now
+		dosages = append(dosages, ScheduledDosage{
+			Dosage{intakeTime, amount, Medicine{medcine}}
+			day,
+			taken
+		})
 	}
 	if err = rows.Err(); err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
@@ -517,7 +525,7 @@ func addNote(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	return
 }
 
-func pushDosages(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func pushDosage(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	vars := mux.Vars(r)
 	patientID := vars["id"]
 	dosage := Dosage{}
@@ -533,7 +541,8 @@ func pushDosages(r *http.Request, responseChan chan []byte, errorChan chan error
 		errorChan <- errors.Wrap(err, "failed to start transaction")
 		return
 	}
-	err = tx.QueryRow(`SELECT id FROM Medicines WHERE med_name = ?`, dosage.Medicine).Scan(&medicineID)
+	err = tx.QueryRow(`SELECT id FROM Medicines WHERE med_name = ?`,
+		dosage.Medicine.Name).Scan(&medicineID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			errorChan <- errors.Wrap(err, "Unknown medicine")
@@ -543,8 +552,9 @@ func pushDosages(r *http.Request, responseChan chan []byte, errorChan chan error
 		tx.Rollback()
 		return
 	}
-	_, err = tx.Exec(`INSERT INTO Dosages (amount, patient_id, medicine_id, day, intake_time) VALUES (?, ?, ?, ?, ?)`,
-		dosage.NumberOfPills, patientID, medicineID, dosage.Day, dosage.IntakeMoment)
+	_, err = tx.Exec(`INSERT INTO Dosages (patient_id, medicine_id, amount, intake_time) 
+                          VALUES (?, ?, ?, ?, ?)`,
+		patientID, medicineID, dosage.NumberOfPills, dosage.IntakeMoment)
 	if err != nil {
 		errorChan <- err
 		tx.Rollback()

@@ -34,10 +34,21 @@ CREATE TABLE Medicines(
        med_name	VARCHAR(50) 	NOT NULL	
 );
 
+CREATE TABLE Dosages(
+       id		INT	NOT NULL PRIMARY KEY AUTO_INCREMENT,
+       patient_id	INT	NOT NULL,
+       medicine_id	INT	NOT NULL,
+       amount		TINYINT	NOT NULL,
+       intake_time	TIME	NOT NULL,
+       FOREIGN KEY (patient_id)     REFERENCES Patients(id),
+       FOREIGN KEY (medicine_id)    REFERENCES Medicines(id),
+);
+
 CREATE TABLE ScheduledDosages(
        dosage		INT	NOT NULL,
        day		DATE 	NOT NULL,
-       taken		BOOLEAN NOT NULL
+       taken		BOOLEAN NOT NULL,
+       PRIMARY KEY (dosage, day)
 );
 
 CREATE TABLE Videos(
@@ -52,12 +63,3 @@ CREATE TABLE FAQ(
        question	TEXT 	NOT NULL 
 );
 
-CREATE TABLE Dosages(
-       id		INT	NOT NULL PRIMARY KEY AUTO_INCREMENT,
-       patient_id	INT	NOT NULL,
-       medicine_id	INT	NOT NULL,
-       amount		TINYINT	NOT NULL,
-       intake_time	TIME	NOT NULL,
-       FOREIGN KEY (patient_id)     REFERENCES Patients(id),
-       FOREIGN KEY (medicine_id)    REFERENCES Medicines(id),
-);

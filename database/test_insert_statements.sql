@@ -37,35 +37,36 @@ insert into Medicines(med_name) values(
        "Normal pills"
 );
 
-insert into Dosages(amount, patient_id, medicine_id, day, intake_time) values(
-       12,
-       2,
-       1,
-       ADDDATE(CURDATE(), 30),
-       ADDTIME(CURTIME(), "00:10:00")
+insert into Dosages(patient_id, medicine_id, amount, intake_time) values (
+       2, 1, 12, ADDTIME(CURTIME(), "00:10:00")
 );
 
-insert into Dosages(amount, patient_id, medicine_id, day, intake_time) values(
-       3,
-       2,
-       2,
-       ADDDATE(CURDATE(), 10),
-       ADDTIME(CURTIME(), "01:09:00")
-);
-insert into Dosages(amount, patient_id, medicine_id, day, intake_time) values(
-       12,
-       2,
-       1,
-       ADDDATE(CURDATE(), 60),
-       ADDTIME(CURTIME(), "00:10:00")
+insert into Dosages(patient_id, medicine_id, amount, intake_time) values (
+       2, 2, 3, ADDTIME(CURTIME(), "01:09:00")
 );
 
-insert into Dosages(amount, patient_id, medicine_id, day, intake_time) values(
-       1,
-       2,
-       3,
-       ADDDATE(CURDATE(), 50),
-       ADDTIME(CURTIME(), "10:10:00")
+insert into Dosages(patient_id, medicine_id, amount, intake_time) values (
+       2, 3, 6, ADDTIME(CURTIME(), "10:10:00")
+);
+
+insert into ScheduledDosages(
+       1, ADDDATE(CURDATE(), 30)
+);
+
+insert into ScheduledDosages(
+       1, ADDDATE(CURDATE(), 60)
+);
+
+insert into ScheduledDosages(
+       2, ADDDATE(CURDATE(), 10),
+);
+
+insert into ScheduledDosages(
+       2, ADDDATE(CURDATE(), 20),
+);
+
+insert into ScheduledDosages(
+       3, ADDDATE(CURDATE(), 50)
 );
 
 insert into Notes(patient_Id, question, day) values(

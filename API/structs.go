@@ -1,12 +1,23 @@
 package main
 
-// Dosage : Descibes the dosage of a certain medicine for a certain day
+// ScheduledDosage : Describes an instance of a dosage for the schedule
+type ScheduledDosage struct {
+	Dosage Dosage `json:"dosage"`
+	Day    string `json:"date"`
+	Taken  bool   `json:"taken"`
+}
+
+// Dosage : Describes the time and number of pills is associated with a medicine
+// This can be different for different people
 type Dosage struct {
-	Day           string `json:"date"`
-	IntakeMoment  string `json:"intake_moment"`
-	NumberOfPills int    `json:"amount"`
-	Medicine      string `json:"medicine"`
-	Taken         bool   `json:"taken"`
+	IntakeMoment  string   `json:"intake_moment"`
+	NumberOfPills int      `json:"amount"`
+	Medicine      Medicine `json:"medicine"`
+}
+
+// Medicine : Data for a medicine
+type Medicine struct {
+	Name string `json:name`
 }
 
 // Note : A note from a patient for their physician
