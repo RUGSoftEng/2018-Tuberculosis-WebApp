@@ -25,26 +25,15 @@ echo 'Setting PATH Variables...'
 # Adding go binaries to PATH
 export PATH=$PATH:/usr/local/go/bin && echo 'SUCCESS'
 export GOPATH=/home/vagrant/go && echo 'SUCCESS'
+export PROJROOT=/vagrant
 
+# Reads lines from 'go_dependencies' file and installs them
 echo 'Installing Go Dependencies...'
-echo 'Downloading github.com/pkg/errors...'
-go get -u github.com/pkg/errors && echo 'SUCCESS'
-
-echo 'Downloading github.com/gorilla/mux...'
-go get -u github.com/gorilla/mux && echo 'SUCCESS'
-
-echo 'Downloading golang.org/x/crypto/bcrypt...'
-go get -u golang.org/x/crypto/bcrypt && echo 'SUCCESS'
-
-echo 'Downloading github.com/go-sql-driver/mysql...'
-go get -u github.com/go-sql-driver/mysql && echo 'SUCCESS'
-
-echo 'Downloading github.com/dgrijalva/jwt-go...'
-go get -u github.com/dgrijalva/jwt-go && echo 'SUCCESS'
-
-echo 'Downloading github.com/mitchellh/mapstructure...'
-go get -u github.com/mitchellh/mapstructure && echo 'SUCCESS'
-
+while IFS='' read -r line || [[ -n "$line" ]]; do
+    echo "Downloading $line..."
+    go get -u $line && echo "SUCCESS" || echo "FAILED"
+done < "$PROJROOT/go_dependencies"
+echo "DONE"
 
 echo 'Setting up paths for the vagrant ssh user'
 echo -e 'export PATH=$PATH:/usr/local/go/bin' >> /home/vagrant/.bashrc
@@ -52,11 +41,9 @@ echo -e 'export GOPATH=/home/vagrant/go' >> /home/vagrant/.bashrc
 echo -e 'export PROJROOT=/vagrant' >> /home/vagrant/.bashrc
 echo 'DONE'
 
-
-export PROJROOT=/vagrant
-
 echo 'Setting up Database...'
-mysql -u root --password=root <<< 'create database TestDB' \
+mysql -u root --password=root <<< 'drop database if exists TestDB' \
+    && mysql -u root --password=root <<< 'create database TestDB' \
     && mysql -u root --password=root TestDB < $PROJROOT/database/DDL_statements.sql \
     && mysql -u root --password=root TestDB < $PROJROOT/database/test_insert_statements.sql \
     && echo 'SUCCESS'
