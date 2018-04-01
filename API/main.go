@@ -12,8 +12,8 @@ import (
 	"time"
 	//"go/token"
 	"fmt"
-	"github.com/mitchellh/mapstructure"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/mitchellh/mapstructure"
 )
 
 var (
@@ -230,7 +230,7 @@ func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan err
 		return
 	}
 
-	// Retrieve all dosage identifiers 
+	// Retrieve all dosage identifiers
 	rows, err := tx.Query(`SELECT id FROM Dosages
                                WHERE patient_id = ?`, id)
 	if err != nil {
@@ -264,7 +264,7 @@ func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan err
 			return
 		}
 	}
-	
+
 	_, err = tx.Exec(`DELETE FROM Dosages WHERE patient_id=?`, id)
 	if err != nil {
 		errorChan <- err
@@ -643,7 +643,7 @@ func CheckPasswordHash(password, hash string) bool {
 
 //This function validates a password against a specific user, and issues a JWT Token
 
-func login(r *http.Request, responseChan chan []byte, errorChan chan error){
+func login(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	cred := UserValidation{}
 	err := json.NewDecoder(r.Body).Decode(&cred)
 	if err != nil {
@@ -656,19 +656,19 @@ func login(r *http.Request, responseChan chan []byte, errorChan chan error){
 		errorChan <- errors.Wrap(err, "Database failure")
 		return
 	}
-	if !CheckPasswordHash(cred.Password, password){
+	if !CheckPasswordHash(cred.Password, password) {
 		log.Println("Mismatching credentials")
 		return
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": cred.Username,
-		"password": cred.Password,})
+		"password": cred.Password})
 	tokenString, err := token.SignedString([]byte("secret"))
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Failed to generate JWT token")
 		return
 	}
-	jsonToSend,err := json.Marshal(JWToken{Token:tokenString})
+	jsonToSend, err := json.Marshal(JWToken{Token: tokenString})
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Failed to encode token")
 		return
@@ -678,7 +678,7 @@ func login(r *http.Request, responseChan chan []byte, errorChan chan error){
 	return
 }
 
-func parseToken(in JWToken, errorChan chan error, responseChan chan []byte){
+func parseToken(in JWToken, errorChan chan error, responseChan chan []byte) {
 	content := in.Token
 	token, _ := jwt.Parse(content, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -691,30 +691,29 @@ func parseToken(in JWToken, errorChan chan error, responseChan chan []byte){
 		mapstructure.Decode(claims, &user)
 		var pwd string
 		err := db.QueryRow(`SELECT pass_hash FROM Accounts WHERE username=?`, user.Username).Scan(&pwd)
-		if err != nil{
+		if err != nil {
 			errorChan <- errors.Wrap(err, "Database failure")
 			return
 		}
-		if !CheckPasswordHash(user.Password, pwd){
+		if !CheckPasswordHash(user.Password, pwd) {
 			responseChan <- []byte("Invalid token")
-		}else{
+		} else {
 			responseChan <- []byte("You're authenticated")
 		}
 		return
-	} else {
-		responseChan <- []byte("Invalid token")
 	}
+	responseChan <- []byte("Invalid token")
 }
 
 // Token authentication will probably be embedded in all the request that are give access
 // to restricted contents, this functions is only for test purposes, but it uses the
 // tokenParse() function that will do the core of the work
 
-func authenticate(r *http.Request, responseChan chan []byte, errorChan chan error){
+func authenticate(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	pass := JWToken{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&pass)
-	if err != nil{
+	if err != nil {
 		errorChan <- errors.Wrap(err, "Error while decoding")
 	}
 	parseToken(pass, errorChan, responseChan)
