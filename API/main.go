@@ -20,46 +20,46 @@ var (
 
 func main() {
 	var err error
-	rootpasswd, dbname, listen_location := "pass", "database", "localhost:8080" // just some values
+	rootpasswd, dbname, listenLocation := "pass", "database", "localhost:8080" // just some values
 	fmt.Scanf("%s", &rootpasswd)
 	fmt.Scanf("%s", &dbname)
-	fmt.Scanf("%s", &listen_location)
+	fmt.Scanf("%s", &listenLocation)
 	db, err = sql.Open("mysql", "root:" + rootpasswd + "@/" + dbname)
 
 	if err != nil {
 		log.Printf("encountered error while connecting to database: %v", err)
 	}
 
-	log.Printf("Connected to database '%s', and listening on '%s'...", dbname, listen_location)
+	log.Printf("Connected to database '%s', and listening on '%s'...", dbname, listenLocation)
 	router := mux.NewRouter()
 	router.Handle("/api/your extension", handlerWrapper(exampleHandler))
 
 	// GET Requests for Retrieving
-	get_router := router.Methods("GET").Subrouter()
-	get_router.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(getDosages))
-	get_router.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(getNotes))
-	get_router.Handle("/api/general/videos/{topic}", handlerWrapper(getVideoByTopic))
+	getRouter := router.Methods("GET").Subrouter()
+	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(getDosages))
+	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(getNotes))
+	getRouter.Handle("/api/general/videos/{topic}", handlerWrapper(getVideoByTopic))
 	
 	// POST Requests for Updating
-	post_router := router.Methods("POST").Subrouter()
-	post_router.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(modifyPatient))
-	post_router.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(modifyPhysician))
+	postRouter := router.Methods("POST").Subrouter()
+	postRouter.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(modifyPatient))
+	postRouter.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(modifyPhysician))
 
 	// PUT Requests for Creating
-	put_router := router.Methods("PUT").Subrouter()
-	put_router.Handle("/api/accounts/patients", handlerWrapper(pushPatient))
-	put_router.Handle("/api/accounts/physicians", handlerWrapper(pushPhysician))
-	put_router.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(pushDosages))
-	put_router.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(addNote))
-	put_router.Handle("/api/general/videos", handlerWrapper(addVideo))
+	putRouter := router.Methods("PUT").Subrouter()
+	putRouter.Handle("/api/accounts/patients", handlerWrapper(pushPatient))
+	putRouter.Handle("/api/accounts/physicians", handlerWrapper(pushPhysician))
+	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(pushDosages))
+	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(addNote))
+	putRouter.Handle("/api/general/videos", handlerWrapper(addVideo))
 	
 	// DELETE Requests for Deleting
-	delete_router := router.Methods("DELETE").Subrouter()
-	delete_router.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(deletePatient))	
-	delete_router.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(deletePhysician))
+	deleteRouter := router.Methods("DELETE").Subrouter()
+	deleteRouter.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(deletePatient))	
+	deleteRouter.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(deletePhysician))
 
 	// Starting the router
-	http.ListenAndServe(listen_location, router)
+	http.ListenAndServe(listenLocation, router)
 }
 
 func handlerWrapper(handler func(r *http.Request, responseChan chan []byte, errorChan chan error)) http.Handler {
@@ -153,17 +153,17 @@ func pushPatient(r *http.Request, responseChan chan []byte, errorChan chan error
     return
   }
   id, err := result.LastInsertId()
-  creation_token := r.URL.Query().Get("token")
-  log.Println(creation_token)
-  var physician_id int
-  err = tx.QueryRow(`SELECT id FROM Physicians WHERE token=?`, creation_token).Scan(&physician_id)
+  creationToken := r.URL.Query().Get("token")
+  log.Println(creationToken)
+  var physicianID int
+  err = tx.QueryRow(`SELECT id FROM Physicians WHERE token=?`, creationToken).Scan(&physicianID)
   if err != nil{
     errorChan <- err
     tx.Rollback()
     return
   }
-  log.Println(physician_id)
-  _, err = tx.Exec(`INSERT INTO Patients VALUES(?,?)`, id, physician_id)
+  log.Println(physicianID)
+  _, err = tx.Exec(`INSERT INTO Patients VALUES(?,?)`, id, physicianID)
   if err != nil{
     errorChan <- err
     tx.Rollback()
@@ -213,31 +213,31 @@ func pushPhysician(r *http.Request, responseChan chan []byte, errorChan chan err
 
 func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan error){
   vars := mux.Vars(r)
-  Id := vars["id"]
+  ID := vars["id"]
   tx, err := db.Begin()
   if err != nil {
 	  errorChan <- errors.Wrap(err, "failed to start transaction")
 	  return
 	}
-  _ , err = tx.Exec(`DELETE FROM Notes WHERE patient_Id=?`,Id )
+  _ , err = tx.Exec(`DELETE FROM Notes WHERE patient_Id=?`,ID )
   if err != nil{
     errorChan <- err
     tx.Rollback()
     return
   }
-  _ , err = tx.Exec(`DELETE FROM Dosages WHERE patient_id=?`,Id )
+  _ , err = tx.Exec(`DELETE FROM Dosages WHERE patient_id=?`,ID )
   if err != nil{
     errorChan <- err
     tx.Rollback()
     return
   }
-  _ , err = tx.Exec(`DELETE FROM Patients WHERE id=?`,Id )
+  _ , err = tx.Exec(`DELETE FROM Patients WHERE id=?`,ID )
 	if err != nil{
 		errorChan <- err
 		tx.Rollback()
 		return
 	}
-	_, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, Id)
+	_, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, ID)
 	if err != nil{
 		errorChan <- err
 		tx.Rollback()
@@ -249,20 +249,20 @@ func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan err
 
 func deletePhysician(r *http.Request, responseChan chan []byte, errorChan chan error){
   vars := mux.Vars(r)
-  Id := vars["id"]
-  log.Println(Id)
+  ID := vars["id"]
+  log.Println(ID)
   tx, err := db.Begin()
   if err != nil{
     errorChan <- errors.Wrap(err, "Failed to start transaction")
     return
   }
-  _, err = tx.Exec(`DELETE FROM Physicians  WHERE id=?`, Id)
+  _, err = tx.Exec(`DELETE FROM Physicians  WHERE id=?`, ID)
   if err != nil{
     errorChan <- err
     tx.Rollback()
     return
   }
-  _, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, Id)
+  _, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, ID)
   if err != nil{
     errorChan <- err
     tx.Rollback()
@@ -354,22 +354,22 @@ func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan e
 
 // start/ end dates might be optional ?
 //  Possible defaults:
-//     start_date = [current_day]
-//     end_date   = start_date + 1 month
+//     startDate = [current_day]
+//     endDate   = startDate + 1 month
 func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	// verify patient ?
 	vars := mux.Vars(r)
-	patient_id := vars["id"]
+	patientID := vars["id"]
 
 	from  := r.URL.Query().Get("from") // maybe check if specified
 	until := r.URL.Query().Get("until")
 	const dform = "2006-01-02" // specifies YYYY-MM-DD format
-	start_date, err := time.Parse(dform, from)
+	startDate, err := time.Parse(dform, from)
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error in parsing starting date")
 		return
 	}
-	end_date, err := time.Parse(dform, until)
+	endDate, err := time.Parse(dform, until)
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error in parsing end time")
 		return
@@ -380,7 +380,7 @@ func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error)
                                ON Dosages.medicine_id = Medicines.id
                                WHERE patient_id = ? AND (day BETWEEN ? AND ?)
                                `,
-		patient_id, start_date.Format(dform), end_date.Format(dform)) //add AND day BETWEEN ? AND ?
+		patientID, startDate.Format(dform), endDate.Format(dform)) //add AND day BETWEEN ? AND ?
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error during query")
 		return
@@ -389,25 +389,25 @@ func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error)
 	dosages := []Dosage{}
 	for rows.Next() {
 		var amount int
-		var medicine, day, intake_time string
-		err = rows.Scan(&amount, &medicine, &day, &intake_time)
+		var medicine, day, intakeTime string
+		err = rows.Scan(&amount, &medicine, &day, &intakeTime)
 		if err != nil {
 			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
 			return
 		}
-		dosages = append(dosages, Dosage{day, intake_time, amount, medicine, false}) //false for now
+		dosages = append(dosages, Dosage{day, intakeTime, amount, medicine, false}) //false for now
 	}
 	if err = rows.Err(); err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
 		return
 	}
 
-	json_values, err := json.Marshal(dosages)
+	jsonValues, err := json.Marshal(dosages)
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error when converting to JSON")
 		return
 	}
-	responseChan <- json_values
+	responseChan <- jsonValues
 	errorChan <- nil
 	return
 }
@@ -417,9 +417,9 @@ func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error)
 func getNotes(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	// verify patient
 	vars := mux.Vars(r)
-	patient_id := vars["id"]
+	patientID := vars["id"]
 	
-	rows, err := db.Query(`SELECT question, day FROM Notes WHERE patient_Id = ?`, patient_id)
+	rows, err := db.Query(`SELECT question, day FROM Notes WHERE patient_Id = ?`, patientID)
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error during query")
 		return
@@ -440,12 +440,12 @@ func getNotes(r *http.Request, responseChan chan []byte, errorChan chan error) {
 		return
 	}
 
-	json_values, err := json.Marshal(notes)
+	jsonValues, err := json.Marshal(notes)
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error when converting to JSON")
 		return
 	}
-	responseChan <- json_values
+	responseChan <- jsonValues
 	errorChan <- nil
 	return
 }
@@ -453,7 +453,7 @@ func getNotes(r *http.Request, responseChan chan []byte, errorChan chan error) {
 func addNote(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	// verify patient
 	vars := mux.Vars(r)
-	patient_id := vars["id"]
+	patientID := vars["id"]
 
 	note := Note{}
 	dec := json.NewDecoder(r.Body)
@@ -470,7 +470,7 @@ func addNote(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	}
 	_, err = trans.Exec(
 		`INSERT INTO Notes (patient_id, question, day) VALUES (?, ?, ?)`,
-		patient_id, note.Note, note.CreatedAt)
+		patientID, note.Note, note.CreatedAt)
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Failed to insert note into the database")
 		return
@@ -482,9 +482,9 @@ func addNote(r *http.Request, responseChan chan []byte, errorChan chan error) {
 
 func pushDosages(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	vars := mux.Vars(r)
-	patient_id := vars["id"]
+	patientID := vars["id"]
 	dosage := Dosage{}
-	var medicine_id int
+	var medicineID int
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&dosage)
 	if err != nil {
@@ -496,7 +496,7 @@ func pushDosages(r *http.Request, responseChan chan []byte, errorChan chan error
 		errorChan <- errors.Wrap(err, "failed to start transaction")
 		return
 	}
-	err = tx.QueryRow(`SELECT id FROM Medicines WHERE med_name = ?`, dosage.Medicine).Scan(&medicine_id)
+	err = tx.QueryRow(`SELECT id FROM Medicines WHERE med_name = ?`, dosage.Medicine).Scan(&medicineID)
 	if err != nil{
 		if err == sql.ErrNoRows{
 			errorChan <- errors.Wrap(err, "Unknown medicine")
@@ -507,7 +507,7 @@ func pushDosages(r *http.Request, responseChan chan []byte, errorChan chan error
 		return
 	}
 	_, err = tx.Exec(`INSERT INTO Dosages (amount, patient_id, medicine_id, day, intake_time) VALUES (?, ?, ?, ?, ?)`,
-		dosage.NumberOfPills, patient_id, medicine_id, dosage.Day, dosage.IntakeMoment)
+		dosage.NumberOfPills, patientID, medicineID, dosage.Day, dosage.IntakeMoment)
 	if err != nil{
 		errorChan <- err
 		tx.Rollback()
@@ -543,12 +543,12 @@ func getVideoByTopic(r *http.Request, responseChan chan []byte, errorChan chan e
 		return
 	}
 
-	json_values, err := json.Marshal(videos)
+	jsonValues, err := json.Marshal(videos)
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error when converting to JSON")
 		return
 	}
-	responseChan <- json_values
+	responseChan <- jsonValues
 	errorChan <- nil
 	return
 }
@@ -578,12 +578,12 @@ func addVideo(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	return
 }
 
-// placeHolderFunction
+// HashPassword : placeholder function for hasing
 func HashPassword(password string) (string, error) {
 	return password, nil
 }
 
-// See slack message
+// CheckPasswordHash : compares a given unhashed password and hashed password
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	// it's better to return the error here. otherwise you know there was a error, but you don't have the error message
