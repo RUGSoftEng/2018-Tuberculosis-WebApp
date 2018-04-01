@@ -234,7 +234,7 @@ func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan err
 		tx.Rollback()
 		return
 	}
-	dosageIDs := []int
+	var dosageIDs []int
 	for rows.Next() {
 		var dosageID int
 		err = rows.Scan(&id)
@@ -414,32 +414,32 @@ func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error)
 
 	rows, err := db.Query(`SELECT amount, med_name, day, intake_time, taken
                                FROM ScheduledDosages as SD JOIN 
-                                 (SELECT Dosages.id, amount, intake_time 
+                                 (SELECT Dosages.id, amount, intake_time, med_name 
                                   FROM Dosages JOIN Medicines 
                                      ON Dosages.medicine_id = Medicines.id
                                   WHERE patient_id = ?) as DM
                                ON SD.dosage = DM.id
-                               WHERE date BETWEEN ? AND ?`,
+                               WHERE day BETWEEN ? AND ?`,
 		patientID, startDate.Format(dform), endDate.Format(dform))
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error during query")
 		return
 	}
 
-	dosages := []SchedulesDosage{}
+	dosages := []ScheduledDosage{}
 	for rows.Next() {
 		var amount int
 		var medicine, day, intakeTime string
 		var taken bool
-		err = rows.Scan(&amount, &medicine, &day, &intakeTime, &bool)
+		err = rows.Scan(&amount, &medicine, &day, &intakeTime, &taken)
 		if err != nil {
 			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
 			return
 		}
 		dosages = append(dosages, ScheduledDosage{
-			Dosage{intakeTime, amount, Medicine{medcine}}
+			Dosage{intakeTime, amount, Medicine{medicine}},
 			day,
-			taken
+			taken,
 		})
 	}
 	if err = rows.Err(); err != nil {
@@ -553,7 +553,7 @@ func pushDosage(r *http.Request, responseChan chan []byte, errorChan chan error)
 		return
 	}
 	_, err = tx.Exec(`INSERT INTO Dosages (patient_id, medicine_id, amount, intake_time) 
-                          VALUES (?, ?, ?, ?, ?)`,
+                          VALUES (?, ?, ?, ?)`,
 		patientID, medicineID, dosage.NumberOfPills, dosage.IntakeMoment)
 	if err != nil {
 		errorChan <- err

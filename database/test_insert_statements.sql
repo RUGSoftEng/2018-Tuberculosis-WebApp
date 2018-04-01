@@ -49,25 +49,34 @@ insert into Dosages(patient_id, medicine_id, amount, intake_time) values (
        2, 3, 6, ADDTIME(CURTIME(), "10:10:00")
 );
 
-insert into ScheduledDosages(
-       1, ADDDATE(CURDATE(), 30)
+insert into ScheduledDosages (dosage, day, taken) values(
+       1, ADDDATE(CURDATE(), 30), FALSE
 );
 
-insert into ScheduledDosages(
-       1, ADDDATE(CURDATE(), 60)
+insert into ScheduledDosages (dosage, day, taken) values(
+       1, ADDDATE(CURDATE(), 60), FALSE
 );
 
-insert into ScheduledDosages(
-       2, ADDDATE(CURDATE(), 10),
+insert into ScheduledDosages (dosage, day, taken) values(
+       2, ADDDATE(CURDATE(), 10), FALSE
 );
 
-insert into ScheduledDosages(
-       2, ADDDATE(CURDATE(), 20),
+insert into ScheduledDosages (dosage, day, taken) values(
+       2, ADDDATE(CURDATE(), 20), FALSE
 );
 
-insert into ScheduledDosages(
-       3, ADDDATE(CURDATE(), 50)
+insert into ScheduledDosages (dosage, day, taken) values(
+       3, ADDDATE(CURDATE(), 50), FALSE
 );
+
+insert into ScheduledDosages (dosage, day, taken) values(
+       3, ADDDATE(CURDATE(), 1), TRUE
+);
+
+insert into ScheduledDosages (dosage, day, taken) values(
+       3, ADDDATE(CURDATE(), 0), TRUE
+);
+
 
 insert into Notes(patient_Id, question, day) values(
        2, "This is a test note", "2018-04-10"

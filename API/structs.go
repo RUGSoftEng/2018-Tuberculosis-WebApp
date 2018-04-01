@@ -17,7 +17,7 @@ type Dosage struct {
 
 // Medicine : Data for a medicine
 type Medicine struct {
-	Name string `json:name`
+	Name string `json:"name"`
 }
 
 // Note : A note from a patient for their physician

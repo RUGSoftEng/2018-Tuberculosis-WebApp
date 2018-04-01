@@ -22,7 +22,7 @@ CREATE TABLE Patients(
 );
 
 CREATE TABLE Notes(
-       id		INT	NOT NULL RIMARY KEY AUTO_INCREMENT,
+       id		INT	NOT NULL PRIMARY KEY AUTO_INCREMENT,
        patient_id    	INT 	NOT NULL,
        question		TEXT 	NOT NULL,
        day		DATE 	NOT NULL,
@@ -41,7 +41,7 @@ CREATE TABLE Dosages(
        amount		TINYINT	NOT NULL,
        intake_time	TIME	NOT NULL,
        FOREIGN KEY (patient_id)     REFERENCES Patients(id),
-       FOREIGN KEY (medicine_id)    REFERENCES Medicines(id),
+       FOREIGN KEY (medicine_id)    REFERENCES Medicines(id)
 );
 
 CREATE TABLE ScheduledDosages(
