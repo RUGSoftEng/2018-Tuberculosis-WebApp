@@ -213,31 +213,68 @@ func pushPhysician(r *http.Request, responseChan chan []byte, errorChan chan err
 
 func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	vars := mux.Vars(r)
-	ID := vars["id"]
+	id := vars["id"]
 	tx, err := db.Begin()
 	if err != nil {
 		errorChan <- errors.Wrap(err, "failed to start transaction")
 		return
 	}
-	_, err = tx.Exec(`DELETE FROM Notes WHERE patient_id=?`, ID)
+	_, err = tx.Exec(`DELETE FROM Notes WHERE patient_id=?`, id)
 	if err != nil {
 		errorChan <- err
 		tx.Rollback()
 		return
 	}
-	_, err = tx.Exec(`DELETE FROM Dosages WHERE patient_id=?`, ID)
+
+	// Retrieve all dosage identifiers 
+	rows, err := tx.Query(`SELECT id FROM Dosages
+                               WHERE patient_id = ?`, id)
 	if err != nil {
 		errorChan <- err
 		tx.Rollback()
 		return
 	}
-	_, err = tx.Exec(`DELETE FROM Patients WHERE id=?`, ID)
+	dosageIDs := []int
+	for rows.Next() {
+		var dosageID int
+		err = rows.Scan(&id)
+		if err != nil {
+			errorChan <- err
+			tx.Rollback()
+			return
+		}
+		dosageIDs = append(dosageIDs, dosageID)
+	}
+	if rows.Err() != nil {
+		errorChan <- err
+		tx.Rollback()
+		return
+	}
+
+	// Delete all specific scheduled dosages attached to the patient
+	for _, dosageID := range dosageIDs {
+		_, err = tx.Exec(`DELETE FROM SchedulesDosages WHERE dosage=?`, dosageID)
+		if err != nil {
+			errorChan <- err
+			tx.Rollback()
+			return
+		}
+	}
+	
+	_, err = tx.Exec(`DELETE FROM Dosages WHERE patient_id=?`, id)
 	if err != nil {
 		errorChan <- err
 		tx.Rollback()
 		return
 	}
-	_, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, ID)
+
+	_, err = tx.Exec(`DELETE FROM Patients WHERE id=?`, id)
+	if err != nil {
+		errorChan <- err
+		tx.Rollback()
+		return
+	}
+	_, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, id)
 	if err != nil {
 		errorChan <- err
 		tx.Rollback()
@@ -249,20 +286,20 @@ func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan err
 
 func deletePhysician(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	vars := mux.Vars(r)
-	ID := vars["id"]
-	log.Println(ID)
+	id := vars["id"]
+	log.Println(id)
 	tx, err := db.Begin()
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Failed to start transaction")
 		return
 	}
-	_, err = tx.Exec(`DELETE FROM Physicians  WHERE id=?`, ID)
+	_, err = tx.Exec(`DELETE FROM Physicians  WHERE id=?`, id)
 	if err != nil {
 		errorChan <- err
 		tx.Rollback()
 		return
 	}
-	_, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, ID)
+	_, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, id)
 	if err != nil {
 		errorChan <- err
 		tx.Rollback()
