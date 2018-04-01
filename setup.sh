@@ -39,6 +39,13 @@ go get -u golang.org/x/crypto/bcrypt && echo 'SUCCESS'
 echo 'Downloading github.com/go-sql-driver/mysql...'
 go get -u github.com/go-sql-driver/mysql && echo 'SUCCESS'
 
+echo 'Downloading github.com/dgrijalva/jwt-go...'
+go get -u github.com/dgrijalva/jwt-go && echo 'SUCCESS'
+
+echo 'Downloading github.com/mitchellh/mapstructure...'
+go get -u github.com/mitchellh/mapstructure && echo 'SUCCESS'
+
+
 echo 'Setting up paths for the vagrant ssh user'
 echo -e 'export PATH=$PATH:/usr/local/go/bin' >> /home/vagrant/.bashrc
 echo -e 'export GOPATH=/home/vagrant/go' >> /home/vagrant/.bashrc
