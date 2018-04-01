@@ -12,8 +12,8 @@ import (
 	"time"
 	//"go/token"
 	"fmt"
-	"github.com/mitchellh/mapstructure"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/mitchellh/mapstructure"
 )
 
 var (
@@ -53,7 +53,7 @@ func main() {
 	putRouter := router.Methods("PUT").Subrouter()
 	putRouter.Handle("/api/accounts/patients", handlerWrapper(pushPatient))
 	putRouter.Handle("/api/accounts/physicians", handlerWrapper(pushPhysician))
-	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(pushDosages))
+	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(pushDosage))
 	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(addNote))
 	putRouter.Handle("/api/general/videos", handlerWrapper(addVideo))
 
@@ -100,11 +100,11 @@ func exampleHandler(r *http.Request, responseChan chan []byte, errorChan chan er
 
 	// This is a join example for a patient call, change to physician it is a call only a physician can make
 	// remove join part if it is a call able for both
-	err := db.QueryRow(`	SELECT id 
-								FROM Patients AS pa 
-									INNER JOIN Accounts AS acc 
-									ON pa.id = acc.id  
-								WHERE acc.api_token = ?`,
+	err := db.QueryRow(`SELECT id
+			   FROM Patients AS pa 
+			   INNER JOIN Accounts AS acc 
+			   ON pa.id = acc.id  
+			   WHERE acc.api_token = ?`,
 		apiToken).Scan(ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -217,31 +217,68 @@ func pushPhysician(r *http.Request, responseChan chan []byte, errorChan chan err
 
 func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	vars := mux.Vars(r)
-	ID := vars["id"]
+	id := vars["id"]
 	tx, err := db.Begin()
 	if err != nil {
 		errorChan <- errors.Wrap(err, "failed to start transaction")
 		return
 	}
-	_, err = tx.Exec(`DELETE FROM Notes WHERE patient_Id=?`, ID)
+	_, err = tx.Exec(`DELETE FROM Notes WHERE patient_id=?`, id)
 	if err != nil {
 		errorChan <- err
 		tx.Rollback()
 		return
 	}
-	_, err = tx.Exec(`DELETE FROM Dosages WHERE patient_id=?`, ID)
+
+	// Retrieve all dosage identifiers
+	rows, err := tx.Query(`SELECT id FROM Dosages
+                               WHERE patient_id = ?`, id)
 	if err != nil {
 		errorChan <- err
 		tx.Rollback()
 		return
 	}
-	_, err = tx.Exec(`DELETE FROM Patients WHERE id=?`, ID)
+	var dosageIDs []int
+	for rows.Next() {
+		var dosageID int
+		err = rows.Scan(&id)
+		if err != nil {
+			errorChan <- err
+			tx.Rollback()
+			return
+		}
+		dosageIDs = append(dosageIDs, dosageID)
+	}
+	if rows.Err() != nil {
+		errorChan <- err
+		tx.Rollback()
+		return
+	}
+
+	// Delete all specific scheduled dosages attached to the patient
+	for _, dosageID := range dosageIDs {
+		_, err = tx.Exec(`DELETE FROM SchedulesDosages WHERE dosage=?`, dosageID)
+		if err != nil {
+			errorChan <- err
+			tx.Rollback()
+			return
+		}
+	}
+
+	_, err = tx.Exec(`DELETE FROM Dosages WHERE patient_id=?`, id)
 	if err != nil {
 		errorChan <- err
 		tx.Rollback()
 		return
 	}
-	_, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, ID)
+
+	_, err = tx.Exec(`DELETE FROM Patients WHERE id=?`, id)
+	if err != nil {
+		errorChan <- err
+		tx.Rollback()
+		return
+	}
+	_, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, id)
 	if err != nil {
 		errorChan <- err
 		tx.Rollback()
@@ -253,20 +290,20 @@ func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan err
 
 func deletePhysician(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	vars := mux.Vars(r)
-	ID := vars["id"]
-	log.Println(ID)
+	id := vars["id"]
+	log.Println(id)
 	tx, err := db.Begin()
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Failed to start transaction")
 		return
 	}
-	_, err = tx.Exec(`DELETE FROM Physicians  WHERE id=?`, ID)
+	_, err = tx.Exec(`DELETE FROM Physicians  WHERE id=?`, id)
 	if err != nil {
 		errorChan <- err
 		tx.Rollback()
 		return
 	}
-	_, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, ID)
+	_, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, id)
 	if err != nil {
 		errorChan <- err
 		tx.Rollback()
@@ -379,27 +416,35 @@ func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error)
 		return
 	}
 
-	rows, err := db.Query(`SELECT amount, med_name, day, intake_time 
-                               FROM Dosages JOIN Medicines 
-                               ON Dosages.medicine_id = Medicines.id
-                               WHERE patient_id = ? AND (day BETWEEN ? AND ?)
-                               `,
-		patientID, startDate.Format(dform), endDate.Format(dform)) //add AND day BETWEEN ? AND ?
+	rows, err := db.Query(`SELECT amount, med_name, day, intake_time, taken
+                               FROM ScheduledDosages as SD JOIN 
+                                 (SELECT Dosages.id, amount, intake_time, med_name 
+                                  FROM Dosages JOIN Medicines 
+                                     ON Dosages.medicine_id = Medicines.id
+                                  WHERE patient_id = ?) as DM
+                               ON SD.dosage = DM.id
+                               WHERE day BETWEEN ? AND ?`,
+		patientID, startDate.Format(dform), endDate.Format(dform))
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error during query")
 		return
 	}
 
-	dosages := []Dosage{}
+	dosages := []ScheduledDosage{}
 	for rows.Next() {
 		var amount int
 		var medicine, day, intakeTime string
-		err = rows.Scan(&amount, &medicine, &day, &intakeTime)
+		var taken bool
+		err = rows.Scan(&amount, &medicine, &day, &intakeTime, &taken)
 		if err != nil {
 			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
 			return
 		}
-		dosages = append(dosages, Dosage{day, intakeTime, amount, medicine, false}) //false for now
+		dosages = append(dosages, ScheduledDosage{
+			Dosage{intakeTime, amount, Medicine{medicine}},
+			day,
+			taken,
+		})
 	}
 	if err = rows.Err(); err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
@@ -423,7 +468,7 @@ func getNotes(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	vars := mux.Vars(r)
 	patientID := vars["id"]
 
-	rows, err := db.Query(`SELECT question, day FROM Notes WHERE patient_Id = ?`, patientID)
+	rows, err := db.Query(`SELECT question, day FROM Notes WHERE patient_id = ?`, patientID)
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error during query")
 		return
@@ -484,7 +529,7 @@ func addNote(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	return
 }
 
-func pushDosages(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func pushDosage(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	vars := mux.Vars(r)
 	patientID := vars["id"]
 	dosage := Dosage{}
@@ -500,7 +545,8 @@ func pushDosages(r *http.Request, responseChan chan []byte, errorChan chan error
 		errorChan <- errors.Wrap(err, "failed to start transaction")
 		return
 	}
-	err = tx.QueryRow(`SELECT id FROM Medicines WHERE med_name = ?`, dosage.Medicine).Scan(&medicineID)
+	err = tx.QueryRow(`SELECT id FROM Medicines WHERE med_name = ?`,
+		dosage.Medicine.Name).Scan(&medicineID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			errorChan <- errors.Wrap(err, "Unknown medicine")
@@ -510,8 +556,9 @@ func pushDosages(r *http.Request, responseChan chan []byte, errorChan chan error
 		tx.Rollback()
 		return
 	}
-	_, err = tx.Exec(`INSERT INTO Dosages (amount, patient_id, medicine_id, day, intake_time) VALUES (?, ?, ?, ?, ?)`,
-		dosage.NumberOfPills, patientID, medicineID, dosage.Day, dosage.IntakeMoment)
+	_, err = tx.Exec(`INSERT INTO Dosages (patient_id, medicine_id, amount, intake_time) 
+                          VALUES (?, ?, ?, ?)`,
+		patientID, medicineID, dosage.NumberOfPills, dosage.IntakeMoment)
 	if err != nil {
 		errorChan <- err
 		tx.Rollback()
@@ -596,7 +643,7 @@ func CheckPasswordHash(password, hash string) bool {
 
 //This function validates a password against a specific user, and issues a JWT Token
 
-func login(r *http.Request, responseChan chan []byte, errorChan chan error){
+func login(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	cred := UserValidation{}
 	err := json.NewDecoder(r.Body).Decode(&cred)
 	if err != nil {
@@ -609,19 +656,19 @@ func login(r *http.Request, responseChan chan []byte, errorChan chan error){
 		errorChan <- errors.Wrap(err, "Database failure")
 		return
 	}
-	if !CheckPasswordHash(cred.Password, password){
+	if !CheckPasswordHash(cred.Password, password) {
 		log.Println("Mismatching credentials")
 		return
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": cred.Username,
-		"password": cred.Password,})
+		"password": cred.Password})
 	tokenString, err := token.SignedString([]byte("secret"))
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Failed to generate JWT token")
 		return
 	}
-	jsonToSend,err := json.Marshal(JWToken{Token:tokenString})
+	jsonToSend, err := json.Marshal(JWToken{Token: tokenString})
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Failed to encode token")
 		return
@@ -631,7 +678,7 @@ func login(r *http.Request, responseChan chan []byte, errorChan chan error){
 	return
 }
 
-func parseToken(in JWToken, errorChan chan error, responseChan chan []byte){
+func parseToken(in JWToken, errorChan chan error, responseChan chan []byte) {
 	content := in.Token
 	token, _ := jwt.Parse(content, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -644,30 +691,29 @@ func parseToken(in JWToken, errorChan chan error, responseChan chan []byte){
 		mapstructure.Decode(claims, &user)
 		var pwd string
 		err := db.QueryRow(`SELECT pass_hash FROM Accounts WHERE username=?`, user.Username).Scan(&pwd)
-		if err != nil{
+		if err != nil {
 			errorChan <- errors.Wrap(err, "Database failure")
 			return
 		}
-		if !CheckPasswordHash(user.Password, pwd){
+		if !CheckPasswordHash(user.Password, pwd) {
 			responseChan <- []byte("Invalid token")
-		}else{
+		} else {
 			responseChan <- []byte("You're authenticated")
 		}
 		return
-	} else {
-		responseChan <- []byte("Invalid token")
 	}
+	responseChan <- []byte("Invalid token")
 }
 
 // Token authentication will probably be embedded in all the request that are give access
 // to restricted contents, this functions is only for test purposes, but it uses the
 // tokenParse() function that will do the core of the work
 
-func authenticate(r *http.Request, responseChan chan []byte, errorChan chan error){
+func authenticate(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	pass := JWToken{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&pass)
-	if err != nil{
+	if err != nil {
 		errorChan <- errors.Wrap(err, "Error while decoding")
 	}
 	parseToken(pass, errorChan, responseChan)
