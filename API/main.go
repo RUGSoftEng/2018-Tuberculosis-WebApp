@@ -570,13 +570,13 @@ func pushDosage(r *http.Request, responseChan chan []byte, errorChan chan error)
 }
 
 func getTopics(r *http.Request, responseChan chan []byte, errorChan chan error) {
-	rows, err := db.Query(`SELECT DISTINCT topic FROM Videos`,)
+	rows, err := db.Query(`SELECT DISTINCT topic FROM Videos`)
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error when querying the database")
 		return
 	}
 
-	topics := [0]string
+	var topics []string
 	for rows.Next() {
 		var topic string
 		err = rows.Scan(&topic)
@@ -590,14 +590,14 @@ func getTopics(r *http.Request, responseChan chan []byte, errorChan chan error) 
 		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
 		return
 	}
-	
+
 	jsonValues, err := json.Marshal(topics)
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error when converting to JSON")
 		return
 	}
 	responseChan <- jsonValues
-	return	
+	return
 }
 
 func getVideoByTopic(r *http.Request, responseChan chan []byte, errorChan chan error) {
