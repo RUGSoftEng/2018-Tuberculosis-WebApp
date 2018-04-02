@@ -170,9 +170,18 @@ _To be added_
 | **Body**      | JSON Video            |
 | **Return**    | -                     |
 ### Retrieving
+#### Retrieving all video topics
+| **Type**      | GET                           |
+|---------------|-------------------------------|
+| **Path**      | `/api/general/videos/topics/{topic}` |
+| **Variables** | topic: String                 |
+| **Body**      | -                             |
+
+
 #### Retrieving all videos with a certain topic
 | **Type**      | GET                           |
 |---------------|-------------------------------|
-| **Path**      | `/api/general/videos/{topic}` |
+| **Path**      | `/api/general/videos/topics/{topic}` |
 | **Variables** | topic: String                 |
 | **Body**      | -                             |
+| **Return**    | List of topics ["topic1", "topic2"] |

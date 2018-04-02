@@ -40,7 +40,8 @@ func main() {
 	getRouter := router.Methods("GET").Subrouter()
 	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(getDosages))
 	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(getNotes))
-	getRouter.Handle("/api/general/videos/{topic}", handlerWrapper(getVideoByTopic))
+	getRouter.Handle("/api/general/videos/topics/{topic}", handlerWrapper(getVideoByTopic))
+	getRouter.Handle("/api/general/videos/topics", handlerWrapper(getTopics))
 
 	// POST Requests for Updating
 	postRouter := router.Methods("POST").Subrouter()
@@ -568,6 +569,37 @@ func pushDosage(r *http.Request, responseChan chan []byte, errorChan chan error)
 	errorChan <- tx.Commit()
 }
 
+func getTopics(r *http.Request, responseChan chan []byte, errorChan chan error) {
+	rows, err := db.Query(`SELECT DISTINCT topic FROM Videos`)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error when querying the database")
+		return
+	}
+
+	var topics []string
+	for rows.Next() {
+		var topic string
+		err = rows.Scan(&topic)
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
+			return
+		}
+		topics = append(topics, topic)
+	}
+	if err = rows.Err(); err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
+		return
+	}
+
+	jsonValues, err := json.Marshal(topics)
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Unexpected error when converting to JSON")
+		return
+	}
+	responseChan <- jsonValues
+	return
+}
+
 func getVideoByTopic(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	vars := mux.Vars(r)
 	topic := vars["topic"]
@@ -642,7 +674,6 @@ func CheckPasswordHash(password, hash string) bool {
 }
 
 //This function validates a password against a specific user, and issues a JWT Token
-
 func login(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	cred := UserValidation{}
 	err := json.NewDecoder(r.Body).Decode(&cred)
@@ -708,7 +739,6 @@ func parseToken(in JWToken, errorChan chan error, responseChan chan []byte) {
 // Token authentication will probably be embedded in all the request that are give access
 // to restricted contents, this functions is only for test purposes, but it uses the
 // tokenParse() function that will do the core of the work
-
 func authenticate(r *http.Request, responseChan chan []byte, errorChan chan error) {
 	pass := JWToken{}
 	dec := json.NewDecoder(r.Body)
