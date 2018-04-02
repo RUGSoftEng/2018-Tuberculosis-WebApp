@@ -2,13 +2,13 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql" // anonymous import
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"log"
 	http "net/http"
 	"time"
-	"fmt"
 )
 
 var (

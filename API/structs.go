@@ -51,12 +51,11 @@ type Video struct {
 	Reference string `json:"reference"`
 }
 
-
-type UserValidation struct{
-  Username string `json:"username"`
-  Password string `json:"password"`
+type UserValidation struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
-type JWToken struct{
-  Token string `json:"token"`
+type JWToken struct {
+	Token string `json:"token"`
 }
