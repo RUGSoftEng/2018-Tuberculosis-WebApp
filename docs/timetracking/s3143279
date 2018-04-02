@@ -84,3 +84,9 @@
 - Changed Dosages modeling and updated all methods which use the dosages
 - Changed Dosages modeling and updated all methods which use the dosages
 - Changed Dosages modeling and updated all methods which use the dosages
+- Added api function for retrieving video topics
+- Added api function for retrieving video topics
+- Split the main.go file into sub files + created a makefile
+- Split the main.go file into sub files + created a makefile
+- Split the main.go file into sub files + created a makefile
+- Split the main.go file into sub files + created a makefile
