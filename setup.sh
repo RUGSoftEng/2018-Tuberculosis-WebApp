@@ -36,8 +36,9 @@ done < "$PROJROOT/go_dependencies"
 echo "DONE"
 
 echo 'Setting up paths for the vagrant ssh user'
-echo -e 'export PATH=$PATH:/usr/local/go/bin' >> /home/vagrant/.bashrc
 echo -e 'export GOPATH=/home/vagrant/go' >> /home/vagrant/.bashrc
+echo -e 'export PATH=$PATH:/usr/local/go/bin' >> /home/vagrant/.bashrc
+echo -e 'export PATH=$PATH:$GOPATH/bin' >> /home/vagrant/.bashrc
 echo -e 'export PROJROOT=/vagrant' >> /home/vagrant/.bashrc
 echo 'DONE'
 
@@ -48,12 +49,8 @@ mysql -u root --password=root <<< 'drop database if exists TestDB' \
     && mysql -u root --password=root TestDB < $PROJROOT/database/test_insert_statements.sql \
     && echo 'SUCCESS'
 
-#echo 'Starting API...'
-#echo -e 'root\nTestDB\nlocalhost:2002' | go run $PROJROOT/API/main.go $PROJROOT/API/structs.go &
-#sleep 1s
-
 # Command for automatically starting the API
-echo "alias start_api='echo -e \"root\nTestDB\n192.168.50.4:2002\" | go run $PROJROOT/API/main.go $PROJROOT/API/structs.go'" >> /home/vagrant/.bashrc
+echo "alias start_api='echo -e \"root\nTestDB\n192.168.50.4:2002\" | make run --quiet -C $PROJROOT/API'" >> /home/vagrant/.bashrc
 
 # Command for completely reloading the Database
 echo "alias reload_db='mysql -u root --password=root <<< \"drop database TestDB\" \\
