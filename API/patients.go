@@ -53,7 +53,7 @@ func pushPatient(r *http.Request, responseChan chan APIResponse, errorChan chan 
 	}
 	if err = tx.Commit(); err != nil {
 		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
-		return		
+		return
 	}
 	responseChan <- APIResponse{nil, http.StatusCreated}
 }
@@ -91,10 +91,10 @@ func modifyPatient(r *http.Request, responseChan chan APIResponse, errorChan cha
 		tx.Rollback()
 		return
 	}
-	
+
 	if err = tx.Commit(); err != nil {
 		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
-		return		
+		return
 	}
 	responseChan <- APIResponse{nil, http.StatusOK}
 }
@@ -172,7 +172,7 @@ func deletePatient(r *http.Request, responseChan chan APIResponse, errorChan cha
 
 	if err = tx.Commit(); err != nil {
 		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
-		return		
+		return
 	}
 	responseChan <- APIResponse{nil, http.StatusOK}
 }

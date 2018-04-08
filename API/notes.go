@@ -37,7 +37,7 @@ func addNote(r *http.Request, responseChan chan APIResponse, errorChan chan erro
 
 	if err = trans.Commit(); err != nil {
 		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
-		return		
+		return
 	}
 	responseChan <- APIResponse{nil, http.StatusCreated}
 }

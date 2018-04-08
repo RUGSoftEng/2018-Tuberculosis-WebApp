@@ -47,7 +47,7 @@ func pushPhysician(r *http.Request, responseChan chan APIResponse, errorChan cha
 
 	if err = tx.Commit(); err != nil {
 		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
-		return		
+		return
 	}
 
 	responseChan <- APIResponse{nil, http.StatusCreated}
@@ -95,7 +95,7 @@ func modifyPhysician(r *http.Request, responseChan chan APIResponse, errorChan c
 
 	if err = tx.Commit(); err != nil {
 		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
-		return		
+		return
 	}
 	responseChan <- APIResponse{nil, http.StatusOK}
 }
@@ -125,7 +125,7 @@ func deletePhysician(r *http.Request, responseChan chan APIResponse, errorChan c
 
 	if err = tx.Commit(); err != nil {
 		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
-		return		
+		return
 	}
 	responseChan <- APIResponse{nil, http.StatusOK}
 }

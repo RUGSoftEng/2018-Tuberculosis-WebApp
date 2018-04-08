@@ -78,7 +78,7 @@ func handlerWrapper(handler func(r *http.Request, responseChan chan APIResponse,
 				w.WriteHeader(r.StatusCode)
 				return
 			}
-			
+
 			jsonData, err := json.Marshal(r.Data)
 			if err != nil {
 				err := errors.Wrap(err, "Error during JSON Decoding")

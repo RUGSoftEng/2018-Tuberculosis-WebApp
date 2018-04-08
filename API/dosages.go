@@ -49,7 +49,7 @@ func pushDosage(r *http.Request, responseChan chan APIResponse, errorChan chan e
 
 	if err = tx.Commit(); err != nil {
 		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
-		return		
+		return
 	}
 	responseChan <- APIResponse{nil, http.StatusCreated}
 }
