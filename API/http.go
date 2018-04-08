@@ -89,38 +89,3 @@ func handlerWrapper(handler func(r *http.Request, responseChan chan []byte, erro
 		return
 	})
 }
-
-func exampleHandler(r *http.Request, responseChan chan []byte, errorChan chan error) {
-	ID := 0
-	apiToken := r.Header.Get("api_token")
-
-	// This is a join example for a patient call, change to physician it is a call only a physician can make
-	// remove join part if it is a call able for both
-	err := db.QueryRow(`SELECT id
-			   FROM Patients AS pa 
-			   INNER JOIN Accounts AS acc 
-			   ON pa.id = acc.id  
-			   WHERE acc.api_token = ?`,
-		apiToken).Scan(ID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			errorChan <- errors.Wrap(err, "no valid login credentials")
-			return
-		}
-		errorChan <- errors.Wrap(err, "encountered error during query")
-		return
-	}
-
-	// if you are going to insert multiple things in the database do this using a transaction.
-	// see insertPatient
-
-	// do your own querries,
-	// if you encounter a "err != nil" send it to the errorChan in the above matter
-	// if all goed well, marshal your results and sen them to responseChan
-
-	// End for a get function
-	// responseChan <- "your marshalled data"
-
-	// End for a succesfull push or put function
-	// errorChan <- nil
-}
