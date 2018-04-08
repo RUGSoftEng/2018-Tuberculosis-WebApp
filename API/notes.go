@@ -9,7 +9,7 @@ import (
 )
 
 // CREATE
-func addNote(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func addNote(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	// verify patient
 	vars := mux.Vars(r)
 	patientID := vars["id"]
@@ -35,14 +35,17 @@ func addNote(r *http.Request, responseChan chan []byte, errorChan chan error) {
 		return
 	}
 
-	errorChan <- trans.Commit()
-	return
+	if err = trans.Commit(); err != nil {
+		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+		return		
+	}
+	responseChan <- APIResponse{nil, http.StatusCreated}
 }
 
 // RETRIEVE
 // Possible to also add a time interval?
 // Or all 'untreated' notes
-func getNotes(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func getNotes(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	// verify patient
 	vars := mux.Vars(r)
 	patientID := vars["id"]
@@ -67,13 +70,5 @@ func getNotes(r *http.Request, responseChan chan []byte, errorChan chan error) {
 		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
 		return
 	}
-
-	jsonValues, err := json.Marshal(notes)
-	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error when converting to JSON")
-		return
-	}
-	responseChan <- jsonValues
-	errorChan <- nil
-	return
+	responseChan <- APIResponse{notes, http.StatusOK}
 }

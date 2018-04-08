@@ -61,3 +61,10 @@ type UserValidation struct {
 type JWToken struct {
 	Token string `json:"token"`
 }
+
+// APIResponse : Type used by the Response Channel
+// in the handlerWrapper (does not need json tags)
+type APIResponse struct {
+	Data       interface{}
+	StatusCode int
+}

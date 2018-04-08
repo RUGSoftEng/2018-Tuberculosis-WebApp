@@ -5,13 +5,12 @@ import (
 	_ "github.com/go-sql-driver/mysql" // anonymous import
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	"log"
 	http "net/http"
 )
 
 // CREATE
 // expects a json file containing the new patient and a url encoded physician token
-func pushPatient(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func pushPatient(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	patient := Patient{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&patient)
@@ -39,7 +38,6 @@ func pushPatient(r *http.Request, responseChan chan []byte, errorChan chan error
 	}
 	id, err := result.LastInsertId()
 	creationToken := r.URL.Query().Get("token")
-	log.Println(creationToken)
 	var physicianID int
 	err = tx.QueryRow(`SELECT id FROM Physicians WHERE token=?`, creationToken).Scan(&physicianID)
 	if err != nil {
@@ -47,18 +45,21 @@ func pushPatient(r *http.Request, responseChan chan []byte, errorChan chan error
 		tx.Rollback()
 		return
 	}
-	log.Println(physicianID)
 	_, err = tx.Exec(`INSERT INTO Patients VALUES(?,?)`, id, physicianID)
 	if err != nil {
 		errorChan <- err
 		tx.Rollback()
 		return
 	}
-	errorChan <- tx.Commit()
+	if err = tx.Commit(); err != nil {
+		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+		return		
+	}
+	responseChan <- APIResponse{nil, http.StatusCreated}
 }
 
 // UPDATE
-func modifyPatient(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func modifyPatient(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	patient := Patient{}
@@ -90,13 +91,16 @@ func modifyPatient(r *http.Request, responseChan chan []byte, errorChan chan err
 		tx.Rollback()
 		return
 	}
-
-	errorChan <- tx.Commit()
-
+	
+	if err = tx.Commit(); err != nil {
+		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+		return		
+	}
+	responseChan <- APIResponse{nil, http.StatusOK}
 }
 
 // DELETE
-func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func deletePatient(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	tx, err := db.Begin()
@@ -166,5 +170,9 @@ func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan err
 		return
 	}
 
-	errorChan <- tx.Commit()
+	if err = tx.Commit(); err != nil {
+		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+		return		
+	}
+	responseChan <- APIResponse{nil, http.StatusOK}
 }

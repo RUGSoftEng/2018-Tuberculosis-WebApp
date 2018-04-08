@@ -9,7 +9,7 @@ import (
 )
 
 // CREATE
-func addVideo(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func addVideo(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	video := Video{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&video)
@@ -18,24 +18,27 @@ func addVideo(r *http.Request, responseChan chan []byte, errorChan chan error) {
 		return
 	}
 
-	trans, err := db.Begin()
+	tx, err := db.Begin()
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Failed to start new transaction")
 		return
 	}
-	_, err = trans.Exec(`INSERT INTO Videos (topic, title, reference) VALUES (?, ?, ?)`,
+	_, err = tx.Exec(`INSERT INTO Videos (topic, title, reference) VALUES (?, ?, ?)`,
 		video.Topic, video.Title, video.Reference)
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Failed to insert video into the database")
 		return
 	}
 
-	errorChan <- trans.Commit()
-	return
+	if err = tx.Commit(); err != nil {
+		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+		return		
+	}
+	responseChan <- APIResponse{nil, http.StatusCreated}
 }
 
 // RETRIEVE
-func getTopics(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func getTopics(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	rows, err := db.Query(`SELECT DISTINCT topic FROM Videos`)
 	if err != nil {
 		errorChan <- errors.Wrap(err, "Unexpected error when querying the database")
@@ -56,18 +59,11 @@ func getTopics(r *http.Request, responseChan chan []byte, errorChan chan error) 
 		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
 		return
 	}
-
-	jsonValues, err := json.Marshal(topics)
-	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error when converting to JSON")
-		return
-	}
-	responseChan <- jsonValues
-	return
+	responseChan <- APIResponse{topics, http.StatusOK}
 }
 
 // RETRIEVE
-func getVideoByTopic(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func getVideoByTopic(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	vars := mux.Vars(r)
 	topic := vars["topic"]
 
@@ -91,13 +87,5 @@ func getVideoByTopic(r *http.Request, responseChan chan []byte, errorChan chan e
 		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
 		return
 	}
-
-	jsonValues, err := json.Marshal(videos)
-	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error when converting to JSON")
-		return
-	}
-	responseChan <- jsonValues
-	errorChan <- nil
-	return
+	responseChan <- APIResponse{videos, http.StatusOK}
 }

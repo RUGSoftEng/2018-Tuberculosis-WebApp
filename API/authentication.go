@@ -26,7 +26,7 @@ func CheckPasswordHash(password, hash string) bool {
 }
 
 //This function validates a password against a specific user, and issues a JWT Token
-func login(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func login(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	cred := UserValidation{}
 	err := json.NewDecoder(r.Body).Decode(&cred)
 	if err != nil {
@@ -51,17 +51,11 @@ func login(r *http.Request, responseChan chan []byte, errorChan chan error) {
 		errorChan <- errors.Wrap(err, "Failed to generate JWT token")
 		return
 	}
-	jsonToSend, err := json.Marshal(JWToken{Token: tokenString})
-	if err != nil {
-		errorChan <- errors.Wrap(err, "Failed to encode token")
-		return
-	}
-	responseChan <- jsonToSend
-	errorChan <- nil
+	responseChan <- APIResponse{JWToken{Token: tokenString}, http.StatusOK}
 	return
 }
 
-func parseToken(in JWToken, errorChan chan error, responseChan chan []byte) {
+func parseToken(in JWToken, errorChan chan error, responseChan chan APIResponse) {
 	content := in.Token
 	token, _ := jwt.Parse(content, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -79,19 +73,19 @@ func parseToken(in JWToken, errorChan chan error, responseChan chan []byte) {
 			return
 		}
 		if !CheckPasswordHash(user.Password, pwd) {
-			responseChan <- []byte("Invalid token")
+			errorChan <- errors.New("Invalid token")
 		} else {
-			responseChan <- []byte("You're authenticated")
+			responseChan <- APIResponse{"You're authenticated", http.StatusOK}
 		}
 		return
 	}
-	responseChan <- []byte("Invalid token")
+	errorChan <- errors.New("Invalid token")
 }
 
 // Token authentication will probably be embedded in all the request that are give access
 // to restricted contents, this functions is only for test purposes, but it uses the
 // tokenParse() function that will do the core of the work
-func authenticate(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func authenticate(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	pass := JWToken{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&pass)

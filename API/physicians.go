@@ -10,7 +10,7 @@ import (
 )
 
 // CREATE
-func pushPhysician(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func pushPhysician(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	physician := Physician{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&physician)
@@ -45,12 +45,16 @@ func pushPhysician(r *http.Request, responseChan chan []byte, errorChan chan err
 		return
 	}
 
-	errorChan <- tx.Commit()
+	if err = tx.Commit(); err != nil {
+		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+		return		
+	}
 
+	responseChan <- APIResponse{nil, http.StatusCreated}
 }
 
 // UPDATE
-func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func modifyPhysician(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	physician := Physician{}
@@ -89,11 +93,15 @@ func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan e
 		return
 	}
 
-	errorChan <- tx.Commit()
+	if err = tx.Commit(); err != nil {
+		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+		return		
+	}
+	responseChan <- APIResponse{nil, http.StatusOK}
 }
 
 // DELETE
-func deletePhysician(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func deletePhysician(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	log.Println(id)
@@ -115,5 +123,9 @@ func deletePhysician(r *http.Request, responseChan chan []byte, errorChan chan e
 		return
 	}
 
-	errorChan <- tx.Commit()
+	if err = tx.Commit(); err != nil {
+		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+		return		
+	}
+	responseChan <- APIResponse{nil, http.StatusOK}
 }
