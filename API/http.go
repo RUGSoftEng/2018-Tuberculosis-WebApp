@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql" // anonymous import
 	"github.com/gorilla/mux"
@@ -29,7 +30,6 @@ func main() {
 
 	log.Printf("Connected to database '%s', and listening on '%s'...", dbname, listenLocation)
 	router := mux.NewRouter()
-	router.Handle("/api/your extension", handlerWrapper(exampleHandler))
 
 	// GET Requests for Retrieving
 	getRouter := router.Methods("GET").Subrouter()
@@ -62,9 +62,9 @@ func main() {
 	http.ListenAndServe(listenLocation, router)
 }
 
-func handlerWrapper(handler func(r *http.Request, responseChan chan []byte, errorChan chan error)) http.Handler {
+func handlerWrapper(handler func(r *http.Request, responseChan chan APIResponse, errorChan chan error)) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		responseChan := make(chan []byte)
+		responseChan := make(chan APIResponse)
 		errorChan := make(chan error)
 
 		go handler(r, responseChan, errorChan)
@@ -72,9 +72,24 @@ func handlerWrapper(handler func(r *http.Request, responseChan chan []byte, erro
 		time.After(2 * time.Second)
 
 		select {
-		case body := <-responseChan:
+		case r := <-responseChan:
+			// Maybe check for certain status codes not returning a body (e.g. StatusCreated)
+			if r.StatusCode == http.StatusCreated {
+				w.WriteHeader(r.StatusCode)
+				return
+			}
+
+			jsonData, err := json.Marshal(r.Data)
+			if err != nil {
+				err := errors.Wrap(err, "Error during JSON Decoding")
+				log.Printf("Server error: %v", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
 			w.Header().Set("Content-Type", "application/json")
-			w.Write(body)
+			w.WriteHeader(r.StatusCode)
+			w.Write(jsonData)
 		case err := <-errorChan:
 			if err != nil {
 				log.Printf("Server error: %v", err)
@@ -88,39 +103,4 @@ func handlerWrapper(handler func(r *http.Request, responseChan chan []byte, erro
 		}
 		return
 	})
-}
-
-func exampleHandler(r *http.Request, responseChan chan []byte, errorChan chan error) {
-	ID := 0
-	apiToken := r.Header.Get("api_token")
-
-	// This is a join example for a patient call, change to physician it is a call only a physician can make
-	// remove join part if it is a call able for both
-	err := db.QueryRow(`SELECT id
-			   FROM Patients AS pa 
-			   INNER JOIN Accounts AS acc 
-			   ON pa.id = acc.id  
-			   WHERE acc.api_token = ?`,
-		apiToken).Scan(ID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			errorChan <- errors.Wrap(err, "no valid login credentials")
-			return
-		}
-		errorChan <- errors.Wrap(err, "encountered error during query")
-		return
-	}
-
-	// if you are going to insert multiple things in the database do this using a transaction.
-	// see insertPatient
-
-	// do your own querries,
-	// if you encounter a "err != nil" send it to the errorChan in the above matter
-	// if all goed well, marshal your results and sen them to responseChan
-
-	// End for a get function
-	// responseChan <- "your marshalled data"
-
-	// End for a succesfull push or put function
-	// errorChan <- nil
 }

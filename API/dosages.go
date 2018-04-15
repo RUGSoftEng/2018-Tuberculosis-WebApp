@@ -11,7 +11,7 @@ import (
 )
 
 // CREATE
-func pushDosage(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func pushDosage(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	vars := mux.Vars(r)
 	patientID := vars["id"]
 	dosage := Dosage{}
@@ -47,7 +47,11 @@ func pushDosage(r *http.Request, responseChan chan []byte, errorChan chan error)
 		return
 	}
 
-	errorChan <- tx.Commit()
+	if err = tx.Commit(); err != nil {
+		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+		return
+	}
+	responseChan <- APIResponse{nil, http.StatusCreated}
 }
 
 // RETRIEVE
@@ -55,7 +59,7 @@ func pushDosage(r *http.Request, responseChan chan []byte, errorChan chan error)
 //  Possible defaults:
 //     startDate = [current_day]
 //     endDate   = startDate + 1 month
-func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func getDosages(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	// verify patient ?
 	vars := mux.Vars(r)
 	patientID := vars["id"]
@@ -108,13 +112,5 @@ func getDosages(r *http.Request, responseChan chan []byte, errorChan chan error)
 		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
 		return
 	}
-
-	jsonValues, err := json.Marshal(dosages)
-	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error when converting to JSON")
-		return
-	}
-	responseChan <- jsonValues
-	errorChan <- nil
-	return
+	responseChan <- APIResponse{dosages, http.StatusOK}
 }
