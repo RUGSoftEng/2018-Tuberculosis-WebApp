@@ -1,0 +1,96 @@
+- First group meeting
+- First group meeting
+- First group meeting
+- First group meeting
+- Requirements Document: titlepage, formatting and small requirements adding.
+- Requirements Document: titlepage, formatting and small requirements adding.
+- Requirements Document: titlepage, formatting and small requirements adding.
+- Requirements Document: titlepage, formatting and small requirements adding.
+- Group meeting (whole group)
+- Group meeting (whole group)
+- Webapp group meeting
+- Webapp group meeting
+- Learning Golang
+- Learning Golang
+- Learning Golang
+- Learning Golang
+- Learning Golang
+- Learning Golang
+- Group meeting (whole group)
+- Webapp group meeting
+- TA group meeting
+- TA group meeting
+- Group meeting (whole group)
+- Group meeting (whole group)
+- Webapp group meeting
+- Webapp group meeting
+- Learning Testing in Golang
+- Learning Testing in Golang
+- Learning Testing in Golang
+- Created Architecture Document
+- First (very basic) Layout of Architecure Document
+- API Project creation on GitHub
+- Setting up local MySQL database, getting basic API functionality to work
+- Setting up local MySQL database, getting basic API functionality to work
+- Setting up local MySQL database, getting basic API functionality to work
+- Setting up local MySQL database, getting basic API functionality to work
+- Setting up local MySQL database, getting basic API functionality to work
+- Working on getDosages API Function
+- Working on getDosages API Function
+- Working on getDosages API Function
+- Working on getDosages API Function
+- Working on getDosages API Function
+- Added date interval ( [from, until] ) functionality for getDosages API
+- Work on getNotes and addNotes API
+- Work on getNotes and addNotes API
+- Work on getNotes and addNotes API
+- Group meeting
+- Group meeting
+- Webapp group discussion / meeting
+- Webapp group discussion / meeting
+- Renaming API paths & Database Table names
+- Renaming API paths & Database Table names
+- Renaming API paths & Database Table names
+- Renaming API paths & Database Table names
+- Learning vagrant
+- Learning vagrant
+- Learning vagrant
+- Very basic vagrant environment setup
+- Very basic vagrant environment setup
+- Very basic vagrant environment setup
+- Working version of automated vagrant setup + api connection
+- Working version of automated vagrant setup + api connection
+- Working version of automated vagrant setup + api connection
+- Working version of automated vagrant setup + api connection
+- Working version of automated vagrant setup + api connection
+- Working version of automated vagrant setup + api connection
+- Adding / Retrieving Videos
+- Adding / Retrieving Videos
+- New reloading database while vagrant VM is running
+- New reloading database while vagrant VM is running
+- Start of API documentation
+- Start of API documentation
+- Start of API documentation
+- Start of API documentation
+- Debugging minor problem with authentication
+- Debugging minor problem with authentication
+- Golint and Gofmt understanding and running
+- Golint and Gofmt understanding and running
+- Changed Dosages modeling and updated all methods which use the dosages
+- Changed Dosages modeling and updated all methods which use the dosages
+- Changed Dosages modeling and updated all methods which use the dosages
+- Changed Dosages modeling and updated all methods which use the dosages
+- Changed Dosages modeling and updated all methods which use the dosages
+- Changed Dosages modeling and updated all methods which use the dosages
+- Changed Dosages modeling and updated all methods which use the dosages
+- Changed Dosages modeling and updated all methods which use the dosages
+- Added api function for retrieving video topics
+- Added api function for retrieving video topics
+- Split the main.go file into sub files + created a makefile
+- Split the main.go file into sub files + created a makefile
+- Split the main.go file into sub files + created a makefile
+- Split the main.go file into sub files + created a makefile
+- Added safesql tool for spotting SQL Injection vunerabilities + reformatted the makefile
+- Removed exampleHandler + changes the response channel to accept unmarshelled data and a statuscode
+- Removed exampleHandler + changes the response channel to accept unmarshelled data and a statuscode
+- Removed exampleHandler + changes the response channel to accept unmarshelled data and a statuscode
