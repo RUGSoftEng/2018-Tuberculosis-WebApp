@@ -43,7 +43,6 @@ func main() {
 	postRouter.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(modifyPatient))
 	postRouter.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(modifyPhysician))
 	postRouter.Handle("/api/accounts/login", handlerWrapper(login))
-	postRouter.Handle("/api/accounts/authenticate", handlerWrapper(authenticate))
 
 	// PUT Requests for Creating
 	putRouter := router.Methods("PUT").Subrouter()
