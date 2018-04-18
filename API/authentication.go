@@ -81,7 +81,6 @@ func parseToken(in JWToken, errorChan chan error, responseChan chan APIResponse)
 			errorChan <- errors.New("Invalid token")
 			return false
 		} else {
-			responseChan <- APIResponse{"You're authenticated", http.StatusOK}
 			return true
 		}
 		return false
