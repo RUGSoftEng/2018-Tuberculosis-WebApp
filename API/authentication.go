@@ -93,6 +93,8 @@ func parseToken(in JWToken, errorChan chan error, responseChan chan APIResponse)
 // to restricted contents, this functions is only for test purposes, but it uses the
 // tokenParse() function that will do the core of the work
 
+
+// I think this function shield potentially return an error if the credentials are invalid, instead of the boolean
 func authenticate(r *http.Request, responseChan chan APIResponse, errorChan chan error) bool {
 	token := r.Header.Get("access_token")
 	pass := JWToken{Token:token}
@@ -102,5 +104,15 @@ func authenticate(r *http.Request, responseChan chan APIResponse, errorChan chan
 	} else {
 		log.Println("Access denied")
 		return false
+	}
+}
+
+func authWrapper(handler func(r *http.Request, responseChan chan APIResponse, errorChan chan error)) func(*http.Request, chan APIResponse, chan error) {
+	return func(req *http.Request, resChan chan APIResponse, errChan chan error) {
+		if !authenticate(req, resChan, errChan) {
+			errChan <- errors.New("Invalid Credentials")
+			return
+		}
+		handler(req, resChan, errChan)
 	}
 }
