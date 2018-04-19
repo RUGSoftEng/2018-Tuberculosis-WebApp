@@ -91,6 +91,12 @@
 - Split the main.go file into sub files + created a makefile
 - Split the main.go file into sub files + created a makefile
 - Added safesql tool for spotting SQL Injection vunerabilities + reformatted the makefile
-- Removed exampleHandler + changes the response channel to accept unmarshelled data and a statuscode
-- Removed exampleHandler + changes the response channel to accept unmarshelled data and a statuscode
-- Removed exampleHandler + changes the response channel to accept unmarshelled data and a statuscode
+- Removed exampleHandler + changes the response channel to accept unmarshalled data and a statuscode
+- Removed exampleHandler + changes the response channel to accept unmarshalled data and a statuscode
+- Removed exampleHandler + changes the response channel to accept unmarshalled data and a statuscode
+
+- Setting up Postman local testing + created authWrapper
+- Setting up Postman local testing + created authWrapper
+- Setting up Postman local testing + created authWrapper
+- Setting up Postman local testing + created authWrapper
+- Setting up Postman local testing + created authWrapper
