@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	http "net/http"
 	"time"
-	"log"
 )
 
 // CREATE
@@ -63,10 +62,10 @@ func pushDosage(r *http.Request, responseChan chan APIResponse, errorChan chan e
 func getDosages(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	// verify patient ?
 
-	if !authenticate(r, responseChan, errorChan) {
-		log.Println("You are not authenticated")
-		return
-	}
+//	if !authenticate(r, responseChan, errorChan) {
+//		log.Println("You are not authenticated")
+//		return
+//	}
 
 
 	vars := mux.Vars(r)

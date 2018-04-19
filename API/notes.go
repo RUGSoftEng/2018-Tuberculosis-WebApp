@@ -6,7 +6,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	http "net/http"
-	"log"
 )
 
 // CREATE
@@ -48,10 +47,10 @@ func addNote(r *http.Request, responseChan chan APIResponse, errorChan chan erro
 // Or all 'untreated' notes
 func getNotes(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 
-	if !authenticate(r, responseChan, errorChan) {
-		log.Println("You are not authenticated")
-		return
-	}
+//	if !authenticate(r, responseChan, errorChan) {
+//		log.Println("You are not authenticated")
+//		return
+//	}
 
 	vars := mux.Vars(r)
 	patientID := vars["id"]
