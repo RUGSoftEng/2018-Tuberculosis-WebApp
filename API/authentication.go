@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	_ "github.com/go-sql-driver/mysql" // anonymous import
 	"github.com/mitchellh/mapstructure"
@@ -62,12 +61,16 @@ func login(r *http.Request, responseChan chan APIResponse, errorChan chan error)
 
 func parseToken(in JWToken, errorChan chan error, responseChan chan APIResponse) bool {
 	content := in.Token
-	token, _ := jwt.Parse(content, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(content, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("There was an error")
+			return nil, errors.New("There was an error")
 		}
 		return []byte("secret"), nil
 	})
+	if err != nil {
+		errorChan <- errors.Wrap(err, "Invalid token")
+		return false
+	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		var user UserValidation
 		mapstructure.Decode(claims, &user)
@@ -78,7 +81,7 @@ func parseToken(in JWToken, errorChan chan error, responseChan chan APIResponse)
 			return false
 		}
 		if !CheckPasswordHash(user.Password, pwd, errorChan) {
-			errorChan <- errors.New("Invalid token")
+			errorChan <- errors.New("Invalid credentials")
 			return false
 		} else {
 			return true
