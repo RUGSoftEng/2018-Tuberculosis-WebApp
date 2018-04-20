@@ -60,7 +60,7 @@ func pushDosage(r *http.Request, responseChan chan APIResponse, errorChan chan e
 //     startDate = [current_day]
 //     endDate   = startDate + 1 month
 func getDosages(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
-	// verify patient ?
+
 	vars := mux.Vars(r)
 	patientID := vars["id"]
 

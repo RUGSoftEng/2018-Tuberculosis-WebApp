@@ -46,7 +46,7 @@ func addNote(r *http.Request, responseChan chan APIResponse, errorChan chan erro
 // Possible to also add a time interval?
 // Or all 'untreated' notes
 func getNotes(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
-	// verify patient
+
 	vars := mux.Vars(r)
 	patientID := vars["id"]
 
