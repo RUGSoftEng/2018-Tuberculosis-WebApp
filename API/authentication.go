@@ -113,7 +113,11 @@ func parseToken(in JWToken, errorChan chan error, responseChan chan APIResponse,
 func authenticate(r *http.Request, responseChan chan APIResponse, errorChan chan error) bool {
   vars := mux.Vars(r)
   id1 := vars["id"]
-	id, _ := strconv.Atoi(id1)
+	id, err := strconv.Atoi(id1)
+	if err != nil{
+		errorChan <- errors.Wrap(err, "Error in converting to int")
+		return false
+	}
 	token := r.Header.Get("access_token")
 	pass := JWToken{Token:token}
 	log.Println(pass)

@@ -60,13 +60,6 @@ func pushDosage(r *http.Request, responseChan chan APIResponse, errorChan chan e
 //     startDate = [current_day]
 //     endDate   = startDate + 1 month
 func getDosages(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
-	// verify patient ?
-
-//	if !authenticate(r, responseChan, errorChan) {
-//		log.Println("You are not authenticated")
-//		return
-//	}
-
 
 	vars := mux.Vars(r)
 	patientID := vars["id"]
