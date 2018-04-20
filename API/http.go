@@ -33,15 +33,15 @@ func main() {
 
 	// GET Requests for Retrieving
 	getRouter := router.Methods("GET").Subrouter()
-	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(getDosages))
-	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(getNotes))
+	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(authWrapper(getDosages)))
+	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(authWrapper(getNotes)))
 	getRouter.Handle("/api/general/videos/topics/{topic}", handlerWrapper(getVideoByTopic))
 	getRouter.Handle("/api/general/videos/topics", handlerWrapper(getTopics))
 
 	// POST Requests for Updating
 	postRouter := router.Methods("POST").Subrouter()
-	postRouter.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(modifyPatient))
-	postRouter.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(modifyPhysician))
+	postRouter.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(authWrapper(modifyPatient)))
+	postRouter.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(authWrapper(modifyPhysician)))
 	postRouter.Handle("/api/accounts/login", handlerWrapper(login))
 
 	// PUT Requests for Creating
@@ -49,7 +49,7 @@ func main() {
 	putRouter.Handle("/api/accounts/patients", handlerWrapper(pushPatient))
 	putRouter.Handle("/api/accounts/physicians", handlerWrapper(pushPhysician))
 	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(pushDosage))
-	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(authWrapper(addNote)))
+	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(addNote))
 	putRouter.Handle("/api/general/videos", handlerWrapper(addVideo))
 
 	// DELETE Requests for Deleting

@@ -9,6 +9,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	http "net/http"
+	"github.com/gorilla/mux"
+	"strconv"
 )
 
 type fn func(*http.Request, chan APIResponse, chan error)
@@ -59,7 +61,7 @@ func login(r *http.Request, responseChan chan APIResponse, errorChan chan error)
 	return
 }
 
-func parseToken(in JWToken, errorChan chan error, responseChan chan APIResponse) bool {
+func parseToken(in JWToken, errorChan chan error, responseChan chan APIResponse, id int) bool {
 	content := in.Token
 	token, err := jwt.Parse(content, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -78,6 +80,16 @@ func parseToken(in JWToken, errorChan chan error, responseChan chan APIResponse)
 		err := db.QueryRow(`SELECT pass_hash FROM Accounts WHERE username=?`, user.Username).Scan(&pwd)
 		if err != nil {
 			errorChan <- errors.Wrap(err, "Database failure")
+			return false
+		}
+		var readId int
+		err = db.QueryRow(`SELECT id FROM Accounts WHERE username=?`, user.Username).Scan(&readId)
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Database failure")
+			return false
+		}
+		if id != readId{
+			errorChan <- errors.Wrap(errors.New("Wrong credentials"), "Wrong credentials")
 			return false
 		}
 		if !CheckPasswordHash(user.Password, pwd, errorChan) {
@@ -99,10 +111,13 @@ func parseToken(in JWToken, errorChan chan error, responseChan chan APIResponse)
 
 // I think this function shield potentially return an error if the credentials are invalid, instead of the boolean
 func authenticate(r *http.Request, responseChan chan APIResponse, errorChan chan error) bool {
+  vars := mux.Vars(r)
+  id1 := vars["id"]
+	id, _ := strconv.Atoi(id1)
 	token := r.Header.Get("access_token")
 	pass := JWToken{Token:token}
 	log.Println(pass)
-	if parseToken(pass, errorChan, responseChan) {
+	if parseToken(pass, errorChan, responseChan, id) {
 		return true
 	} else {
 		log.Println("Access denied")
@@ -112,7 +127,9 @@ func authenticate(r *http.Request, responseChan chan APIResponse, errorChan chan
 
 func authWrapper(handler func(r *http.Request, responseChan chan APIResponse, errorChan chan error)) func(*http.Request, chan APIResponse, chan error) {
 	return func(req *http.Request, resChan chan APIResponse, errChan chan error) {
+		log.Println("Are we here?")
 		if !authenticate(req, resChan, errChan) {
+			log.Println("Are we here in the if statement :p?")
 			errChan <- errors.New("Invalid Credentials")
 			return
 		}
