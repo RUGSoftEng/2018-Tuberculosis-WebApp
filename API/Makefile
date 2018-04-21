@@ -21,7 +21,7 @@ fmt:
 
 #############################
 # Go Tools for error checking
-check: lint vet safesql errcheck
+check: deps_check lint vet safesql errcheck
 
 # -set_exit_status: returns 1 if any improvements could be found
 lint:
@@ -42,7 +42,7 @@ errcheck:
 #####################################################
 # Dependencies for running the makefile
 # This does not get the dependencies for the api code
-deps_make:
+deps_check:
 	go get -u golang.org/x/lint/golint
 	go get -u github.com/stripe/safesql
 	go get -u github.com/kisielk/errcheck
