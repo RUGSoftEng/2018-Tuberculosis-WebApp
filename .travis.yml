@@ -1,3 +1,6 @@
+os:
+ - linux
+
 language: go
 go:
  - "1.10"
@@ -5,6 +8,9 @@ go:
 install:
  - Makefile
 
+before_script:
+ - cd ./API/
+
 script:
- - make check -C ./API/
- - make build -C ./API/
+ - make check
+ - make build
