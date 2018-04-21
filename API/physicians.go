@@ -33,7 +33,10 @@ func pushPhysician(r *http.Request, responseChan chan APIResponse, errorChan cha
                                 VALUES(?, ?, ?, ?)`, physician.Name, physician.Username, physician.Password, role)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 	id, err := result.LastInsertId()
@@ -41,7 +44,10 @@ func pushPhysician(r *http.Request, responseChan chan APIResponse, errorChan cha
 		id, physician.Email, physician.CreationToken)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 
@@ -80,7 +86,10 @@ func modifyPhysician(r *http.Request, responseChan chan APIResponse, errorChan c
                           WHERE id=?`, physician.Name, physician.Password, id)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 	_, err = tx.Exec(`UPDATE Physicians SET
@@ -89,7 +98,10 @@ func modifyPhysician(r *http.Request, responseChan chan APIResponse, errorChan c
                           WHERE id = ?`, physician.Email, physician.CreationToken, id)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 
@@ -113,13 +125,19 @@ func deletePhysician(r *http.Request, responseChan chan APIResponse, errorChan c
 	_, err = tx.Exec(`DELETE FROM Physicians  WHERE id=?`, id)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 	_, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, id)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 

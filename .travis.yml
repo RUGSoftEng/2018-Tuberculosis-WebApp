@@ -1,0 +1,13 @@
+os:
+ - linux
+
+language: go
+go:
+ - "1.10"
+
+before_script:
+ - cd ./API/
+
+script:
+ - make check
+ - make build
