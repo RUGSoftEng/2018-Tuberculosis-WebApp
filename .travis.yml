@@ -1,0 +1,10 @@
+language: go
+go:
+ - "1.10"
+
+install:
+ - Makefile
+
+script:
+ - make check -C ./API/
+ - make build -C ./API/
