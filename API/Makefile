@@ -21,14 +21,24 @@ fmt:
 
 #############################
 # Go Tools for error checking
-check: deps_check lint vet safesql errcheck
+check: deps_check lint vet fmt_check safesql errcheck
 
 # -set_exit_status: returns 1 if any improvements could be found
 lint:
 	golint -set_exit_status *.go
 
+# Checks for potential errors
 vet:
 	go vet *.go
+
+# Check whether the code has been formatted
+fmt_check:
+ifneq ($(strip $(shell gofmt -l *.go)),)
+	$(error Unformatted go code (run [gofmt], or [make format]))
+else
+	@echo Code is formatted properly
+endif
+
 
 # Looks for SQL Injection weaknesses
 # -q: No output if nothing fails
@@ -47,7 +57,7 @@ deps_check:
 	go get -u github.com/stripe/safesql
 	go get -u github.com/kisielk/errcheck
 
-##############################
+###############################
 # Dependencies for the api code
 deps_code:
 	go get -u github.com/pkg/errors
