@@ -58,7 +58,10 @@ func main() {
 	deleteRouter.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(deletePhysician))
 
 	// Starting the router
-	http.ListenAndServe(listenLocation, router)
+	err = http.ListenAndServe(listenLocation, router)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func handlerWrapper(handler func(r *http.Request, responseChan chan APIResponse, errorChan chan error)) http.Handler {
@@ -88,7 +91,12 @@ func handlerWrapper(handler func(r *http.Request, responseChan chan APIResponse,
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(r.StatusCode)
-			w.Write(jsonData)
+			_, err = w.Write(jsonData) //returns an integer, not sure what it's used for
+			if err != nil {
+				log.Printf("Server error: %v", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		case err := <-errorChan:
 			if err != nil {
 				log.Printf("Server error: %v", err)

@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"github.com/dgrijalva/jwt-go"
 	_ "github.com/go-sql-driver/mysql" // anonymous import
+	"github.com/gorilla/mux"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	http "net/http"
-	"github.com/gorilla/mux"
 	"strconv"
 )
 
@@ -75,30 +75,32 @@ func parseToken(in JWToken, errorChan chan error, responseChan chan APIResponse,
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		var user UserValidation
-		mapstructure.Decode(claims, &user)
+		err = mapstructure.Decode(claims, &user)
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Failed to decode")
+			return false
+		}
 		var pwd string
 		err := db.QueryRow(`SELECT pass_hash FROM Accounts WHERE username=?`, user.Username).Scan(&pwd)
 		if err != nil {
 			errorChan <- errors.Wrap(err, "Database failure")
 			return false
 		}
-		var readId int
-		err = db.QueryRow(`SELECT id FROM Accounts WHERE username=?`, user.Username).Scan(&readId)
+		var readID int
+		err = db.QueryRow(`SELECT id FROM Accounts WHERE username=?`, user.Username).Scan(&readID)
 		if err != nil {
 			errorChan <- errors.Wrap(err, "Database failure")
 			return false
 		}
-		if id != readId{
+		if id != readID {
 			errorChan <- errors.Wrap(errors.New("Wrong credentials"), "Wrong credentials")
 			return false
 		}
 		if !CheckPasswordHash(user.Password, pwd, errorChan) {
 			errorChan <- errors.New("Invalid credentials")
 			return false
-		} else {
-			return true
 		}
-		return false
+		return true
 	}
 	errorChan <- errors.New("Invalid token")
 	return false
@@ -108,25 +110,23 @@ func parseToken(in JWToken, errorChan chan error, responseChan chan APIResponse,
 // to restricted contents, this functions is only for test purposes, but it uses the
 // tokenParse() function that will do the core of the work
 
-
 // I think this function shield potentially return an error if the credentials are invalid, instead of the boolean
 func authenticate(r *http.Request, responseChan chan APIResponse, errorChan chan error) bool {
-  vars := mux.Vars(r)
-  id1 := vars["id"]
+	vars := mux.Vars(r)
+	id1 := vars["id"]
 	id, err := strconv.Atoi(id1)
-	if err != nil{
+	if err != nil {
 		errorChan <- errors.Wrap(err, "Error in converting to int")
 		return false
 	}
 	token := r.Header.Get("access_token")
-	pass := JWToken{Token:token}
+	pass := JWToken{Token: token}
 	log.Println(pass)
 	if parseToken(pass, errorChan, responseChan, id) {
 		return true
-	} else {
-		log.Println("Access denied")
-		return false
 	}
+	log.Println("Access denied")
+	return false
 }
 
 func authWrapper(handler func(r *http.Request, responseChan chan APIResponse, errorChan chan error)) func(*http.Request, chan APIResponse, chan error) {

@@ -35,7 +35,10 @@ func pushDosage(r *http.Request, responseChan chan APIResponse, errorChan chan e
 		} else {
 			errorChan <- errors.Wrap(err, "Failed to execute query")
 		}
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback Failed")
+		}
 		return
 	}
 	_, err = tx.Exec(`INSERT INTO Dosages (patient_id, medicine_id, amount, intake_time) 
@@ -43,7 +46,10 @@ func pushDosage(r *http.Request, responseChan chan APIResponse, errorChan chan e
 		patientID, medicineID, dosage.NumberOfPills, dosage.IntakeMoment)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback Failed")
+		}
 		return
 	}
 
