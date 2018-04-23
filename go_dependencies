@@ -1,0 +1,7 @@
+github.com/pkg/errors
+github.com/gorilla/mux
+golang.org/x/crypto/bcrypt
+github.com/go-sql-driver/mysql
+github.com/dgrijalva/jwt-go
+github.com/mitchellh/mapstructure
+golang.org/x/lint/golint
