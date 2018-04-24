@@ -9,50 +9,56 @@ import (
 )
 
 // CREATE
-func addNote(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
+func addNote(r *http.Request, ar *APIResponse) {
 	// verify patient
-	vars := mux.Vars(r)
-	patientID := vars["id"]
-
 	note := Note{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&note)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error during JSON decoding")
+		ar.StatusCode = http.StatusBadRequest
+		ar.Error = errors.Wrap(err, "Unexpected error during JSON decoding")
 		return
 	}
 
-	trans, err := db.Begin()
+	tx, err := db.Begin()
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Failed to start new transaction")
+		ar.StatusCode = http.StatusInternalServerError
+		ar.Error = errors.Wrap(err, "Failed to start new transaction")
 		return
 	}
-	_, err = trans.Exec(
+
+	vars := mux.Vars(r)
+	patientID := vars["id"]
+	_, err = tx.Exec(
 		`INSERT INTO Notes (patient_id, question, day) VALUES (?, ?, ?)`,
 		patientID, note.Note, note.CreatedAt)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Failed to insert note into the database")
+		ar.StatusCode = http.StatusInternalServerError
+		ar.Error = errors.Wrap(err, "Failed to insert note into the database")
 		return
 	}
 
-	if err = trans.Commit(); err != nil {
-		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+	if err = tx.Commit(); err != nil {
+		ar.StatusCode = http.StatusInternalServerError
+		ar.Error = errors.Wrap(err, "Failed to commit changes to database.")
 		return
 	}
-	responseChan <- APIResponse{nil, http.StatusCreated}
+
+	ar.StatusCode = http.StatusCreated
 }
 
 // RETRIEVE
 // Possible to also add a time interval?
 // Or all 'untreated' notes
-func getNotes(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
+func getNotes(r *http.Request, ar *APIResponse) {
 
 	vars := mux.Vars(r)
 	patientID := vars["id"]
 
 	rows, err := db.Query(`SELECT question, day FROM Notes WHERE patient_id = ?`, patientID)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error during query")
+		ar.StatusCode = http.StatusInternalServerError
+		ar.Error =  errors.Wrap(err, "Unexpected error during query")
 		return
 	}
 
@@ -61,14 +67,17 @@ func getNotes(r *http.Request, responseChan chan APIResponse, errorChan chan err
 		var note, date string
 		err = rows.Scan(&note, &date)
 		if err != nil {
-			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
+			ar.StatusCode = http.StatusInternalServerError
+			ar.Error =  errors.Wrap(err, "Unexpected error during row scanning")
 			return
 		}
 		notes = append(notes, Note{note, date})
 	}
 	if err = rows.Err(); err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
+		ar.StatusCode = http.StatusInternalServerError
+		ar.Error =  errors.Wrap(err, "Unexpected error after scanning rows")
 		return
 	}
-	responseChan <- APIResponse{notes, http.StatusOK}
+
+	ar.Data = notes
 }

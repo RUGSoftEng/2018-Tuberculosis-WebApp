@@ -9,39 +9,45 @@ import (
 )
 
 // CREATE
-func addVideo(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
+func addVideo(r *http.Request, ar *APIResponse) {
 	video := Video{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&video)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error during JSON decoding")
+		ar.StatusCode = http.StatusBadRequest
+		ar.Error = errors.Wrap(err, "Unexpected error during JSON decoding")
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Failed to start new transaction")
+		ar.StatusCode = http.StatusInternalServerError
+		ar.Error = errors.Wrap(err, "Failed to start new transaction")
 		return
 	}
 	_, err = tx.Exec(`INSERT INTO Videos (topic, title, reference) VALUES (?, ?, ?)`,
 		video.Topic, video.Title, video.Reference)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Failed to insert video into the database")
+		ar.StatusCode = http.StatusInternalServerError
+		err = errors.Wrap(err, "Failed to insert video into the database")
+		ar.Error = errorWithRollback(err, tx)
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+		ar.StatusCode = http.StatusInternalServerError
+		ar.Error = errors.Wrap(err, "Failed to commit changes to database.")
 		return
 	}
-	responseChan <- APIResponse{nil, http.StatusCreated}
+	ar.StatusCode = http.StatusCreated
 }
 
 // RETRIEVE
-func getTopics(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
+func getTopics(r *http.Request, ar *APIResponse) {
 	rows, err := db.Query(`SELECT DISTINCT topic FROM Videos`)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error when querying the database")
+		ar.StatusCode = http.StatusInternalServerError
+		ar.Error = errors.Wrap(err, "Unexpected error when querying the database")
 		return
 	}
 
@@ -50,26 +56,29 @@ func getTopics(r *http.Request, responseChan chan APIResponse, errorChan chan er
 		var topic string
 		err = rows.Scan(&topic)
 		if err != nil {
-			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
+			ar.StatusCode = http.StatusInternalServerError
+			ar.Error = errors.Wrap(err, "Unexpected error during row scanning")
 			return
 		}
 		topics = append(topics, topic)
 	}
 	if err = rows.Err(); err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
+		ar.StatusCode = http.StatusInternalServerError
+		ar.Error = errors.Wrap(err, "Unexpected error after scanning rows")
 		return
 	}
-	responseChan <- APIResponse{topics, http.StatusOK}
+	ar.Data = topics
 }
 
 // RETRIEVE
-func getVideoByTopic(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
+func getVideoByTopic(r *http.Request, ar *APIResponse) {
 	vars := mux.Vars(r)
 	topic := vars["topic"]
 
 	rows, err := db.Query(`SELECT topic, title, reference FROM Videos WHERE topic = ?`, topic)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error when querying the database")
+		ar.StatusCode = http.StatusInternalServerError
+		ar.Error = errors.Wrap(err, "Unexpected error when querying the database")
 		return
 	}
 
@@ -78,14 +87,17 @@ func getVideoByTopic(r *http.Request, responseChan chan APIResponse, errorChan c
 		var topic, title, reference string
 		err = rows.Scan(&topic, &title, &reference)
 		if err != nil {
-			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
+			ar.StatusCode = http.StatusInternalServerError
+			ar.Error = errors.Wrap(err, "Unexpected error during row scanning")
 			return
 		}
 		videos = append(videos, Video{topic, title, reference})
 	}
 	if err = rows.Err(); err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
+		ar.StatusCode = http.StatusInternalServerError
+		ar.Error = errors.Wrap(err, "Unexpected error after scanning rows")
 		return
 	}
-	responseChan <- APIResponse{videos, http.StatusOK}
+
+	ar.Data = videos
 }

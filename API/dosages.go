@@ -11,53 +11,65 @@ import (
 )
 
 // CREATE
-func pushDosage(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
-	vars := mux.Vars(r)
-	patientID := vars["id"]
+func pushDosage(r *http.Request, ar *APIResponse) {
+
 	dosage := Dosage{}
-	var medicineID int
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&dosage)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Failed to decode JSON")
+		ar.StatusCode = http.StatusBadRequest
+		ar.Error = errors.Wrap(err, "Failed to decode JSON")
 		return
 	}
+
 	tx, err := db.Begin()
 	if err != nil {
-		errorChan <- errors.Wrap(err, "failed to start transaction")
+		ar.StatusCode = http.StatusInternalServerError
+		ar.Error = errors.Wrap(err, "failed to start transaction")
 		return
 	}
+
+	var medicineID int
 	err = tx.QueryRow(`SELECT id FROM Medicines WHERE med_name = ?`,
 		dosage.Medicine.Name).Scan(&medicineID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			errorChan <- errors.Wrap(err, "Unknown medicine")
+			ar.StatusCode = http.StatusNotFound
+			ar.Error = errors.Wrap(err, "Unknown medicine")
 		} else {
-			errorChan <- errors.Wrap(err, "Failed to execute query")
+			ar.StatusCode = http.StatusInternalServerError
+			ar.Error = errors.Wrap(err, "Failed to execute query")
 		}
 		err = tx.Rollback()
 		if err != nil {
-			errorChan <- errors.Wrap(err, "Rollback Failed")
+			ar.StatusCode = http.StatusInternalServerError
+			ar.Error = errors.Wrap(err, "Rollback Failed")
 		}
 		return
 	}
+
+	vars := mux.Vars(r)
+	patientID := vars["id"]
 	_, err = tx.Exec(`INSERT INTO Dosages (patient_id, medicine_id, amount, intake_time) 
                           VALUES (?, ?, ?, ?)`,
 		patientID, medicineID, dosage.NumberOfPills, dosage.IntakeMoment)
 	if err != nil {
-		errorChan <- err
+		ar.Error = err
 		err = tx.Rollback()
 		if err != nil {
-			errorChan <- errors.Wrap(err, "Rollback Failed")
+			ar.StatusCode = http.StatusInternalServerError
+			ar.Error = errors.Wrap(err, "Rollback Failed")
 		}
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+		ar.StatusCode = http.StatusInternalServerError
+		ar.Error = errors.Wrap(err, "Failed to commit changes to database.")
 		return
 	}
-	responseChan <- APIResponse{nil, http.StatusCreated}
+
+	ar.StatusCode = http.StatusCreated
 }
 
 // RETRIEVE
@@ -65,7 +77,7 @@ func pushDosage(r *http.Request, responseChan chan APIResponse, errorChan chan e
 //  Possible defaults:
 //     startDate = [current_day]
 //     endDate   = startDate + 1 month
-func getDosages(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
+func getDosages(r *http.Request, ar *APIResponse) {
 
 	vars := mux.Vars(r)
 	patientID := vars["id"]
@@ -75,12 +87,14 @@ func getDosages(r *http.Request, responseChan chan APIResponse, errorChan chan e
 	const dform = "2006-01-02" // specifies YYYY-MM-DD format
 	startDate, err := time.Parse(dform, from)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error in parsing starting date")
+		ar.StatusCode = http.StatusBadRequest
+		ar.Error = errors.Wrap(err, "Error wrong from date, expected: yyyy-mm-dd")
 		return
 	}
 	endDate, err := time.Parse(dform, until)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error in parsing end time")
+		ar.StatusCode = http.StatusBadRequest
+		ar.Error = errors.Wrap(err, "Error wrong until date, expected: yyyy-mm-dd")
 		return
 	}
 
@@ -94,7 +108,8 @@ func getDosages(r *http.Request, responseChan chan APIResponse, errorChan chan e
                                WHERE day BETWEEN ? AND ?`,
 		patientID, startDate.Format(dform), endDate.Format(dform))
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error during query")
+		ar.StatusCode = http.StatusInternalServerError
+		ar.Error = errors.Wrap(err, "Unexpected error during query")
 		return
 	}
 
@@ -105,7 +120,8 @@ func getDosages(r *http.Request, responseChan chan APIResponse, errorChan chan e
 		var taken bool
 		err = rows.Scan(&amount, &medicine, &day, &intakeTime, &taken)
 		if err != nil {
-			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
+			ar.StatusCode = http.StatusInternalServerError
+			ar.Error = errors.Wrap(err, "Unexpected error during row scanning")
 			return
 		}
 		dosages = append(dosages, ScheduledDosage{
@@ -115,8 +131,9 @@ func getDosages(r *http.Request, responseChan chan APIResponse, errorChan chan e
 		})
 	}
 	if err = rows.Err(); err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
+		ar.StatusCode = http.StatusInternalServerError
+		ar.Error = errors.Wrap(err, "Unexpected error after scanning rows")
 		return
 	}
-	responseChan <- APIResponse{dosages, http.StatusOK}
+	ar.Data = dosages
 }

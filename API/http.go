@@ -64,50 +64,50 @@ func main() {
 	}
 }
 
-func handlerWrapper(handler func(r *http.Request, responseChan chan APIResponse, errorChan chan error)) http.Handler {
+// APIResponse : Type used by the Response Channel
+// in the handlerWrapper (does not need json tags)
+type APIResponse struct {
+	Data       interface{}
+	StatusCode int
+	Error error
+}
+
+func handlerWrapper(handler func(r *http.Request, ar *APIResponse) ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		responseChan := make(chan APIResponse)
-		errorChan := make(chan error)
 
-		go handler(r, responseChan, errorChan)
+		ar := APIResponse{nil, 200, nil}
+		handler(r, &ar)
 
-		time.After(2 * time.Second)
-
-		select {
-		case r := <-responseChan:
-			// Maybe check for certain status codes not returning a body (e.g. StatusCreated)
-			if r.StatusCode == http.StatusCreated {
-				w.WriteHeader(r.StatusCode)
-				return
+		if ar.Error != nil {
+			log.Printf("Server error: %v", ar.Error)
+			if ar.StatusCode == http.StatusInternalServerError {
+				ar.Error = errors.New(http.StatusText(http.StatusInternalServerError))
 			}
-
-			jsonData, err := json.Marshal(r.Data)
-			if err != nil {
-				err := errors.Wrap(err, "Error during JSON Decoding")
-				log.Printf("Server error: %v", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(r.StatusCode)
-			_, err = w.Write(jsonData) //returns an integer, not sure what it's used for
-			if err != nil {
-				log.Printf("Server error: %v", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		case err := <-errorChan:
-			if err != nil {
-				log.Printf("Server error: %v", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			w.WriteHeader(http.StatusAccepted)
-			http.Error(w, http.StatusText(http.StatusAccepted), http.StatusAccepted)
-		case <-time.After(5 * time.Second):
-			log.Printf("Response timeout")
+			http.Error(w, ar.Error.Error(), ar.StatusCode)
+			return
 		}
+
+		if ar.Data == nil {
+			w.WriteHeader(ar.StatusCode)
+		}
+
+		jsonData, err := json.Marshal(ar.Data)
+		if err != nil {
+			err := errors.Wrap(err, "Error during JSON Decoding")
+			log.Printf("Error marshalling response: %v", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(ar.StatusCode)
+		_, err = w.Write(jsonData) //returns an integer, not sure what it's used for
+		if err != nil {
+			log.Printf("Error sending response to request: %v", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
 		return
 	})
 }
