@@ -1,5 +1,10 @@
 package main
 
+import (
+	"database/sql"
+	"github.com/pkg/errors"
+)
+
 // ScheduledDosage : Describes an instance of a dosage for the schedule
 type ScheduledDosage struct {
 	Dosage Dosage `json:"dosage"`
@@ -62,9 +67,10 @@ type JWToken struct {
 	Token string `json:"token"`
 }
 
-// APIResponse : Type used by the Response Channel
-// in the handlerWrapper (does not need json tags)
-type APIResponse struct {
-	Data       interface{}
-	StatusCode int
+func errorWithRollback(err error, tx *sql.Tx) error {
+	err2 := tx.Rollback()
+	if err2 != nil {
+		err = errors.New(err.Error() + "\n Rollback failed:" + err2.Error())
+	}
+	return err
 }
