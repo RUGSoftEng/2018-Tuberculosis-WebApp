@@ -5,13 +5,12 @@ import (
 	_ "github.com/go-sql-driver/mysql" // anonymous import
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	"log"
 	http "net/http"
 )
 
 // CREATE
 // expects a json file containing the new patient and a url encoded physician token
-func pushPatient(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func pushPatient(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	patient := Patient{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&patient)
@@ -34,31 +33,42 @@ func pushPatient(r *http.Request, responseChan chan []byte, errorChan chan error
                                 VALUES(?, ?, ?, ?)`, patient.Name, patient.Username, patient.Password, role)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 	id, err := result.LastInsertId()
 	creationToken := r.URL.Query().Get("token")
-	log.Println(creationToken)
 	var physicianID int
 	err = tx.QueryRow(`SELECT id FROM Physicians WHERE token=?`, creationToken).Scan(&physicianID)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
-	log.Println(physicianID)
 	_, err = tx.Exec(`INSERT INTO Patients VALUES(?,?)`, id, physicianID)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
-	errorChan <- tx.Commit()
+	if err = tx.Commit(); err != nil {
+		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+		return
+	}
+	responseChan <- APIResponse{nil, http.StatusCreated}
 }
 
 // UPDATE
-func modifyPatient(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func modifyPatient(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	patient := Patient{}
@@ -81,22 +91,28 @@ func modifyPatient(r *http.Request, responseChan chan []byte, errorChan chan err
 		errorChan <- errors.Wrap(err, "failed to start transaction")
 		return
 	}
-	tx.Exec(`UPDATE Accounts SET 
+	_, err = tx.Exec(`UPDATE Accounts SET 
                  name = ?,
                  pass_hash = ?
                  WHERE id = ?`, patient.Name, patient.Password, id)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 
-	errorChan <- tx.Commit()
-
+	if err = tx.Commit(); err != nil {
+		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+		return
+	}
+	responseChan <- APIResponse{nil, http.StatusOK}
 }
 
 // DELETE
-func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func deletePatient(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	tx, err := db.Begin()
@@ -107,7 +123,10 @@ func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan err
 	_, err = tx.Exec(`DELETE FROM Notes WHERE patient_id=?`, id)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 
@@ -116,7 +135,10 @@ func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan err
                                WHERE patient_id = ?`, id)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 	var dosageIDs []int
@@ -125,14 +147,20 @@ func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan err
 		err = rows.Scan(&id)
 		if err != nil {
 			errorChan <- err
-			tx.Rollback()
+			err = tx.Rollback()
+			if err != nil {
+				errorChan <- errors.Wrap(err, "Rollback failed")
+			}
 			return
 		}
 		dosageIDs = append(dosageIDs, dosageID)
 	}
 	if rows.Err() != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 
@@ -141,7 +169,10 @@ func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan err
 		_, err = tx.Exec(`DELETE FROM SchedulesDosages WHERE dosage=?`, dosageID)
 		if err != nil {
 			errorChan <- err
-			tx.Rollback()
+			err = tx.Rollback()
+			if err != nil {
+				errorChan <- errors.Wrap(err, "Rollback failed")
+			}
 			return
 		}
 	}
@@ -149,22 +180,35 @@ func deletePatient(r *http.Request, responseChan chan []byte, errorChan chan err
 	_, err = tx.Exec(`DELETE FROM Dosages WHERE patient_id=?`, id)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 
 	_, err = tx.Exec(`DELETE FROM Patients WHERE id=?`, id)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 	_, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, id)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 
-	errorChan <- tx.Commit()
+	if err = tx.Commit(); err != nil {
+		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+		return
+	}
+	responseChan <- APIResponse{nil, http.StatusOK}
 }

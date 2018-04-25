@@ -10,7 +10,7 @@ import (
 )
 
 // CREATE
-func pushPhysician(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func pushPhysician(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	physician := Physician{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&physician)
@@ -33,7 +33,10 @@ func pushPhysician(r *http.Request, responseChan chan []byte, errorChan chan err
                                 VALUES(?, ?, ?, ?)`, physician.Name, physician.Username, physician.Password, role)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 	id, err := result.LastInsertId()
@@ -41,16 +44,23 @@ func pushPhysician(r *http.Request, responseChan chan []byte, errorChan chan err
 		id, physician.Email, physician.CreationToken)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 
-	errorChan <- tx.Commit()
+	if err = tx.Commit(); err != nil {
+		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+		return
+	}
 
+	responseChan <- APIResponse{nil, http.StatusCreated}
 }
 
 // UPDATE
-func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func modifyPhysician(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	physician := Physician{}
@@ -76,7 +86,10 @@ func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan e
                           WHERE id=?`, physician.Name, physician.Password, id)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 	_, err = tx.Exec(`UPDATE Physicians SET
@@ -85,15 +98,22 @@ func modifyPhysician(r *http.Request, responseChan chan []byte, errorChan chan e
                           WHERE id = ?`, physician.Email, physician.CreationToken, id)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 
-	errorChan <- tx.Commit()
+	if err = tx.Commit(); err != nil {
+		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+		return
+	}
+	responseChan <- APIResponse{nil, http.StatusOK}
 }
 
 // DELETE
-func deletePhysician(r *http.Request, responseChan chan []byte, errorChan chan error) {
+func deletePhysician(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	log.Println(id)
@@ -105,15 +125,25 @@ func deletePhysician(r *http.Request, responseChan chan []byte, errorChan chan e
 	_, err = tx.Exec(`DELETE FROM Physicians  WHERE id=?`, id)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 	_, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, id)
 	if err != nil {
 		errorChan <- err
-		tx.Rollback()
+		err = tx.Rollback()
+		if err != nil {
+			errorChan <- errors.Wrap(err, "Rollback failed")
+		}
 		return
 	}
 
-	errorChan <- tx.Commit()
+	if err = tx.Commit(); err != nil {
+		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+		return
+	}
+	responseChan <- APIResponse{nil, http.StatusOK}
 }

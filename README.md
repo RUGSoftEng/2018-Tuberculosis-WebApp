@@ -1,5 +1,12 @@
 # 2018-Tuberculosis
 
+master [![Build Status](https://travis-ci.org/RUGSoftEng/2018-Tuberculosis-WebApp.svg?branch=master)](https://travis-ci.org/RUGSoftEng/2018-Tuberculosis-WebApp)
+
+development [![Build Status](https://travis-ci.org/RUGSoftEng/2018-Tuberculosis-WebApp.svg?branch=development)](https://travis-ci.org/RUGSoftEng/2018-Tuberculosis-WebApp)
+
+dev-web [![Build Status](https://travis-ci.org/RUGSoftEng/2018-Tuberculosis-WebApp.svg?branch=dev-web)](https://travis-ci.org/RUGSoftEng/2018-Tuberculosis-WebApp)
+
+---
 * [Vagrant](#vagrant)
 * [API](#api)
 * [Database](#database)
