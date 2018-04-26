@@ -109,10 +109,10 @@ func parseToken(in JWToken, ar *APIResponse, id int) {
 		}
 		return
 	}
-/*
-	ar.StatusCode = http.StatusBadRequest
-	ar.Error = errors.Wrap(err, "Authentication failed: Mismatching credentials")
-*/
+	/*
+		ar.StatusCode = http.StatusBadRequest
+		ar.Error = errors.Wrap(err, "Authentication failed: Mismatching credentials")
+	*/
 }
 
 // Token authentication will probably be embedded in all the request that are give access
