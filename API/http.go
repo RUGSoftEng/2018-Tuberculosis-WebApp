@@ -68,10 +68,10 @@ func main() {
 type APIResponse struct {
 	Data       interface{}
 	StatusCode int
-	Error error
+	Error      error
 }
 
-func handlerWrapper(handler func(r *http.Request, ar *APIResponse) ) http.Handler {
+func handlerWrapper(handler func(r *http.Request, ar *APIResponse)) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		ar := APIResponse{nil, 200, nil}

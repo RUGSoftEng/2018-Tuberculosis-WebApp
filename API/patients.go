@@ -125,7 +125,7 @@ func deletePatient(r *http.Request, ar *APIResponse) {
 	tx, err := db.Begin()
 	if err != nil {
 		ar.StatusCode = http.StatusInternalServerError
-		ar.Error =  errors.Wrap(err, "failed to start transaction")
+		ar.Error = errors.Wrap(err, "failed to start transaction")
 		return
 	}
 

@@ -58,7 +58,7 @@ func getNotes(r *http.Request, ar *APIResponse) {
 	rows, err := db.Query(`SELECT question, day FROM Notes WHERE patient_id = ?`, patientID)
 	if err != nil {
 		ar.StatusCode = http.StatusInternalServerError
-		ar.Error =  errors.Wrap(err, "Unexpected error during query")
+		ar.Error = errors.Wrap(err, "Unexpected error during query")
 		return
 	}
 
@@ -68,14 +68,14 @@ func getNotes(r *http.Request, ar *APIResponse) {
 		err = rows.Scan(&note, &date)
 		if err != nil {
 			ar.StatusCode = http.StatusInternalServerError
-			ar.Error =  errors.Wrap(err, "Unexpected error during row scanning")
+			ar.Error = errors.Wrap(err, "Unexpected error during row scanning")
 			return
 		}
 		notes = append(notes, Note{note, date})
 	}
 	if err = rows.Err(); err != nil {
 		ar.StatusCode = http.StatusInternalServerError
-		ar.Error =  errors.Wrap(err, "Unexpected error after scanning rows")
+		ar.Error = errors.Wrap(err, "Unexpected error after scanning rows")
 		return
 	}
 

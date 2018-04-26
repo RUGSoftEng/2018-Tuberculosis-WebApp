@@ -70,11 +70,7 @@ type JWToken struct {
 func errorWithRollback(err error, tx *sql.Tx) error {
 	err2 := tx.Rollback()
 	if err2 != nil {
-<<<<<<< HEAD
 		err = errors.New(err.Error() + "\n Rollback failed:" + err2.Error())
-=======
-		err.Error()  += "\n Rollback failed:" + err2.Error()
->>>>>>> 88dc7c43482321b34a3209def3966310ab4c56a2
 	}
 	return err
 }
