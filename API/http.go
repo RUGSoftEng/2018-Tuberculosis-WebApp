@@ -88,6 +88,7 @@ func handlerWrapper(handler func(r *http.Request, ar *APIResponse)) http.Handler
 
 		if ar.Data == nil {
 			w.WriteHeader(ar.StatusCode)
+			return
 		}
 
 		jsonData, err := json.Marshal(ar.Data)
