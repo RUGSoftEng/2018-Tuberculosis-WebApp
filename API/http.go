@@ -72,6 +72,24 @@ type APIResponse struct {
 	Error      error
 }
 
+func (a *APIResponse) setError(err error, errMessage string) {
+	a.setErrorAndStatus(http.StatusInternalServerError, err, errMessage)
+}
+
+func (a *APIResponse) setErrorAndStatus(status int, err error, errMessage string) {
+	a.StatusCode = status
+	a.Error = errors.Wrap(err, errMessage)
+}
+
+func (a *APIResponse) setResponse(data interface{}) {
+	a.setResponseAndStatus(http.StatusOK, data)
+}
+
+func (a *APIResponse) setResponseAndStatus(status int, data interface{}) {
+	a.StatusCode = status
+	a.Data = data
+}
+
 func handlerWrapper(handler func(r *http.Request, ar *APIResponse)) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
