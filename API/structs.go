@@ -56,6 +56,12 @@ type Video struct {
 	Reference string `json:"reference"`
 }
 
+// FAQ : Describes a Frequently Asked Question
+type FAQ struct {
+	Question string `json:"question"`
+	Answer   string `json:"answer"`
+}
+
 // UserValidation : ADD DOCUMENTATION
 type UserValidation struct {
 	Username string `json:"username"`

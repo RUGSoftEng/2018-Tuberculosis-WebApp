@@ -36,6 +36,7 @@ func main() {
 	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(authWrapper(getNotes)))
 	getRouter.Handle("/api/general/videos/topics/{topic}", handlerWrapper(getVideoByTopic))
 	getRouter.Handle("/api/general/videos/topics", handlerWrapper(getTopics))
+	getRouter.Handle("/api/general/faq", handlerWrapper(getFAQs))
 
 	// POST Requests for Updating
 	postRouter := router.Methods("POST").Subrouter()
