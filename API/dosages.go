@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	_ "github.com/go-sql-driver/mysql" // anonymous import
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	http "net/http"
 	"time"
 )
@@ -17,15 +16,13 @@ func pushDosage(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&dosage)
 	if err != nil {
-		ar.StatusCode = http.StatusBadRequest
-		ar.Error = errors.Wrap(err, "Failed to decode JSON")
+		ar.setErrorAndStatus(http.StatusBadRequest, err, "Failed to decode JSON.")
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "failed to start transaction")
+		ar.setError(err, "Failed to start transaction.")
 		return
 	}
 
@@ -34,17 +31,11 @@ func pushDosage(r *http.Request, ar *APIResponse) {
 		dosage.Medicine.Name).Scan(&medicineID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			ar.StatusCode = http.StatusNotFound
-			ar.Error = errors.Wrap(err, "Unknown medicine")
+			ar.setErrorAndStatus(http.StatusNotFound, err, "Unknown medicine.")
 		} else {
-			ar.StatusCode = http.StatusInternalServerError
-			ar.Error = errors.Wrap(err, "Failed to execute query")
+			ar.setError(err, "Failed to execute query.")
 		}
-		err = tx.Rollback()
-		if err != nil {
-			ar.StatusCode = http.StatusInternalServerError
-			ar.Error = errors.Wrap(err, "Rollback Failed")
-		}
+		ar.setError(errorWithRollback(err, tx), "")
 		return
 	}
 
@@ -54,21 +45,14 @@ func pushDosage(r *http.Request, ar *APIResponse) {
                           VALUES (?, ?, ?, ?)`,
 		patientID, medicineID, dosage.NumberOfPills, dosage.IntakeMoment)
 	if err != nil {
-		ar.Error = err
-		err = tx.Rollback()
-		if err != nil {
-			ar.StatusCode = http.StatusInternalServerError
-			ar.Error = errors.Wrap(err, "Rollback Failed")
-		}
+		ar.setError(errorWithRollback(err, tx), "")
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "Failed to commit changes to database.")
+		ar.setError(err, "Failed to commit changes to database.")
 		return
 	}
-
 	ar.StatusCode = http.StatusCreated
 }
 
@@ -87,14 +71,12 @@ func getDosages(r *http.Request, ar *APIResponse) {
 	const dform = "2006-01-02" // specifies YYYY-MM-DD format
 	startDate, err := time.Parse(dform, from)
 	if err != nil {
-		ar.StatusCode = http.StatusBadRequest
-		ar.Error = errors.Wrap(err, "Error wrong from date, expected: yyyy-mm-dd")
+		ar.setErrorAndStatus(http.StatusBadRequest, err, "Error wrong from date, expected: yyyy-mm-dd")
 		return
 	}
 	endDate, err := time.Parse(dform, until)
 	if err != nil {
-		ar.StatusCode = http.StatusBadRequest
-		ar.Error = errors.Wrap(err, "Error wrong until date, expected: yyyy-mm-dd")
+		ar.setErrorAndStatus(http.StatusBadRequest, err, "Error wrong until date, expected: yyyy-mm-dd")
 		return
 	}
 
@@ -108,8 +90,7 @@ func getDosages(r *http.Request, ar *APIResponse) {
                                WHERE day BETWEEN ? AND ?`,
 		patientID, startDate.Format(dform), endDate.Format(dform))
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "Unexpected error during query")
+		ar.setError(err, "Unexpected error during query")
 		return
 	}
 
@@ -120,8 +101,7 @@ func getDosages(r *http.Request, ar *APIResponse) {
 		var taken bool
 		err = rows.Scan(&amount, &medicine, &day, &intakeTime, &taken)
 		if err != nil {
-			ar.StatusCode = http.StatusInternalServerError
-			ar.Error = errors.Wrap(err, "Unexpected error during row scanning")
+			ar.setError(err, "Unexpected error during row scanning")
 			return
 		}
 		dosages = append(dosages, ScheduledDosage{
@@ -131,9 +111,8 @@ func getDosages(r *http.Request, ar *APIResponse) {
 		})
 	}
 	if err = rows.Err(); err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "Unexpected error after scanning rows")
+		ar.setError(err, "Unexpected error after scanning rows")
 		return
 	}
-	ar.Data = dosages
+	ar.setResponse(dosages)
 }

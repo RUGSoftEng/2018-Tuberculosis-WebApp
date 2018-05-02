@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	_ "github.com/go-sql-driver/mysql" // anonymous import
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	"log"
 	http "net/http"
 )
@@ -15,42 +14,36 @@ func pushPhysician(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&physician)
 	if err != nil {
-		ar.StatusCode = http.StatusBadRequest
-		ar.Error = errors.Wrap(err, "Failed to decode incoming JSON")
+		ar.setErrorAndStatus(http.StatusBadRequest, err, "Failed to decode incoming JSON.")
 		return
 	}
 	physician.Password, err = HashPassword(physician.Password)
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "Failed to hash password")
+		ar.setError(err, "Failed to hash password")
 		return
 	}
 	tx, err := db.Begin()
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "Failed to start transaction")
+		ar.setError(err, "Failed to start transaction")
 		return
 	}
 	role := "physician"
 	result, err := tx.Exec(`INSERT INTO Accounts (name, username, pass_hash, role)
                                 VALUES(?, ?, ?, ?)`, physician.Name, physician.Username, physician.Password, role)
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errorWithRollback(err, tx)
+		ar.setError(errorWithRollback(err, tx), "")
 		return
 	}
 	id, err := result.LastInsertId()
 	_, err = tx.Exec(`INSERT INTO Physicians VALUES(?, ?, ?)`,
 		id, physician.Email, physician.CreationToken)
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errorWithRollback(err, tx)
+		ar.setError(errorWithRollback(err, tx), "")
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "Failed to commit changes to database.")
+		ar.setError(err, "Failed to commit changes to database.")
 		return
 	}
 
@@ -63,21 +56,18 @@ func modifyPhysician(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&physician)
 	if err != nil {
-		ar.StatusCode = http.StatusBadRequest
-		ar.Error = errors.Wrap(err, "Failed to decode incoming JSON")
+		ar.setErrorAndStatus(http.StatusBadRequest, err, "Failed to decode incoming JSON")
 		return
 	}
 
 	physician.Password, err = HashPassword(physician.Password)
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "Hashing failed")
+		ar.setError(err, "Hashing failed.")
 		return
 	}
 	tx, err := db.Begin()
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "failed to start transaction")
+		ar.setError(err, "Failed to start transaction.")
 		return
 	}
 
@@ -88,8 +78,7 @@ func modifyPhysician(r *http.Request, ar *APIResponse) {
                           pass_hash = ?
                           WHERE id=?`, physician.Name, physician.Password, id)
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errorWithRollback(err, tx)
+		ar.setError(errorWithRollback(err, tx), "")
 		return
 	}
 	_, err = tx.Exec(`UPDATE Physicians SET
@@ -97,14 +86,12 @@ func modifyPhysician(r *http.Request, ar *APIResponse) {
                           token = ?
                           WHERE id = ?`, physician.Email, physician.CreationToken, id)
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errorWithRollback(err, tx)
+		ar.setError(errorWithRollback(err, tx), "")
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "Failed to commit changes to database.")
+		ar.setError(err, "Failed to commit changes to database.")
 		return
 	}
 }
@@ -116,26 +103,22 @@ func deletePhysician(r *http.Request, ar *APIResponse) {
 	log.Println(id)
 	tx, err := db.Begin()
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "Failed to start transaction")
+		ar.setError(err, "Failed to start transaction.")
 		return
 	}
 	_, err = tx.Exec(`DELETE FROM Physicians  WHERE id=?`, id)
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errorWithRollback(err, tx)
+		ar.setError(errorWithRollback(err, tx), "")
 		return
 	}
 	_, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, id)
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errorWithRollback(err, tx)
+		ar.setError(errorWithRollback(err, tx), "")
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "Failed to commit changes to database.")
+		ar.setError(err, "Failed to commit changes to database.")
 		return
 	}
 }
