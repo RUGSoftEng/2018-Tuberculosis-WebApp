@@ -34,7 +34,7 @@ func main() {
 
 	// GET Requests for Retrieving
 	getRouter := router.Methods("GET").Subrouter()
-	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(authWrapper(getDosages)))
+	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(authWrapper(getDosages)))
 	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(authWrapper(getNotes)))
 	getRouter.Handle("/api/general/videos/topics/{topic}", handlerWrapper(getVideoByTopic))
 	getRouter.Handle("/api/general/videos/topics", handlerWrapper(getTopics))
@@ -51,6 +51,7 @@ func main() {
 	putRouter.Handle("/api/accounts/patients", handlerWrapper(pushPatient))
 	putRouter.Handle("/api/accounts/physicians", handlerWrapper(pushPhysician))
 	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(pushDosage))
+	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(addScheduledDosages))
 	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(addNote))
 	putRouter.Handle("/api/general/videos", handlerWrapper(addVideo))
 

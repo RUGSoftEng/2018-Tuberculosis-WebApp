@@ -11,7 +11,6 @@ import (
 
 // CREATE
 func pushDosage(r *http.Request, ar *APIResponse) {
-
 	dosage := Dosage{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&dosage)
@@ -47,6 +46,76 @@ func pushDosage(r *http.Request, ar *APIResponse) {
 	if err != nil {
 		ar.setError(errorWithRollback(err, tx), "")
 		return
+	}
+
+	if err = tx.Commit(); err != nil {
+		ar.setError(err, "Failed to commit changes to database.")
+		return
+	}
+	ar.StatusCode = http.StatusCreated
+}
+
+// InputDosagesJSON : Temp struct
+type InputDosagesJSON struct {
+	Medicine Medicine `json:"medicine"`
+	Days     []string `json:"days"`
+}
+
+// CREATE
+func addScheduledDosages(r *http.Request, ar *APIResponse) {
+	// Scan Patient ID
+	vars := mux.Vars(r)
+	patientID := vars["id"]
+
+	// Decode Request Body to JSON
+	in := InputDosagesJSON{}
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&in)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusBadRequest, err, "Failed to decode JSON.")
+		return
+	}
+
+	// Start Database Transaction
+	tx, err := db.Begin()
+	if err != nil {
+		ar.setError(err, "Failed to start transaction.")
+		return
+	}
+
+	// Query Medicine ID
+	var medicineID int
+	err = tx.QueryRow(`SELECT id FROM Medicines WHERE med_name = ?`, in.Medicine.Name).Scan(&medicineID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ar.setErrorAndStatus(http.StatusNotFound, err, "Unknown medicine.")
+		} else {
+			ar.setError(err, "Failed to execute query.")
+		}
+		ar.setError(errorWithRollback(err, tx), "")
+		return
+	}
+
+	// Query Dosage ID
+	var dosageID int
+	err = tx.QueryRow(`SELECT id FROM Dosages WHERE medicine_id = ? AND patient_id = ?`, medicineID, patientID).Scan(&dosageID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ar.setErrorAndStatus(http.StatusNotFound, err, "Unknown dosage.")
+		} else {
+			ar.setError(err, "Failed to execute query.")
+		}
+		ar.setError(errorWithRollback(err, tx), "")
+		return
+	}
+
+	// Add a ScheduledDosage for each given day
+	for _, day := range in.Days {
+		_, err := tx.Exec(`INSERT INTO ScheduledDosages VALUES (?, ?, ?)`, dosageID, day, false)
+		if err != nil {
+			ar.setError(errorWithRollback(err, tx), "")
+			return
+		}
 	}
 
 	if err = tx.Commit(); err != nil {
