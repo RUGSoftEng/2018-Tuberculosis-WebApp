@@ -9,6 +9,8 @@ import (
 	"github.com/pkg/errors"
 	"log"
 	http "net/http"
+	"reflect"
+	"runtime"
 )
 
 var (
@@ -94,6 +96,8 @@ func handlerWrapper(handler func(r *http.Request, ar *APIResponse)) http.Handler
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		ar := APIResponse{nil, 200, nil}
+		funcName := runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name()
+		log.Printf("New request:\n |url:  %s\n |func: %s\n", r.URL, funcName)
 		handler(r, &ar)
 
 		if ar.Error != nil {
