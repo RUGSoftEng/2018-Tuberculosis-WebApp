@@ -10,11 +10,10 @@ services:
 
 before_script:
  - mysql -e "CREATE DATABASE TestDB"
- - cd ./API/
- - make deps_check
+ - make deps_check -C ./API
 
 script:
  - mysql -e < ./database/DDL_statements.sql
  - mysql -e < ./database/test_insert_statements.sql
- - make check
- - make build
+ - make check -C ./API
+ - make build -C ./API
