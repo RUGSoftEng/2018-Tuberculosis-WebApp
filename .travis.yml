@@ -7,6 +7,7 @@ go:
 
 before_script:
  - cd ./API/
+ - - make deps_check
 
 script:
  - make check
