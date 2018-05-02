@@ -122,3 +122,12 @@
 - Created a new version for the api documentation
 - Created a new version for the api documentation
 - Created a new version for the api documentation
+- Refactoring api error setting
+- Refactoring api error setting
+- Refactoring api error setting
+- Refactoring api error setting
+- Changed dependency downloading
+- Added some additional loggin for api requests
+- Added some additional loggin for api requests
+- Data base creation / test insertion checks to Travis CI
+- Created new database call for adding ScheduledDosages
