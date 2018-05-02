@@ -60,6 +60,7 @@ CREATE TABLE Videos(
 
 CREATE TABLE FAQ(
        id	INT	NOT NULL PRIMARY KEY AUTO_INCREMENT,
-       question	TEXT 	NOT NULL 
+       question TEXT 	NOT NULL,
+       answer	TEXT 	NOT NULL 
 );
 

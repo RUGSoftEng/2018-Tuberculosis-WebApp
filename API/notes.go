@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	_ "github.com/go-sql-driver/mysql" // anonymous import
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	http "net/http"
 )
 
@@ -15,15 +14,13 @@ func addNote(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&note)
 	if err != nil {
-		ar.StatusCode = http.StatusBadRequest
-		ar.Error = errors.Wrap(err, "Unexpected error during JSON decoding")
+		ar.setErrorAndStatus(http.StatusBadRequest, err, "Unexpected error during JSON decoding.")
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "Failed to start new transaction")
+		ar.setError(err, "Failed to start new transaction.")
 		return
 	}
 
@@ -33,14 +30,12 @@ func addNote(r *http.Request, ar *APIResponse) {
 		`INSERT INTO Notes (patient_id, question, day) VALUES (?, ?, ?)`,
 		patientID, note.Note, note.CreatedAt)
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "Failed to insert note into the database")
+		ar.setError(err, "Failed to insert note into the database.")
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "Failed to commit changes to database.")
+		ar.setError(err, "Failed to commit changes to database.")
 		return
 	}
 
@@ -57,8 +52,7 @@ func getNotes(r *http.Request, ar *APIResponse) {
 
 	rows, err := db.Query(`SELECT question, day FROM Notes WHERE patient_id = ?`, patientID)
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "Unexpected error during query")
+		ar.setError(err, "Unexpected error during query")
 		return
 	}
 
@@ -67,17 +61,15 @@ func getNotes(r *http.Request, ar *APIResponse) {
 		var note, date string
 		err = rows.Scan(&note, &date)
 		if err != nil {
-			ar.StatusCode = http.StatusInternalServerError
-			ar.Error = errors.Wrap(err, "Unexpected error during row scanning")
+			ar.setError(err, "Unexpected error during row scanning")
 			return
 		}
 		notes = append(notes, Note{note, date})
 	}
 	if err = rows.Err(); err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "Unexpected error after scanning rows")
+		ar.setError(err, "Unexpected error after scanning rows")
 		return
 	}
 
-	ar.Data = notes
+	ar.setResponse(notes)
 }

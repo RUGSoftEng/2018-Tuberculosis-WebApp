@@ -9,6 +9,8 @@ import (
 	"github.com/pkg/errors"
 	"log"
 	http "net/http"
+	"reflect"
+	"runtime"
 )
 
 var (
@@ -32,10 +34,11 @@ func main() {
 
 	// GET Requests for Retrieving
 	getRouter := router.Methods("GET").Subrouter()
-	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(authWrapper(getDosages)))
+	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(authWrapper(getDosages)))
 	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(authWrapper(getNotes)))
 	getRouter.Handle("/api/general/videos/topics/{topic}", handlerWrapper(getVideoByTopic))
 	getRouter.Handle("/api/general/videos/topics", handlerWrapper(getTopics))
+	getRouter.Handle("/api/general/faq", handlerWrapper(getFAQs))
 
 	// POST Requests for Updating
 	postRouter := router.Methods("POST").Subrouter()
@@ -48,6 +51,7 @@ func main() {
 	putRouter.Handle("/api/accounts/patients", handlerWrapper(pushPatient))
 	putRouter.Handle("/api/accounts/physicians", handlerWrapper(pushPhysician))
 	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(pushDosage))
+	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(addScheduledDosages))
 	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(addNote))
 	putRouter.Handle("/api/general/videos", handlerWrapper(addVideo))
 
@@ -71,10 +75,30 @@ type APIResponse struct {
 	Error      error
 }
 
+func (a *APIResponse) setError(err error, errMessage string) {
+	a.setErrorAndStatus(http.StatusInternalServerError, err, errMessage)
+}
+
+func (a *APIResponse) setErrorAndStatus(status int, err error, errMessage string) {
+	a.StatusCode = status
+	a.Error = errors.Wrap(err, errMessage)
+}
+
+func (a *APIResponse) setResponse(data interface{}) {
+	a.setResponseAndStatus(http.StatusOK, data)
+}
+
+func (a *APIResponse) setResponseAndStatus(status int, data interface{}) {
+	a.StatusCode = status
+	a.Data = data
+}
+
 func handlerWrapper(handler func(r *http.Request, ar *APIResponse)) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		ar := APIResponse{nil, 200, nil}
+		funcName := runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name()
+		log.Printf("New request:\n |url:  %s\n |func: %s\n", r.URL, funcName)
 		handler(r, &ar)
 
 		if ar.Error != nil {

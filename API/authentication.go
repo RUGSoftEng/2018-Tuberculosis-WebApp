@@ -25,22 +25,19 @@ func login(r *http.Request, ar *APIResponse) {
 	cred := UserValidation{}
 	err := json.NewDecoder(r.Body).Decode(&cred)
 	if err != nil {
-		ar.StatusCode = http.StatusBadRequest
-		ar.Error = errors.Wrap(err, "Failed to decode user credentials")
+		ar.setErrorAndStatus(http.StatusBadRequest, err, "Failed to decode user credentials")
 		return
 	}
 	var password string
 	err = db.QueryRow(`SELECT pass_hash FROM Accounts WHERE username=?`, cred.Username).Scan(&password)
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "Database failure")
+		ar.setError(err, "Database failure")
 		return
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(password), []byte(cred.Password))
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "Authentication failed: Mismatching credentials")
+		ar.setError(err, "Authentication failed: Mismatching credentials")
 		return
 	}
 
@@ -50,8 +47,7 @@ func login(r *http.Request, ar *APIResponse) {
 	tokenString, err := token.SignedString([]byte("secret"))
 
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "Failed to generate JWT token")
+		ar.setError(err, "Failed to generate JWT token")
 		return
 	}
 
@@ -67,44 +63,37 @@ func parseToken(in JWToken, ar *APIResponse, id int) {
 		return []byte("secret"), nil
 	})
 	if err != nil {
-		ar.StatusCode = http.StatusBadRequest
-		ar.Error = errors.Wrap(err, "Invalid token")
+		ar.setErrorAndStatus(http.StatusBadRequest, err, "Invalid token.")
 		return
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); !ok || !token.Valid {
-		ar.StatusCode = http.StatusBadRequest
-		ar.Error = errors.New("Invalid token")
+		ar.setErrorAndStatus(http.StatusBadRequest, err, "Invalid token.")
 
 		var user UserValidation
 		err = mapstructure.Decode(claims, &user)
 		if err != nil {
-			ar.StatusCode = http.StatusInternalServerError
-			ar.Error = errors.Wrap(err, "Failed to decode")
+			ar.setError(err, "Failed to decode")
 			return
 		}
 		var pwd string
 		err := db.QueryRow(`SELECT pass_hash FROM Accounts WHERE username=?`, user.Username).Scan(&pwd)
 		if err != nil {
-			ar.StatusCode = http.StatusBadRequest
-			ar.Error = errors.Wrap(err, "failed to query accounts")
+			ar.setErrorAndStatus(http.StatusBadRequest, err, "Failed to query accounts.")
 			return
 		}
 		var readID int
 		err = db.QueryRow(`SELECT id FROM Accounts WHERE username=?`, user.Username).Scan(&readID)
 		if err == sql.ErrNoRows {
-			ar.StatusCode = http.StatusBadRequest
-			ar.Error = errors.New("invalid credentials")
+			ar.setErrorAndStatus(http.StatusBadRequest, errors.New("invalid credentials"), "")
 			return
 		}
 		if err != nil {
-			ar.StatusCode = http.StatusInternalServerError
-			ar.Error = errors.Wrap(err, "Database failure")
+			ar.setError(err, "Database failure")
 			return
 		}
 		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(pwd))
 		if err != nil {
-			ar.StatusCode = http.StatusBadRequest
-			ar.Error = errors.Wrap(err, "Authentication failed: Mismatching credentials")
+			ar.setErrorAndStatus(http.StatusBadRequest, err, "Authentication failed: Mismatching credentials.")
 			return
 		}
 		return
@@ -125,8 +114,7 @@ func authenticate(r *http.Request, ar *APIResponse) {
 	id1 := vars["id"]
 	id, err := strconv.Atoi(id1)
 	if err != nil {
-		ar.StatusCode = http.StatusInternalServerError
-		ar.Error = errors.Wrap(err, "Error in converting to int")
+		ar.setError(err, "Error in converting to int")
 		return
 	}
 	token := r.Header.Get("access_token")
