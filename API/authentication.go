@@ -9,7 +9,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
-	"log"
 	http "net/http"
 	"strconv"
 )
@@ -55,8 +54,9 @@ func login(r *http.Request, ar *APIResponse) {
 	ar.Data = JWToken{Token: tokenString, ID: tokenID}
 }
 
-func parseToken(in JWToken, ar *APIResponse, id int) {
+func parseToken(in JWToken, ar *APIResponse) {
 	content := in.Token
+	id := in.ID
 	token, err := jwt.Parse(content, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("There was an error")
@@ -92,6 +92,12 @@ func parseToken(in JWToken, ar *APIResponse, id int) {
 			ar.setError(err, "Database failure")
 			return
 		}
+		// DO NOT REMOVE THE FOLLOWING LINES
+		if id != readID{
+			ar.setError(errors.New("Invalid credentials"), "Wrong user")
+			return
+		}
+		// UP UNTIL HERE
 		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(pwd))
 		if err != nil {
 			ar.setErrorAndStatus(http.StatusBadRequest, err, "Authentication failed: Mismatching credentials.")
@@ -119,9 +125,8 @@ func authenticate(r *http.Request, ar *APIResponse) {
 		return
 	}
 	token := r.Header.Get("access_token")
-	pass := JWToken{Token: token}
-	log.Println(pass)
-	parseToken(pass, ar, id)
+	pass := JWToken{Token: token, ID:id}
+	parseToken(pass, ar)
 }
 
 func authWrapper(handler func(r *http.Request, ar *APIResponse)) func(*http.Request, *APIResponse) {
