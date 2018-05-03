@@ -50,9 +50,9 @@ func login(r *http.Request, ar *APIResponse) {
 		ar.setError(err, "Failed to generate JWT token")
 		return
 	}
-	var tokenId int
-	err = db.QueryRow(`SELECT id FROM Accounts WHERE username=?`, cred.Username).Scan(&tokenId)
-	ar.Data = JWToken{Token: tokenString, Id: tokenId}
+	var tokenID int
+	err = db.QueryRow(`SELECT id FROM Accounts WHERE username=?`, cred.Username).Scan(&tokenID)
+	ar.Data = JWToken{Token: tokenString, ID: tokenID}
 }
 
 func parseToken(in JWToken, ar *APIResponse, id int) {

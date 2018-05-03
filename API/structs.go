@@ -71,7 +71,7 @@ type UserValidation struct {
 // JWToken : ADD DOCUMENTATION
 type JWToken struct {
 	Token string `json:"token"`
-	Id    int    `json:"id"`
+	ID    int    `json:"id"`
 }
 
 func errorWithRollback(err error, tx *sql.Tx) error {
