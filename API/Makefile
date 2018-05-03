@@ -7,7 +7,7 @@ all: format check build
 run: build
 	./$(EXEC_NAME)
 
-build: deps_code
+build:
 	$(GOBUILD) -o $(EXEC_NAME)
 
 ###################################
@@ -21,7 +21,7 @@ fmt:
 
 #############################
 # Go Tools for error checking
-check: deps_check lint vet fmt_check safesql errcheck
+check: lint vet fmt_check safesql errcheck
 
 # -set_exit_status: returns 1 if any improvements could be found
 lint:
@@ -48,6 +48,8 @@ safesql:
 # Looks for unchecked errors
 errcheck:
 	errcheck .
+
+deps: deps_check deps_code
 
 #####################################################
 # Dependencies for running the makefile

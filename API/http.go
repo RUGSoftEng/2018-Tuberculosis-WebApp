@@ -9,7 +9,8 @@ import (
 	"github.com/pkg/errors"
 	"log"
 	http "net/http"
-	"time"
+	"reflect"
+	"runtime"
 )
 
 var (
@@ -33,10 +34,11 @@ func main() {
 
 	// GET Requests for Retrieving
 	getRouter := router.Methods("GET").Subrouter()
-	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(authWrapper(getDosages)))
+	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(authWrapper(getDosages)))
 	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(authWrapper(getNotes)))
 	getRouter.Handle("/api/general/videos/topics/{topic}", handlerWrapper(getVideoByTopic))
 	getRouter.Handle("/api/general/videos/topics", handlerWrapper(getTopics))
+	getRouter.Handle("/api/general/faq", handlerWrapper(getFAQs))
 
 	// POST Requests for Updating
 	postRouter := router.Methods("POST").Subrouter()
@@ -49,6 +51,7 @@ func main() {
 	putRouter.Handle("/api/accounts/patients", handlerWrapper(pushPatient))
 	putRouter.Handle("/api/accounts/physicians", handlerWrapper(pushPhysician))
 	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(pushDosage))
+	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(addScheduledDosages))
 	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(addNote))
 	putRouter.Handle("/api/general/videos", handlerWrapper(addVideo))
 
@@ -64,50 +67,71 @@ func main() {
 	}
 }
 
-func handlerWrapper(handler func(r *http.Request, responseChan chan APIResponse, errorChan chan error)) http.Handler {
+// APIResponse : Type used by the Response Channel
+// in the handlerWrapper (does not need json tags)
+type APIResponse struct {
+	Data       interface{}
+	StatusCode int
+	Error      error
+}
+
+func (a *APIResponse) setError(err error, errMessage string) {
+	a.setErrorAndStatus(http.StatusInternalServerError, err, errMessage)
+}
+
+func (a *APIResponse) setErrorAndStatus(status int, err error, errMessage string) {
+	a.StatusCode = status
+	a.Error = errors.Wrap(err, errMessage)
+}
+
+func (a *APIResponse) setResponse(data interface{}) {
+	a.setResponseAndStatus(http.StatusOK, data)
+}
+
+func (a *APIResponse) setResponseAndStatus(status int, data interface{}) {
+	a.StatusCode = status
+	a.Data = data
+}
+
+func handlerWrapper(handler func(r *http.Request, ar *APIResponse)) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		responseChan := make(chan APIResponse)
-		errorChan := make(chan error)
 
-		go handler(r, responseChan, errorChan)
+		ar := APIResponse{nil, 200, nil}
+		funcName := runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name()
+		log.Printf("New request:\n |url:  %s\n |func: %s\n", r.URL, funcName)
+		handler(r, &ar)
 
-		time.After(2 * time.Second)
-
-		select {
-		case r := <-responseChan:
-			// Maybe check for certain status codes not returning a body (e.g. StatusCreated)
-			if r.StatusCode == http.StatusCreated {
-				w.WriteHeader(r.StatusCode)
-				return
+		if ar.Error != nil {
+			log.Printf("Server error: %v", ar.Error)
+			if ar.StatusCode == http.StatusInternalServerError {
+				ar.Error = errors.New(http.StatusText(http.StatusInternalServerError))
 			}
-
-			jsonData, err := json.Marshal(r.Data)
-			if err != nil {
-				err := errors.Wrap(err, "Error during JSON Decoding")
-				log.Printf("Server error: %v", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(r.StatusCode)
-			_, err = w.Write(jsonData) //returns an integer, not sure what it's used for
-			if err != nil {
-				log.Printf("Server error: %v", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		case err := <-errorChan:
-			if err != nil {
-				log.Printf("Server error: %v", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			w.WriteHeader(http.StatusAccepted)
-			http.Error(w, http.StatusText(http.StatusAccepted), http.StatusAccepted)
-		case <-time.After(5 * time.Second):
-			log.Printf("Response timeout")
+			http.Error(w, ar.Error.Error(), ar.StatusCode)
+			return
 		}
+
+		if ar.Data == nil {
+			w.WriteHeader(ar.StatusCode)
+			return
+		}
+
+		jsonData, err := json.Marshal(ar.Data)
+		if err != nil {
+			err := errors.Wrap(err, "Error during JSON Decoding")
+			log.Printf("Error marshalling response: %v", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(ar.StatusCode)
+		_, err = w.Write(jsonData) //returns an integer, not sure what it's used for
+		if err != nil {
+			log.Printf("Error sending response to request: %v", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
 		return
 	})
 }
