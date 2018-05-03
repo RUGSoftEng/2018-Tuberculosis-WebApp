@@ -51,8 +51,8 @@ func login(r *http.Request, ar *APIResponse) {
 		return
 	}
 	var tokenId int
-  err = db.QueryRow(`SELECT id FROM Accounts WHERE username=?`, cred.Username).Scan(&tokenId)
-	ar.Data = JWToken{Token: tokenString, Id:tokenId}
+	err = db.QueryRow(`SELECT id FROM Accounts WHERE username=?`, cred.Username).Scan(&tokenId)
+	ar.Data = JWToken{Token: tokenString, Id: tokenId}
 }
 
 func parseToken(in JWToken, ar *APIResponse, id int) {
