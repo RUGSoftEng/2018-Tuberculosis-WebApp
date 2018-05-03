@@ -1,7 +1,7 @@
 CREATE TABLE Accounts(
        id		INT		NOT NULL PRIMARY KEY AUTO_INCREMENT,
        name		VARCHAR(200) 	NOT NULL,
-       username		VARCHAR(200) 	NOT NULL,
+       username		VARCHAR(200) 	NOT NULL  UNIQUE,
        pass_hash	VARCHAR(200) 	NOT NULL,
        role		VARCHAR(10) 	NOT NULL, 
        api_token	VARCHAR(64)
