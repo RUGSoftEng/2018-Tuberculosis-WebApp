@@ -93,7 +93,7 @@ func parseToken(in JWToken, ar *APIResponse) {
 			return
 		}
 		// DO NOT REMOVE THE FOLLOWING LINES
-		if id != readID{
+		if id != readID {
 			ar.setError(errors.New("Invalid credentials"), "Wrong user")
 			return
 		}
@@ -125,7 +125,7 @@ func authenticate(r *http.Request, ar *APIResponse) {
 		return
 	}
 	token := r.Header.Get("access_token")
-	pass := JWToken{Token: token, ID:id}
+	pass := JWToken{Token: token, ID: id}
 	parseToken(pass, ar)
 }
 
