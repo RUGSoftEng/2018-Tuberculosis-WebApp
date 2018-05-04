@@ -17,6 +17,12 @@ var (
 	db *sql.DB
 )
 
+// Custom made error codes
+const (
+	StatusFailedOperation             = 599
+	StatusDatabaseConstraintViolation = 598
+)
+
 func main() {
 	var err error
 	rootpasswd, dbname, listenLocation := "pass", "database", "localhost:8080" // just some values
