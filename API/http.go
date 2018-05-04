@@ -17,6 +17,7 @@ var (
 	db *sql.DB
 )
 
+// Custom made error codes
 const (
 	StatusFailedOperation             = 599
 	StatusDatabaseConstraintViolation = 598

@@ -44,10 +44,9 @@ func pushPatient(r *http.Request, ar *APIResponse) {
 		if me.Number == 1062 {
 			ar.setErrorAndStatus(StatusDatabaseConstraintViolation, errors.New("Username already in use"), "please choose another one")
 			return
-		} else {
-			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
-			return
 		}
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
+		return
 	}
 
 	id, err := result.LastInsertId()
