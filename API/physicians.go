@@ -126,10 +126,10 @@ func deletePhysician(r *http.Request, ar *APIResponse) {
 // GET
 func getPatients(r *http.Request, ar *APIResponse) {
 	vars := mux.Vars(r)
-	physicianId := vars["id"]
+	physicianID := vars["id"]
 	rows, err := db.Query(`SELECT Accounts.id, Accounts.name 
                               FROM Accounts INNER JOIN Patients 
-                              ON Accounts.id=Patients.id AND Patients.physician_id=?`, physicianId)
+                              ON Accounts.id=Patients.id AND Patients.physician_id=?`, physicianID)
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error during query")
 		return

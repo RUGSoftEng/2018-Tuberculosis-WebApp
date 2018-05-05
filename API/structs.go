@@ -76,7 +76,7 @@ type JWToken struct {
 
 // PatientInfo : Identifies a patient through his/her public data
 type PatientInfo struct {
-	Id   int    `json:"id"`
+	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
