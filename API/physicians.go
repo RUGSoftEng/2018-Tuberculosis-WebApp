@@ -122,3 +122,35 @@ func deletePhysician(r *http.Request, ar *APIResponse) {
 		return
 	}
 }
+
+// GET
+func getPatients(r *http.Request, ar *APIResponse) {
+	vars := mux.Vars(r)
+	physicianId := vars["id"]
+	rows, err := db.Query(`SELECT Accounts.id, Accounts.name 
+                              FROM Accounts INNER JOIN Patients 
+                              ON Accounts.id=Patients.id AND Patients.physician_id=?`, physicianId)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error during query")
+		return
+	}
+
+	patients := []PatientInfo{}
+	for rows.Next() {
+		var name string
+		var id int
+		err = rows.Scan(&id, &name)
+		if err != nil {
+			ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error during row scanning")
+			return
+		}
+		patients = append(patients, PatientInfo{id, name})
+	}
+	if err = rows.Err(); err != nil {
+		ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error after scanning rows")
+		return
+	}
+
+	ar.setResponse(patients)
+
+}
