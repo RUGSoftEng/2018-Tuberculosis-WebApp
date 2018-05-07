@@ -15,13 +15,13 @@ func pushDosage(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&dosage)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusBadRequest, err, "Failed to decode JSON.")
+		ar.setErrorAndStatus(StatusFailedOperation, err, "Failed to decode JSON.")
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setError(err, "Failed to start transaction.")
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
 		return
 	}
 
@@ -32,9 +32,9 @@ func pushDosage(r *http.Request, ar *APIResponse) {
 		if err == sql.ErrNoRows {
 			ar.setErrorAndStatus(http.StatusNotFound, err, "Unknown medicine.")
 		} else {
-			ar.setError(err, "Failed to execute query.")
+			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to execute query.")
 		}
-		ar.setError(errorWithRollback(err, tx), "")
+		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
 		return
 	}
 
@@ -44,12 +44,12 @@ func pushDosage(r *http.Request, ar *APIResponse) {
                           VALUES (?, ?, ?, ?)`,
 		patientID, medicineID, dosage.NumberOfPills, dosage.IntakeMoment)
 	if err != nil {
-		ar.setError(errorWithRollback(err, tx), "")
+		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		ar.setError(err, "Failed to commit changes to database.")
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to commit changes to database.")
 		return
 	}
 	ar.StatusCode = http.StatusCreated
@@ -72,14 +72,14 @@ func addScheduledDosages(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&in)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusBadRequest, err, "Failed to decode JSON.")
+		ar.setErrorAndStatus(StatusFailedOperation, err, "Failed to decode JSON.")
 		return
 	}
 
 	// Start Database Transaction
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setError(err, "Failed to start transaction.")
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
 		return
 	}
 
@@ -90,9 +90,9 @@ func addScheduledDosages(r *http.Request, ar *APIResponse) {
 		if err == sql.ErrNoRows {
 			ar.setErrorAndStatus(http.StatusNotFound, err, "Unknown medicine.")
 		} else {
-			ar.setError(err, "Failed to execute query.")
+			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to execute query.")
 		}
-		ar.setError(errorWithRollback(err, tx), "")
+		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
 		return
 	}
 
@@ -103,9 +103,9 @@ func addScheduledDosages(r *http.Request, ar *APIResponse) {
 		if err == sql.ErrNoRows {
 			ar.setErrorAndStatus(http.StatusNotFound, err, "Unknown dosage.")
 		} else {
-			ar.setError(err, "Failed to execute query.")
+			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to execute query.")
 		}
-		ar.setError(errorWithRollback(err, tx), "")
+		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
 		return
 	}
 
@@ -113,13 +113,13 @@ func addScheduledDosages(r *http.Request, ar *APIResponse) {
 	for _, day := range in.Days {
 		_, err := tx.Exec(`INSERT INTO ScheduledDosages VALUES (?, ?, ?)`, dosageID, day, false)
 		if err != nil {
-			ar.setError(errorWithRollback(err, tx), "")
+			ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
 			return
 		}
 	}
 
 	if err = tx.Commit(); err != nil {
-		ar.setError(err, "Failed to commit changes to database.")
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to commit changes to database.")
 		return
 	}
 	ar.StatusCode = http.StatusCreated
@@ -159,7 +159,7 @@ func getDosages(r *http.Request, ar *APIResponse) {
                                WHERE day BETWEEN ? AND ?`,
 		patientID, startDate.Format(dform), endDate.Format(dform))
 	if err != nil {
-		ar.setError(err, "Unexpected error during query")
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error during query")
 		return
 	}
 
@@ -170,7 +170,7 @@ func getDosages(r *http.Request, ar *APIResponse) {
 		var taken bool
 		err = rows.Scan(&amount, &medicine, &day, &intakeTime, &taken)
 		if err != nil {
-			ar.setError(err, "Unexpected error during row scanning")
+			ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error during row scanning")
 			return
 		}
 		dosages = append(dosages, ScheduledDosage{
@@ -180,7 +180,7 @@ func getDosages(r *http.Request, ar *APIResponse) {
 		})
 	}
 	if err = rows.Err(); err != nil {
-		ar.setError(err, "Unexpected error after scanning rows")
+		ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error after scanning rows")
 		return
 	}
 	ar.setResponse(dosages)

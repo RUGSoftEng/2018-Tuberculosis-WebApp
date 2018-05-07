@@ -19,18 +19,18 @@ func addVideo(r *http.Request, ar *APIResponse) {
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setError(err, "Failed to start new transaction")
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start new transaction")
 		return
 	}
 	_, err = tx.Exec(`INSERT INTO Videos (topic, title, reference) VALUES (?, ?, ?)`,
 		video.Topic, video.Title, video.Reference)
 	if err != nil {
-		ar.setError(errorWithRollback(err, tx), "")
+		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		ar.setError(err, "Failed to commit changes to database.")
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to commit changes to database.")
 		return
 	}
 	ar.StatusCode = http.StatusCreated
@@ -40,7 +40,7 @@ func addVideo(r *http.Request, ar *APIResponse) {
 func getTopics(r *http.Request, ar *APIResponse) {
 	rows, err := db.Query(`SELECT DISTINCT topic FROM Videos`)
 	if err != nil {
-		ar.setError(err, "Unexpected error when querying the database")
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error when querying the database")
 		return
 	}
 
@@ -49,13 +49,13 @@ func getTopics(r *http.Request, ar *APIResponse) {
 		var topic string
 		err = rows.Scan(&topic)
 		if err != nil {
-			ar.setError(err, "Unexpected error during row scanning")
+			ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error during row scanning")
 			return
 		}
 		topics = append(topics, topic)
 	}
 	if err = rows.Err(); err != nil {
-		ar.setError(err, "Unexpected error after scanning rows")
+		ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error after scanning rows")
 		return
 	}
 	ar.setResponse(topics)
@@ -68,7 +68,7 @@ func getVideoByTopic(r *http.Request, ar *APIResponse) {
 
 	rows, err := db.Query(`SELECT topic, title, reference FROM Videos WHERE topic = ?`, topic)
 	if err != nil {
-		ar.setError(err, "Unexpected error when querying the database")
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error when querying the database")
 		return
 	}
 
@@ -77,13 +77,13 @@ func getVideoByTopic(r *http.Request, ar *APIResponse) {
 		var topic, title, reference string
 		err = rows.Scan(&topic, &title, &reference)
 		if err != nil {
-			ar.setError(err, "Unexpected error during row scanning")
+			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error during row scanning")
 			return
 		}
 		videos = append(videos, Video{topic, title, reference})
 	}
 	if err = rows.Err(); err != nil {
-		ar.setError(err, "Unexpected error after scanning rows")
+		ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error after scanning rows")
 		return
 	}
 	ar.setResponse(videos)

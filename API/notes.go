@@ -14,13 +14,13 @@ func addNote(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&note)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusBadRequest, err, "Unexpected error during JSON decoding.")
+		ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error during JSON decoding.")
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setError(err, "Failed to start new transaction.")
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start new transaction.")
 		return
 	}
 
@@ -30,12 +30,12 @@ func addNote(r *http.Request, ar *APIResponse) {
 		`INSERT INTO Notes (patient_id, question, day) VALUES (?, ?, ?)`,
 		patientID, note.Note, note.CreatedAt)
 	if err != nil {
-		ar.setError(err, "Failed to insert note into the database.")
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to insert note into the database.")
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		ar.setError(err, "Failed to commit changes to database.")
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to commit changes to database.")
 		return
 	}
 
@@ -52,7 +52,7 @@ func getNotes(r *http.Request, ar *APIResponse) {
 
 	rows, err := db.Query(`SELECT question, day FROM Notes WHERE patient_id = ?`, patientID)
 	if err != nil {
-		ar.setError(err, "Unexpected error during query")
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error during query")
 		return
 	}
 
@@ -61,13 +61,13 @@ func getNotes(r *http.Request, ar *APIResponse) {
 		var note, date string
 		err = rows.Scan(&note, &date)
 		if err != nil {
-			ar.setError(err, "Unexpected error during row scanning")
+			ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error during row scanning")
 			return
 		}
 		notes = append(notes, Note{note, date})
 	}
 	if err = rows.Err(); err != nil {
-		ar.setError(err, "Unexpected error after scanning rows")
+		ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error after scanning rows")
 		return
 	}
 
