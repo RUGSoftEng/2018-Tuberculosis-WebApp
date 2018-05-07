@@ -185,3 +185,22 @@ func getDosages(r *http.Request, ar *APIResponse) {
 	}
 	ar.setResponse(dosages)
 }
+
+// UPDATE
+func updateScheduledDosage(r *http.Request, ar *APIResponse) {
+	// Scan patient ID
+	patientID := mux.Vars(r)["id"]
+
+	// Read input scheduled dosages
+	dosages := []ScheduledDosage{}
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&dosages)
+	//handle error
+	
+	tx, err := db.Begin()
+	//handle error
+
+	for _, dosage range dosages {
+		tx.Exec(``, )
+	}
+}

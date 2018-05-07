@@ -138,7 +138,7 @@ func handlerWrapper(handler func(r *http.Request, ar *APIResponse)) http.Handler
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
-
+		
 		return
 	})
 }
