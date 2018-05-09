@@ -62,16 +62,22 @@ type FAQ struct {
 	Answer   string `json:"answer"`
 }
 
-// UserValidation : ADD DOCUMENTATION
+// UserValidation : A set of values needed for authenticate a user
 type UserValidation struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-// JWToken : ADD DOCUMENTATION
+// JWToken : Contains the ingredients to access restricted areas
 type JWToken struct {
 	Token string `json:"token"`
 	ID    int    `json:"id"`
+}
+
+// PatientInfo : Identifies a patient through his/her public data
+type PatientInfo struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 
 func errorWithRollback(err error, tx *sql.Tx) error {
