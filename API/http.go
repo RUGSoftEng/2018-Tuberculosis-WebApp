@@ -52,6 +52,7 @@ func main() {
 	postRouter.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(authWrapper(modifyPatient)))
 	postRouter.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(authWrapper(modifyPhysician)))
 	postRouter.Handle("/api/accounts/login", handlerWrapper(login))
+	postRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(authWrapper(updateScheduledDosage)))
 
 	// PUT Requests for Creating
 	putRouter := router.Methods("PUT").Subrouter()
@@ -138,7 +139,7 @@ func handlerWrapper(handler func(r *http.Request, ar *APIResponse)) http.Handler
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
-		
+
 		return
 	})
 }
