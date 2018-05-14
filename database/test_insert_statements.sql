@@ -108,3 +108,15 @@ insert into Videos(topic, title, reference) values(
        "The Complete Linux Course: Beginner to Power User",
        "https://www.youtube.com/watch?v=wBp0Rb-ZJak"
 );
+
+insert into Videos(topic, title, reference) values(
+       "Tuberculosis",
+       "What happens to me and my body when I have tuberculosis?",
+       "https://youtu.be/fXiXGRlvH70"
+);
+
+insert into Quizzes(video, question, answers) values(
+       4,
+       "Tuberculosis is caused by",
+       "A bacteria:A virus:Fungi"
+);
