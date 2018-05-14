@@ -22,18 +22,10 @@ wget -q https://dl.google.com/go/go1.10.1.linux-amd64.tar.gz \
     && echo 'SUCCESS'
 
 echo 'Setting PATH Variables...'
-# Adding go binaries to PATH
-export PATH=$PATH:/usr/local/go/bin && echo 'SUCCESS'
-export GOPATH=/home/vagrant/go && echo 'SUCCESS'
 export PROJROOT=/vagrant
-
-# Reads lines from 'go_dependencies' file and installs them
-echo 'Installing Go Dependencies...'
-while IFS='' read -r line || [[ -n "$line" ]]; do
-    echo "Downloading $line..."
-    go get -u $line && echo "SUCCESS" || echo "FAILED"
-done < "$PROJROOT/go_dependencies"
-echo "DONE"
+export GOPATH=/home/vagrant/go
+export PATH=$PATH:/usr/local/go/bin
+export PATH=$PATH:$GOPATH/bin
 
 echo 'Setting up paths for the vagrant ssh user'
 echo -e 'export GOPATH=/home/vagrant/go' >> /home/vagrant/.bashrc
@@ -41,6 +33,10 @@ echo -e 'export PATH=$PATH:/usr/local/go/bin' >> /home/vagrant/.bashrc
 echo -e 'export PATH=$PATH:$GOPATH/bin' >> /home/vagrant/.bashrc
 echo -e 'export PROJROOT=/vagrant' >> /home/vagrant/.bashrc
 echo 'DONE'
+
+echo 'Downloading Golang Dependencies...'
+make deps -C $PROJROOT/API && echo 'SUCCESS'
+
 
 echo 'Setting up Database...'
 mysql -u root --password=root <<< 'drop database if exists TestDB' \
@@ -50,7 +46,7 @@ mysql -u root --password=root <<< 'drop database if exists TestDB' \
     && echo 'SUCCESS'
 
 # Command for automatically starting the API
-echo "alias start_api='echo -e \"root\nTestDB\n192.168.50.4:2002\" | make run --quiet -C $PROJROOT/API'" >> /home/vagrant/.bashrc
+echo "alias start_api='echo -e \"root\nroot\nTestDB\n192.168.50.4:2002\" | make run --quiet -C $PROJROOT/API'" >> /home/vagrant/.bashrc
 
 # Command for completely reloading the Database
 echo "alias reload_db='mysql -u root --password=root <<< \"drop database TestDB\" \\

@@ -1,5 +1,10 @@
 package main
 
+import (
+	"database/sql"
+	"github.com/pkg/errors"
+)
+
 // ScheduledDosage : Describes an instance of a dosage for the schedule
 type ScheduledDosage struct {
 	Dosage Dosage `json:"dosage"`
@@ -51,20 +56,34 @@ type Video struct {
 	Reference string `json:"reference"`
 }
 
-// UserValidation : ADD DOCUMENTATION
+// FAQ : Describes a Frequently Asked Question
+type FAQ struct {
+	Question string `json:"question"`
+	Answer   string `json:"answer"`
+}
+
+// UserValidation : A set of values needed for authenticate a user
 type UserValidation struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-// JWToken : ADD DOCUMENTATION
+// JWToken : Contains the ingredients to access restricted areas
 type JWToken struct {
 	Token string `json:"token"`
+	ID    int    `json:"id"`
 }
 
-// APIResponse : Type used by the Response Channel
-// in the handlerWrapper (does not need json tags)
-type APIResponse struct {
-	Data       interface{}
-	StatusCode int
+// PatientInfo : Identifies a patient through his/her public data
+type PatientInfo struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+func errorWithRollback(err error, tx *sql.Tx) error {
+	err2 := tx.Rollback()
+	if err2 != nil {
+		err = errors.New(err.Error() + "\n Rollback failed:" + err2.Error())
+	}
+	return err
 }

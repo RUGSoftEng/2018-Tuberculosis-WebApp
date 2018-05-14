@@ -2,7 +2,7 @@ insert into Accounts(name, username, pass_hash, role, api_token) values(
        "John",
        "Jboy",
        "passhash",
-       "tester",
+       "physician",
        "00token00"
 );
 
@@ -13,11 +13,11 @@ insert into Physicians(id, email, token) values(
 );
 
 insert into Accounts(name, username, pass_hash, role, api_token) values(
-       "Jerome",
-       "Jthesecond",
-       "passhasher",
-       "tester",
-       "00tok"
+       "Patient",
+       "Username",
+       "$2a$14$ILMXoKunbxlXmXco12NNi.MGNaIFL6nSDj25XXs7bpMxhLfCnjtfW",
+       "patient",
+       ""
 );
 
 insert into Patients(id, physician_id) values(
