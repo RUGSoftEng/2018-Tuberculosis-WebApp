@@ -25,11 +25,12 @@ const (
 
 func main() {
 	var err error
-	rootpasswd, dbname, listenLocation := "pass", "database", "localhost:8080" // just some values
+	dbuser, rootpasswd, dbname, listenLocation := "user", "pass", "database", "localhost:8080" // just some values
+	fmt.Scanf("%s", &dbuser);
 	fmt.Scanf("%s", &rootpasswd)
 	fmt.Scanf("%s", &dbname)
 	fmt.Scanf("%s", &listenLocation)
-	db, err = sql.Open("mysql", "root:"+rootpasswd+"@/"+dbname)
+	db, err = sql.Open("mysql", dbuser+":"+rootpasswd+"@/"+dbname)
 
 	if err != nil {
 		log.Printf("encountered error while connecting to database: %v", err)

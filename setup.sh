@@ -46,7 +46,7 @@ mysql -u root --password=root <<< 'drop database if exists TestDB' \
     && echo 'SUCCESS'
 
 # Command for automatically starting the API
-echo "alias start_api='echo -e \"root\nTestDB\n192.168.50.4:2002\" | make run --quiet -C $PROJROOT/API'" >> /home/vagrant/.bashrc
+echo "alias start_api='echo -e \"root\nroot\nTestDB\n192.168.50.4:2002\" | make run --quiet -C $PROJROOT/API'" >> /home/vagrant/.bashrc
 
 # Command for completely reloading the Database
 echo "alias reload_db='mysql -u root --password=root <<< \"drop database TestDB\" \\
