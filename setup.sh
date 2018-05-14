@@ -45,13 +45,30 @@ mysql -u root --password=root <<< 'drop database if exists TestDB' \
     && mysql -u root --password=root TestDB < $PROJROOT/database/test_insert_statements.sql \
     && echo 'SUCCESS'
 
-# Command for automatically starting the API
-echo "alias start_api='echo -e \"root\nTestDB\n192.168.50.4:2002\" | make run --quiet -C $PROJROOT/API'" >> /home/vagrant/.bashrc
+# OLD! Command for automatically starting the API
+echo "function old_start_api() { echo -e \"root\nroot\nTestDB\n192.168.50.4:2002\" | make run --quiet -C $PROJROOT/API; }" >> /home/vagrant/.bashrc
 
 # Command for completely reloading the Database
-echo "alias reload_db='mysql -u root --password=root <<< \"drop database TestDB\" \\
+echo "function reload_db() { mysql -u root --password=root <<< \"drop database TestDB\" \\
     && mysql -u root --password=root <<< \"create database TestDB\" \\
     && mysql -u root --password=root TestDB < $PROJROOT/database/DDL_statements.sql \\
-    && mysql -u root --password=root TestDB < $PROJROOT/database/test_insert_statements.sql'" >> /home/vagrant/.bashrc
+    && mysql -u root --password=root TestDB < $PROJROOT/database/test_insert_statements.sql; }" >> /home/vagrant/.bashrc
+
+# Command for starting the API, where you specify the arguments:
+# 1] = username for database user
+# 2] = corresponding password for database user
+# 3] = name of the database
+# 4] = location 'ip:port' for api to listen
+echo "function start_api_args() { echo -e \"\$1\n\$2\n\$3\n\$4\" | make run --quiet -C $PROJROOT/API; }" >> /home/vagrant/.bashrc
+
+# Command for retrieving the ip
+echo "function get_ip() { ifconfig eth1 | grep -o 'inet addr:[1-9.]*' | cut -d \":\" -f 2; }" >> /home/vagrant/.bashrc
+
+# Command for starting the api with a specified ip address
+echo "function start_api_ip() { echo -e \"root\nroot\nTestDB\n\${1}:2002\" | make run --quiet -C $PROJROOT/API; }" >> /home/vagrant/.bashrc
+
+# New command for automatically starting the API
+echo "function start_api { start_api_ip \$(get_ip); }" >> /home/vagrant/.bashrc
 
 echo -e '------------------\n| Finished Setup |\n------------------'
+
