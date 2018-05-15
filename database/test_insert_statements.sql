@@ -120,3 +120,13 @@ insert into Quizzes(video, question, answers) values(
        "Tuberculosis is caused by",
        "A bacteria:A virus:Fungi"
 );
+
+insert into FAQ(question, answer) values (
+       "What is tuberculosis?",
+       "Tuberculosis is a disease, caused by the bacterium called Mycobacterium tuberculosis. It can cause lung problems, like a dry cough, but it can also manifest with other symptoms."
+);
+
+insert into FAQ(question, answer) values (
+       "How do you get tuberculosis?",
+       "Tuberculosis is spread via the air. You can get it for example. when someone coughs or talks to you. The bacteria are present in small droplets in the air and you could inhale those droplets."
+);
