@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	http "net/http"
 	"strconv"
+	"strings"
 )
 
 // Retrieves the id variable from the url + converts the variable to an integer
@@ -49,5 +50,27 @@ func queryDosageID(dosage Dosage, patientID int) (dosageID int, err error) {
 	if err != nil {
 		return
 	}
+	return
+}
+
+func queryQuizzes(videoID int) (quizzes []Quiz, err error) {
+	rows, err := db.Query(`SELECT question, answers FROM Quizzes WHERE video = ?`, videoID)
+	if err != nil {
+		return
+	}
+	for rows.Next() {
+		var question, answers string
+		err = rows.Scan(&question, &answers)
+		if err != nil {
+			return
+		}
+		splittedAnswers := strings.Split(answers, ":")
+		quizzes = append(quizzes, Quiz{question, splittedAnswers})
+	}
+
+	if err = rows.Err(); err != nil {
+		return
+	}
+
 	return
 }

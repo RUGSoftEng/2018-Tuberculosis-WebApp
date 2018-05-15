@@ -58,6 +58,14 @@ CREATE TABLE Videos(
        reference	VARCHAR(255) 	NOT NULL
 );
 
+CREATE TABLE Quizzes(
+       video		INT		NOT NULL,
+       question		VARCHAR(255)	NOT NULL,
+       answers		TEXT		NOT NULL,
+       FOREIGN KEY (video) REFERENCES Videos(id),
+       PRIMARY KEY (video, question)
+);
+
 CREATE TABLE FAQ(
        id	INT	NOT NULL PRIMARY KEY AUTO_INCREMENT,
        question TEXT 	NOT NULL,
