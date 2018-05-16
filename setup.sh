@@ -62,7 +62,7 @@ echo "function reload_db() { mysql -u root --password=root <<< \"drop database T
 echo "function start_api_args() { echo -e \"\$1\n\$2\n\$3\n\$4\" | make run --quiet -C $PROJROOT/API; }" >> /home/vagrant/.bashrc
 
 # Command for retrieving the ip
-echo "function get_ip() { ifconfig eth1 | grep -o 'inet addr:[1-9.]*' | cut -d \":\" -f 2; }" >> /home/vagrant/.bashrc
+echo "function get_ip() { ifconfig eth1 | grep -o 'inet addr:[0-9.]*' | cut -d \":\" -f 2; }" >> /home/vagrant/.bashrc
 
 # Command for starting the api with a specified ip address
 echo "function start_api_ip() { echo -e \"root\nroot\nTestDB\n\${1}:2002\" | make run --quiet -C $PROJROOT/API; }" >> /home/vagrant/.bashrc
