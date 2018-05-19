@@ -46,7 +46,7 @@ func main() {
 	getRouter.Handle("/api/general/videos/topics/{topic}", handlerWrapper(getVideoByTopic))
 	getRouter.Handle("/api/general/videos/topics", handlerWrapper(getTopics))
 	getRouter.Handle("/api/general/faq", handlerWrapper(getFAQs))
-	getRouter.Handle("/api/general/physicians/{id:[0-9]+}/retrieve", handlerWrapper(authWrapper(getPatients)))
+	getRouter.Handle("/api/accounts/physicians/{id:[0-9]+}/retrieve", handlerWrapper(authWrapper(getPatients)))
 
 	// POST Requests for Updating
 	postRouter := router.Methods("POST").Subrouter()
@@ -63,6 +63,7 @@ func main() {
 	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(addScheduledDosages))
 	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(addNote))
 	putRouter.Handle("/api/general/videos", handlerWrapper(addVideo))
+	putRouter.Handle("/api/admin/addMedicine", handlerWrapper(pushMedicine))
 
 	// DELETE Requests for Deleting
 	deleteRouter := router.Methods("DELETE").Subrouter()
