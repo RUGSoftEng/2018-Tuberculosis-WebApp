@@ -1,7 +1,7 @@
 CREATE TABLE Accounts(
        id		INT		NOT NULL PRIMARY KEY AUTO_INCREMENT,
        name		VARCHAR(200) 	NOT NULL,
-       username		VARCHAR(200) 	NOT NULL,
+       username		VARCHAR(200) 	NOT NULL  UNIQUE,
        pass_hash	VARCHAR(200) 	NOT NULL,
        role		VARCHAR(10) 	NOT NULL, 
        api_token	VARCHAR(64)
@@ -58,8 +58,17 @@ CREATE TABLE Videos(
        reference	VARCHAR(255) 	NOT NULL
 );
 
+CREATE TABLE Quizzes(
+       video		INT		NOT NULL,
+       question		VARCHAR(255)	NOT NULL,
+       answers		TEXT		NOT NULL,
+       FOREIGN KEY (video) REFERENCES Videos(id),
+       PRIMARY KEY (video, question)
+);
+
 CREATE TABLE FAQ(
        id	INT	NOT NULL PRIMARY KEY AUTO_INCREMENT,
-       question	TEXT 	NOT NULL 
+       question TEXT 	NOT NULL,
+       answer	TEXT 	NOT NULL 
 );
 

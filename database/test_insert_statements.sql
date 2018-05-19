@@ -2,7 +2,7 @@ insert into Accounts(name, username, pass_hash, role, api_token) values(
        "John",
        "Jboy",
        "passhash",
-       "tester",
+       "physician",
        "00token00"
 );
 
@@ -13,11 +13,11 @@ insert into Physicians(id, email, token) values(
 );
 
 insert into Accounts(name, username, pass_hash, role, api_token) values(
-       "Jerome",
-       "Jthesecond",
-       "passhasher",
-       "tester",
-       "00tok"
+       "Patient",
+       "Username",
+       "$2a$14$ILMXoKunbxlXmXco12NNi.MGNaIFL6nSDj25XXs7bpMxhLfCnjtfW",
+       "patient",
+       ""
 );
 
 insert into Patients(id, physician_id) values(
@@ -107,4 +107,26 @@ insert into Videos(topic, title, reference) values(
        "Linux",
        "The Complete Linux Course: Beginner to Power User",
        "https://www.youtube.com/watch?v=wBp0Rb-ZJak"
+);
+
+insert into Videos(topic, title, reference) values(
+       "Tuberculosis",
+       "What happens to me and my body when I have tuberculosis?",
+       "https://youtu.be/fXiXGRlvH70"
+);
+
+insert into Quizzes(video, question, answers) values(
+       4,
+       "Tuberculosis is caused by",
+       "A bacteria:A virus:Fungi"
+);
+
+insert into FAQ(question, answer) values (
+       "What is tuberculosis?",
+       "Tuberculosis is a disease, caused by the bacterium called Mycobacterium tuberculosis. It can cause lung problems, like a dry cough, but it can also manifest with other symptoms."
+);
+
+insert into FAQ(question, answer) values (
+       "How do you get tuberculosis?",
+       "Tuberculosis is spread via the air. You can get it for example. when someone coughs or talks to you. The bacteria are present in small droplets in the air and you could inhale those droplets."
 );
