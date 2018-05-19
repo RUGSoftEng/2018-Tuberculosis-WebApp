@@ -9,7 +9,7 @@ CREATE TABLE Accounts(
 
 CREATE TABLE Physicians(
        id    INT		NOT NULL PRIMARY KEY,
-       email VARCHAR(200) 	NOT NULL,
+       email VARCHAR(200) 	NOT NULL  UNIQUE,
        token VARCHAR(8) 	NOT NULL,
        FOREIGN KEY (id) REFERENCES Accounts(id)
 );
@@ -31,7 +31,7 @@ CREATE TABLE Notes(
 
 CREATE TABLE Medicines(
        id	INT		NOT NULL PRIMARY KEY AUTO_INCREMENT,
-       med_name	VARCHAR(50) 	NOT NULL	
+       med_name	VARCHAR(50) 	NOT NULL  UNIQUE	
 );
 
 CREATE TABLE Dosages(
@@ -53,14 +53,14 @@ CREATE TABLE ScheduledDosages(
 
 CREATE TABLE Videos(
        id		INT		NOT NULL PRIMARY KEY AUTO_INCREMENT,
-       topic		VARCHAR(255) 	NOT NULL,
-       title		VARCHAR(255) 	NOT NULL,
+       topic		VARCHAR(255) 	NOT NULL  UNIQUE,
+       title		VARCHAR(255) 	NOT NULL  UNIQUE,
        reference	VARCHAR(255) 	NOT NULL
 );
 
 CREATE TABLE Quizzes(
        video		INT		NOT NULL,
-       question		VARCHAR(255)	NOT NULL,
+       question		VARCHAR(255)	NOT NULL  UNIQUE,
        answers		TEXT		NOT NULL,
        FOREIGN KEY (video) REFERENCES Videos(id),
        PRIMARY KEY (video, question)
@@ -68,7 +68,7 @@ CREATE TABLE Quizzes(
 
 CREATE TABLE FAQ(
        id	INT	NOT NULL PRIMARY KEY AUTO_INCREMENT,
-       question TEXT 	NOT NULL,
+       question TEXT 	NOT NULL  UNIQUE,
        answer	TEXT 	NOT NULL 
 );
 

@@ -48,3 +48,49 @@
 - Group meeting
 - Webapp group discussion / meeting
 - Webapp group discussion / meeting
+- Renaming API paths & Database Table names
+- Renaming API paths & Database Table names
+- Renaming API paths & Database Table names
+- Renaming API paths & Database Table names
+- Learning vagrant
+- Learning vagrant
+- Learning vagrant
+- Very basic vagrant environment setup
+- Very basic vagrant environment setup
+- Very basic vagrant environment setup
+- Working version of automated vagrant setup + api connection
+- Working version of automated vagrant setup + api connection
+- Working version of automated vagrant setup + api connection
+- Working version of automated vagrant setup + api connection
+- Working version of automated vagrant setup + api connection
+- Working version of automated vagrant setup + api connection
+- Adding / Retrieving Videos
+- Adding / Retrieving Videos
+- New reloading database while vagrant VM is running
+- New reloading database while vagrant VM is running
+- Start of API documentation
+- Start of API documentation
+- Start of API documentation
+- Start of API documentation
+- Debugging minor problem with authentication
+- Debugging minor problem with authentication
+- Golint and Gofmt understanding and running
+- Golint and Gofmt understanding and running
+- Changed Dosages modeling and updated all methods which use the dosages
+- Changed Dosages modeling and updated all methods which use the dosages
+- Changed Dosages modeling and updated all methods which use the dosages
+- Changed Dosages modeling and updated all methods which use the dosages
+- Changed Dosages modeling and updated all methods which use the dosages
+- Changed Dosages modeling and updated all methods which use the dosages
+- Changed Dosages modeling and updated all methods which use the dosages
+- Changed Dosages modeling and updated all methods which use the dosages
+- Added api function for retrieving video topics
+- Added api function for retrieving video topics
+- Split the main.go file into sub files + created a makefile
+- Split the main.go file into sub files + created a makefile
+- Split the main.go file into sub files + created a makefile
+- Split the main.go file into sub files + created a makefile
+- Added safesql tool for spotting SQL Injection vunerabilities + reformatted the makefile
+- Removed exampleHandler + changes the response channel to accept unmarshelled data and a statuscode
+- Removed exampleHandler + changes the response channel to accept unmarshelled data and a statuscode
+- Removed exampleHandler + changes the response channel to accept unmarshelled data and a statuscode
