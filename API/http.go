@@ -26,12 +26,25 @@ const (
 func main() {
 	var err error
 	var dbUser, dbUserPassword, dbName, listenLocation string
-	fmt.Scanf("%s", &dbUser)
-	fmt.Scanf("%s", &dbUserPassword)
-	fmt.Scanf("%s", &dbName)
-	fmt.Scanf("%s", &listenLocation)
-	db, err = sql.Open("mysql", dbUser+":"+dbUserPassword+"@/"+dbName)
 
+	_, err = fmt.Scanf("%s", &dbUser)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "Scanning of Database User failed").Error())
+	}
+	_, err = fmt.Scanf("%s", &dbUserPassword)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "Scanning of Database User's Password failed").Error())
+	}
+	_, err = fmt.Scanf("%s", &dbName)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "Scanning of Database Name failed").Error())
+	}
+	_, err = fmt.Scanf("%s", &listenLocation)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "Scanning of Listen Location failed").Error())
+	}
+
+	db, err = sql.Open("mysql", dbUser+":"+dbUserPassword+"@/"+dbName)
 	if err != nil {
 		log.Printf("encountered error while connecting to database: %v", err)
 	}
