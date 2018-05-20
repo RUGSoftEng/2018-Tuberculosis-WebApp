@@ -63,6 +63,7 @@ func main() {
 	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(addScheduledDosages))
 	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(addNote))
 	putRouter.Handle("/api/general/videos", handlerWrapper(addVideo))
+	putRouter.Handle("/api/admin/faq", handlerWrapper(addFAQ))
 
 	// DELETE Requests for Deleting
 	deleteRouter := router.Methods("DELETE").Subrouter()
@@ -100,6 +101,10 @@ func (a *APIResponse) setResponse(data interface{}) {
 func (a *APIResponse) setResponseAndStatus(status int, data interface{}) {
 	a.StatusCode = status
 	a.Data = data
+}
+
+func (a *APIResponse) setStatus(status int) {
+	a.StatusCode = status
 }
 
 func handlerWrapper(handler func(r *http.Request, ar *APIResponse)) http.Handler {
