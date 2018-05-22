@@ -185,3 +185,49 @@ func getDosages(r *http.Request, ar *APIResponse) {
 	}
 	ar.setResponse(dosages)
 }
+
+// UPDATE
+func updateScheduledDosage(r *http.Request, ar *APIResponse) {
+	// Scan patient ID
+	patientID, err := getPatientIDVariable(r)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusBadRequest, err, "Cannot convert patient id to an integer")
+		return
+	}
+
+	// Read input scheduled dosages
+	scheduledDosages := []ScheduledDosage{}
+	decoder := json.NewDecoder(r.Body)
+	err = decoder.Decode(&scheduledDosages)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusBadRequest, err, "Uanble to decode given json data")
+		return
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		ar.setError(err, "Uanble to start database transaction")
+		return
+	}
+
+	for _, scheduledDosage := range scheduledDosages {
+		dosageID, err := queryDosageID(scheduledDosage.Dosage, patientID)
+		if err != nil {
+			ar.setErrorAndStatus(http.StatusBadRequest, err, "")
+			return
+		}
+		_, err = tx.Exec("UPDATE ScheduledDosages SET taken = ? WHERE dosage = ? AND day = ?",
+			scheduledDosage.Taken, dosageID, scheduledDosage.Day)
+		if err != nil {
+			ar.setError(err, "Something went wrong during SQL Update query")
+			return
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		ar.setError(err, "Unable to commit changes to the database")
+		return
+	}
+
+	ar.StatusCode = http.StatusOK
+}

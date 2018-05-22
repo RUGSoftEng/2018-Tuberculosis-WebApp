@@ -66,21 +66,27 @@ func getVideoByTopic(r *http.Request, ar *APIResponse) {
 	vars := mux.Vars(r)
 	topic := vars["topic"]
 
-	rows, err := db.Query(`SELECT topic, title, reference FROM Videos WHERE topic = ?`, topic)
+	rows, err := db.Query(`SELECT id, topic, title, reference FROM Videos WHERE topic = ?`, topic)
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error when querying the database")
 		return
 	}
 
-	videos := []Video{}
+	videos := []VideoQuiz{}
 	for rows.Next() {
+		var id int
 		var topic, title, reference string
-		err = rows.Scan(&topic, &title, &reference)
+		err = rows.Scan(&id, &topic, &title, &reference)
 		if err != nil {
 			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error during row scanning")
 			return
 		}
-		videos = append(videos, Video{topic, title, reference})
+		video := Video{topic, title, reference}
+		quizzes, err := queryQuizzes(id)
+		if err != nil {
+			ar.setError(err, "Error during querying quizzes")
+		}
+		videos = append(videos, VideoQuiz{video, quizzes})
 	}
 	if err = rows.Err(); err != nil {
 		ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error after scanning rows")

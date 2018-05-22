@@ -56,6 +56,19 @@ type Video struct {
 	Reference string `json:"reference"`
 }
 
+// VideoQuiz : The video alongside it's paired quizzes
+type VideoQuiz struct {
+	Video   Video  `json:"video"`
+	Quizzes []Quiz `json:"quizzes"`
+}
+
+// Quiz : The quiz, belongs to a video.
+// contains a list of answers, the first answer is always the correct answer.
+type Quiz struct {
+	Question string   `json:"question"`
+	Answers  []string `json:"answers"`
+}
+
 // FAQ : Describes a Frequently Asked Question
 type FAQ struct {
 	Question string `json:"question"`

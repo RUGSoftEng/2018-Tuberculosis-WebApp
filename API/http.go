@@ -25,17 +25,18 @@ const (
 
 func main() {
 	var err error
-	rootpasswd, dbname, listenLocation := "pass", "database", "localhost:8080" // just some values
-	fmt.Scanf("%s", &rootpasswd)
-	fmt.Scanf("%s", &dbname)
+	var dbUser, dbUserPassword, dbName, listenLocation string
+	fmt.Scanf("%s", &dbUser)
+	fmt.Scanf("%s", &dbUserPassword)
+	fmt.Scanf("%s", &dbName)
 	fmt.Scanf("%s", &listenLocation)
-	db, err = sql.Open("mysql", "root:"+rootpasswd+"@/"+dbname)
+	db, err = sql.Open("mysql", dbUser+":"+dbUserPassword+"@/"+dbName)
 
 	if err != nil {
 		log.Printf("encountered error while connecting to database: %v", err)
 	}
 
-	log.Printf("Connected to database '%s', and listening on '%s'...", dbname, listenLocation)
+	log.Printf("Connected to database '%s', and listening on '%s'...", dbName, listenLocation)
 	router := mux.NewRouter()
 
 	// GET Requests for Retrieving
@@ -52,6 +53,7 @@ func main() {
 	postRouter.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(authWrapper(modifyPatient)))
 	postRouter.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(authWrapper(modifyPhysician)))
 	postRouter.Handle("/api/accounts/login", handlerWrapper(login))
+	postRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(authWrapper(updateScheduledDosage)))
 
 	// PUT Requests for Creating
 	putRouter := router.Methods("PUT").Subrouter()
