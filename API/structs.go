@@ -54,6 +54,7 @@ type Video struct {
 	Topic     string `json:"topic"`
 	Title     string `json:"title"`
 	Reference string `json:"reference"`
+	Language  string `json:"language"`
 }
 
 // VideoQuiz : The video alongside it's paired quizzes
@@ -73,6 +74,7 @@ type Quiz struct {
 type FAQ struct {
 	Question string `json:"question"`
 	Answer   string `json:"answer"`
+	Language string `json:"language"`
 }
 
 // UserValidation : A set of values needed for authenticate a user

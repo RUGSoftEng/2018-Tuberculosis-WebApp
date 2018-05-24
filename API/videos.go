@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	_ "github.com/go-sql-driver/mysql" // anonymous import
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 	http "net/http"
+	"strings"
 )
 
 // CREATE
@@ -17,13 +19,18 @@ func addVideo(r *http.Request, ar *APIResponse) {
 		return
 	}
 
+	if !isCorrectLanguage(video.Language) {
+		ar.setErrorAndStatus(http.StatusBadRequest, errors.New(""), "Invalid Language")
+		return
+	}
+	
 	tx, err := db.Begin()
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start new transaction")
 		return
 	}
-	_, err = tx.Exec(`INSERT INTO Videos (topic, title, reference) VALUES (?, ?, ?)`,
-		video.Topic, video.Title, video.Reference)
+	_, err = tx.Exec(`INSERT INTO Videos (language, topic, title, reference) VALUES (?, ?, ?, ?)`,
+		video.Language, video.Topic, video.Title, video.Reference)
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
 		return
@@ -36,9 +43,14 @@ func addVideo(r *http.Request, ar *APIResponse) {
 	ar.StatusCode = http.StatusCreated
 }
 
+
 // RETRIEVE
 func getTopics(r *http.Request, ar *APIResponse) {
-	rows, err := db.Query(`SELECT DISTINCT topic FROM Videos`)
+	lang, err := parseLanguage(r)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusBadRequest, err, "")
+	}
+	rows, err := db.Query(`SELECT DISTINCT topic FROM Videos WHERE language = ?`, lang)
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error when querying the database")
 		return
@@ -66,7 +78,13 @@ func getVideoByTopic(r *http.Request, ar *APIResponse) {
 	vars := mux.Vars(r)
 	topic := vars["topic"]
 
-	rows, err := db.Query(`SELECT id, topic, title, reference FROM Videos WHERE topic = ?`, topic)
+	lang, err := parseLanguage(r)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusBadRequest, err, "")
+	}
+
+	rows, err := db.Query(`SELECT id, topic, title, reference FROM Videos WHERE topic = ? AND language = ?`,
+		topic, lang)
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error when querying the database")
 		return
@@ -81,7 +99,7 @@ func getVideoByTopic(r *http.Request, ar *APIResponse) {
 			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error during row scanning")
 			return
 		}
-		video := Video{topic, title, reference}
+		video := Video{topic, title, reference, lang}
 		quizzes, err := queryQuizzes(id)
 		if err != nil {
 			ar.setError(err, "Error during querying quizzes")
