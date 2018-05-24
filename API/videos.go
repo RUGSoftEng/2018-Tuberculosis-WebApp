@@ -6,7 +6,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	http "net/http"
-	"strings"
 )
 
 // CREATE
@@ -23,7 +22,7 @@ func addVideo(r *http.Request, ar *APIResponse) {
 		ar.setErrorAndStatus(http.StatusBadRequest, errors.New(""), "Invalid Language")
 		return
 	}
-	
+
 	tx, err := db.Begin()
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start new transaction")
@@ -43,12 +42,12 @@ func addVideo(r *http.Request, ar *APIResponse) {
 	ar.StatusCode = http.StatusCreated
 }
 
-
 // RETRIEVE
 func getTopics(r *http.Request, ar *APIResponse) {
 	lang, err := parseLanguage(r)
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusBadRequest, err, "")
+		return
 	}
 	rows, err := db.Query(`SELECT DISTINCT topic FROM Videos WHERE language = ?`, lang)
 	if err != nil {
@@ -81,6 +80,7 @@ func getVideoByTopic(r *http.Request, ar *APIResponse) {
 	lang, err := parseLanguage(r)
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusBadRequest, err, "")
+		return
 	}
 
 	rows, err := db.Query(`SELECT id, topic, title, reference FROM Videos WHERE topic = ? AND language = ?`,
