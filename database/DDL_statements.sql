@@ -11,7 +11,7 @@ CREATE TABLE Physicians(
        id    INT		NOT NULL PRIMARY KEY,
        email VARCHAR(200) 	NOT NULL,
        token VARCHAR(8) 	NOT NULL,
-       FOREIGN KEY (id) REFERENCES Accounts(id)
+       FOREIGN KEY (id) REFERENCES Accounts(id) ON DELETE CASCADE
 );
 
 CREATE TABLE Patients(
@@ -48,7 +48,8 @@ CREATE TABLE ScheduledDosages(
        dosage		INT	NOT NULL,
        day		DATE 	NOT NULL,
        taken		BOOLEAN NOT NULL,
-       PRIMARY KEY (dosage, day)
+       PRIMARY KEY (dosage, day),
+       FOREIGN KEY (dosage) REFERENCES Dosages(id)
 );
 
 CREATE TABLE Videos(

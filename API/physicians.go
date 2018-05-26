@@ -106,11 +106,6 @@ func deletePhysician(r *http.Request, ar *APIResponse) {
 		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
 		return
 	}
-	_, err = tx.Exec(`DELETE FROM Physicians  WHERE id=?`, id)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
-		return
-	}
 	_, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, id)
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
