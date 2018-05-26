@@ -11,7 +11,7 @@ import (
 
 // CREATE
 // expects a json file containing the new patient and a url encoded physician token
-func pushPatient(r *http.Request, ar *APIResponse) {
+func createPatient(r *http.Request, ar *APIResponse) {
 	patient := Patient{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&patient)
@@ -79,7 +79,7 @@ func pushPatient(r *http.Request, ar *APIResponse) {
 }
 
 // UPDATE
-func modifyPatient(r *http.Request, ar *APIResponse) {
+func updatePatient(r *http.Request, ar *APIResponse) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	patient := Patient{}

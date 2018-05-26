@@ -63,20 +63,20 @@ func main() {
 
 	// POST Requests for Updating
 	postRouter := router.Methods("POST").Subrouter()
-	postRouter.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(authWrapper(modifyPatient)))
-	postRouter.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(authWrapper(modifyPhysician)))
+	postRouter.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(authWrapper(updatePatient)))
+	postRouter.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(authWrapper(updatePhysician)))
 	postRouter.Handle("/api/accounts/login", handlerWrapper(login))
 	postRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(authWrapper(updateScheduledDosage)))
 
 	// PUT Requests for Creating
 	putRouter := router.Methods("PUT").Subrouter()
-	putRouter.Handle("/api/accounts/patients", handlerWrapper(pushPatient))
-	putRouter.Handle("/api/accounts/physicians", handlerWrapper(pushPhysician))
-	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(pushDosage))
-	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(addScheduledDosages))
-	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(addNote))
-	putRouter.Handle("/api/general/videos", handlerWrapper(addVideo))
-	putRouter.Handle("/api/admin/faq", handlerWrapper(addFAQ))
+	putRouter.Handle("/api/accounts/patients", handlerWrapper(createPatient))
+	putRouter.Handle("/api/accounts/physicians", handlerWrapper(createPhysician))
+	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(createDosage))
+	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(createScheduledDosages))
+	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(createNote))
+	putRouter.Handle("/api/general/videos", handlerWrapper(createVideo))
+	putRouter.Handle("/api/admin/faq", handlerWrapper(createFAQ))
 
 	// DELETE Requests for Deleting
 	deleteRouter := router.Methods("DELETE").Subrouter()

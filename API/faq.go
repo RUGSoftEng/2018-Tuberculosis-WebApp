@@ -7,7 +7,7 @@ import (
 )
 
 // CREATE
-func addFAQ(r *http.Request, ar *APIResponse) {
+func createFAQ(r *http.Request, ar *APIResponse) {
 	newFAQ := FAQ{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&newFAQ)

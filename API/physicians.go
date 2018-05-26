@@ -9,7 +9,7 @@ import (
 )
 
 // CREATE
-func pushPhysician(r *http.Request, ar *APIResponse) {
+func createPhysician(r *http.Request, ar *APIResponse) {
 	physician := Physician{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&physician)
@@ -51,7 +51,7 @@ func pushPhysician(r *http.Request, ar *APIResponse) {
 }
 
 // UPDATE
-func modifyPhysician(r *http.Request, ar *APIResponse) {
+func updatePhysician(r *http.Request, ar *APIResponse) {
 	physician := Physician{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&physician)
