@@ -161,3 +161,6 @@
 - Added language compatibility for FAQ & Videos
 - Added language compatibility for FAQ & Videos
 - Added language compatibility for FAQ & Videos
+- Added ON DELETE CASCADE constraints to database
+- Added ON DELETE CASCADE constraints to database
+- Refactored some api function names
