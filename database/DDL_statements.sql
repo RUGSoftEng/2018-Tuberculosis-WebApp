@@ -17,7 +17,7 @@ CREATE TABLE Physicians(
 CREATE TABLE Patients(
        id		INT NOT NULL PRIMARY KEY,
        physician_id  	INT NOT NULL,
-       FOREIGN KEY (id)			REFERENCES Accounts(id),
+       FOREIGN KEY (id)			REFERENCES Accounts(id) ON DELETE CASCADE,
        FOREIGN KEY (physician_id) 	REFERENCES Physicians(id)
 );
 
@@ -26,12 +26,12 @@ CREATE TABLE Notes(
        patient_id    	INT 	NOT NULL,
        question		TEXT 	NOT NULL,
        day		DATE 	NOT NULL,
-       FOREIGN KEY (patient_Id) REFERENCES Patients(id)
+       FOREIGN KEY (patient_Id) REFERENCES Patients(id) ON DELETE CASCADE
 );
 
 CREATE TABLE Medicines(
        id	INT		NOT NULL PRIMARY KEY AUTO_INCREMENT,
-       med_name	VARCHAR(50) 	NOT NULL	
+       med_name	VARCHAR(50) 	NOT NULL
 );
 
 CREATE TABLE Dosages(
@@ -40,7 +40,7 @@ CREATE TABLE Dosages(
        medicine_id	INT	NOT NULL,
        amount		TINYINT	NOT NULL,
        intake_time	TIME	NOT NULL,
-       FOREIGN KEY (patient_id)     REFERENCES Patients(id),
+       FOREIGN KEY (patient_id)     REFERENCES Patients(id) ON DELETE CASCADE,
        FOREIGN KEY (medicine_id)    REFERENCES Medicines(id)
 );
 
@@ -49,7 +49,7 @@ CREATE TABLE ScheduledDosages(
        day		DATE 	NOT NULL,
        taken		BOOLEAN NOT NULL,
        PRIMARY KEY (dosage, day),
-       FOREIGN KEY (dosage) REFERENCES Dosages(id)
+       FOREIGN KEY (dosage) REFERENCES Dosages(id) ON DELETE CASCADE
 );
 
 CREATE TABLE Videos(
