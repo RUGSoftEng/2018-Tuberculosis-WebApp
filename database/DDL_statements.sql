@@ -53,9 +53,10 @@ CREATE TABLE ScheduledDosages(
 
 CREATE TABLE Videos(
        id		INT		NOT NULL PRIMARY KEY AUTO_INCREMENT,
-       topic		VARCHAR(255) 	NOT NULL,
-       title		VARCHAR(255) 	NOT NULL,
-       reference	VARCHAR(255) 	NOT NULL
+       language 	CHAR(2)	    	NOT NULL DEFAULT 'EN',
+       topic		VARCHAR(255)	NOT NULL,
+       title		VARCHAR(255)	NOT NULL,
+       reference 	VARCHAR(255)	NOT NULL
 );
 
 CREATE TABLE Quizzes(
@@ -68,7 +69,8 @@ CREATE TABLE Quizzes(
 
 CREATE TABLE FAQ(
        id	INT	NOT NULL PRIMARY KEY AUTO_INCREMENT,
+       language CHAR(2)	NOT NULL  DEFAULT 'EN',
        question TEXT 	NOT NULL,
-       answer	TEXT 	NOT NULL 
+       answer	TEXT 	NOT NULL
 );
 

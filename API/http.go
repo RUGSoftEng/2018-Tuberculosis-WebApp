@@ -26,12 +26,25 @@ const (
 func main() {
 	var err error
 	var dbUser, dbUserPassword, dbName, listenLocation string
-	fmt.Scanf("%s", &dbUser)
-	fmt.Scanf("%s", &dbUserPassword)
-	fmt.Scanf("%s", &dbName)
-	fmt.Scanf("%s", &listenLocation)
-	db, err = sql.Open("mysql", dbUser+":"+dbUserPassword+"@/"+dbName)
 
+	_, err = fmt.Scanf("%s", &dbUser)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "Scanning of Database User failed").Error())
+	}
+	_, err = fmt.Scanf("%s", &dbUserPassword)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "Scanning of Database User's Password failed").Error())
+	}
+	_, err = fmt.Scanf("%s", &dbName)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "Scanning of Database Name failed").Error())
+	}
+	_, err = fmt.Scanf("%s", &listenLocation)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "Scanning of Listen Location failed").Error())
+	}
+
+	db, err = sql.Open("mysql", dbUser+":"+dbUserPassword+"@/"+dbName)
 	if err != nil {
 		log.Printf("encountered error while connecting to database: %v", err)
 	}
@@ -63,6 +76,7 @@ func main() {
 	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(addScheduledDosages))
 	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(addNote))
 	putRouter.Handle("/api/general/videos", handlerWrapper(addVideo))
+	putRouter.Handle("/api/admin/faq", handlerWrapper(addFAQ))
 
 	// DELETE Requests for Deleting
 	deleteRouter := router.Methods("DELETE").Subrouter()
@@ -100,6 +114,10 @@ func (a *APIResponse) setResponse(data interface{}) {
 func (a *APIResponse) setResponseAndStatus(status int, data interface{}) {
 	a.StatusCode = status
 	a.Data = data
+}
+
+func (a *APIResponse) setStatus(status int) {
+	a.StatusCode = status
 }
 
 func handlerWrapper(handler func(r *http.Request, ar *APIResponse)) http.Handler {
