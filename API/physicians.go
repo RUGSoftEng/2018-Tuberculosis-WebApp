@@ -9,7 +9,7 @@ import (
 )
 
 // CREATE
-func pushPhysician(r *http.Request, ar *APIResponse) {
+func createPhysician(r *http.Request, ar *APIResponse) {
 	physician := Physician{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&physician)
@@ -51,7 +51,7 @@ func pushPhysician(r *http.Request, ar *APIResponse) {
 }
 
 // UPDATE
-func modifyPhysician(r *http.Request, ar *APIResponse) {
+func updatePhysician(r *http.Request, ar *APIResponse) {
 	physician := Physician{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&physician)
@@ -104,11 +104,6 @@ func deletePhysician(r *http.Request, ar *APIResponse) {
 	tx, err := db.Begin()
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
-		return
-	}
-	_, err = tx.Exec(`DELETE FROM Physicians  WHERE id=?`, id)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
 		return
 	}
 	_, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, id)

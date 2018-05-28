@@ -10,7 +10,7 @@ import (
 )
 
 // CREATE
-func pushDosage(r *http.Request, ar *APIResponse) {
+func createDosage(r *http.Request, ar *APIResponse) {
 	dosage := Dosage{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&dosage)
@@ -62,7 +62,7 @@ type InputDosagesJSON struct {
 }
 
 // CREATE
-func addScheduledDosages(r *http.Request, ar *APIResponse) {
+func createScheduledDosages(r *http.Request, ar *APIResponse) {
 	// Scan Patient ID
 	vars := mux.Vars(r)
 	patientID := vars["id"]

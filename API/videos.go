@@ -9,7 +9,7 @@ import (
 )
 
 // CREATE
-func addVideo(r *http.Request, ar *APIResponse) {
+func createVideo(r *http.Request, ar *APIResponse) {
 	video := Video{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&video)

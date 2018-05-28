@@ -8,7 +8,7 @@ import (
 )
 
 // CREATE
-func addNote(r *http.Request, ar *APIResponse) {
+func createNote(r *http.Request, ar *APIResponse) {
 	// verify patient
 	note := Note{}
 	dec := json.NewDecoder(r.Body)

@@ -11,7 +11,7 @@ import (
 
 // CREATE
 // expects a json file containing the new patient and a url encoded physician token
-func pushPatient(r *http.Request, ar *APIResponse) {
+func createPatient(r *http.Request, ar *APIResponse) {
 	patient := Patient{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&patient)
@@ -79,7 +79,7 @@ func pushPatient(r *http.Request, ar *APIResponse) {
 }
 
 // UPDATE
-func modifyPatient(r *http.Request, ar *APIResponse) {
+func updatePatient(r *http.Request, ar *APIResponse) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	patient := Patient{}
@@ -127,55 +127,7 @@ func deletePatient(r *http.Request, ar *APIResponse) {
 
 	vars := mux.Vars(r)
 	id := vars["id"]
-	_, err = tx.Exec(`DELETE FROM Notes WHERE patient_id=?`, id)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "")
-		return
-	}
 
-	// Retrieve all dosage identifiers
-	rows, err := tx.Query(`SELECT id FROM Dosages
-                               WHERE patient_id = ?`, id)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "")
-		return
-	}
-
-	var dosageIDs []int
-	for rows.Next() {
-		var dosageID int
-		err = rows.Scan(&id)
-		if err != nil {
-			ar.setErrorAndStatus(StatusFailedOperation, errorWithRollback(err, tx), "Failed reading results")
-			return
-		}
-		dosageIDs = append(dosageIDs, dosageID)
-	}
-	if rows.Err() != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
-		return
-	}
-
-	// Delete all specific scheduled dosages attached to the patient
-	for _, dosageID := range dosageIDs {
-		_, err = tx.Exec(`DELETE FROM SchedulesDosages WHERE dosage=?`, dosageID)
-		if err != nil {
-			ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
-			return
-		}
-	}
-
-	_, err = tx.Exec(`DELETE FROM Dosages WHERE patient_id=?`, id)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
-		return
-	}
-
-	_, err = tx.Exec(`DELETE FROM Patients WHERE id=?`, id)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
-		return
-	}
 	_, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, id)
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
