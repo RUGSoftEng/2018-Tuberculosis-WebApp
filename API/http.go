@@ -60,6 +60,10 @@ func main() {
 	getRouter.Handle("/api/general/videos/topics", handlerWrapper(getTopics))
 	getRouter.Handle("/api/general/faq", handlerWrapper(getFAQs))
 	getRouter.Handle("/api/general/physicians/{id:[0-9]+}/retrieve", handlerWrapper(authWrapper(getPatients)))
+	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/retrieveByID", handlerWrapper(retrieveByID))
+	getRouter.Handle("/api/accounts/patients/{username}/retrieveByUsername", handlerWrapper(retrieveByUsername))
+	getRouter.Handle("/api/accounts/physicians/{id:[0-9]+}/retrievePyByID", handlerWrapper(retrievePyByID))
+	getRouter.Handle("/api/accounts/physicians/{username}/retrievePyByUsername", handlerWrapper(retrievePyByUsername))
 
 	// POST Requests for Updating
 	postRouter := router.Methods("POST").Subrouter()

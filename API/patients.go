@@ -139,3 +139,82 @@ func deletePatient(r *http.Request, ar *APIResponse) {
 		return
 	}
 }
+
+//GET
+
+func retrieveByID(r *http.Request, ar *APIResponse) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	patientOV := PatientOverview{}
+	var name string
+	var user string
+	err := db.QueryRow(`SELECT name, username FROM Accounts WHERE id=?`, id).Scan(&name, &user)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	var phy_id int
+	err = db.QueryRow(`SELECT physician_id FROM Patients WHERE id=?`, id).Scan(&phy_id)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	var physician_name string
+	var email string
+	err = db.QueryRow(`SELECT email FROM Physicians WHERE id=?`, phy_id).Scan(&email)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	err = db.QueryRow(`SELECT name FROM Accounts WHERE id=?`, phy_id).Scan(&physician_name)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	patientOV.Name = name
+	patientOV.Username = user
+	patientOV.PhysicianName = physician_name
+	patientOV.PhysicianEmail = email
+	ar.setResponse(patientOV)
+}
+
+func retrieveByUsername(r *http.Request, ar *APIResponse) {
+	vars := mux.Vars(r)
+	username := vars["username"]
+	patient := PatientOverview{}
+	var name string
+	err := db.QueryRow(`SELECT name FROM Accounts WHERE username=?`, username).Scan(&name)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	var id int
+	err = db.QueryRow(`SELECT id FROM Accounts WHERE username=?`, username).Scan(&id)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	var phy_id int
+	err = db.QueryRow(`SELECT physician_id FROM Patients WHERE id=?`, id).Scan(&phy_id)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	var physician_name string
+	var email string
+	err = db.QueryRow(`SELECT email FROM Physicians WHERE id=?`, phy_id).Scan(&email)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	err = db.QueryRow(`SELECT name FROM Accounts WHERE id=?`, phy_id).Scan(&physician_name)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	patient.Name = name
+	patient.Username = username
+	patient.PhysicianEmail = email
+	patient.PhysicianName = physician_name
+	ar.setResponse(patient)
+}
