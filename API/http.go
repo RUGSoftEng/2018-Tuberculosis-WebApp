@@ -83,7 +83,7 @@ func main() {
 	deleteRouter := router.Methods("DELETE").Subrouter()
 	deleteRouter.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(deletePatient))
 	deleteRouter.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(deletePhysician))
-	deleteRouter.Handle("/api/admin/medicines/{id:[0-9]+}", handlerWrapper(deleteMedicine))
+	deleteRouter.Handle("/api/admin/medicines/{id:[0-9]+}/delete", handlerWrapper(deleteMedicine))
 
 	// Starting the router
 	err = http.ListenAndServe(listenLocation, router)
