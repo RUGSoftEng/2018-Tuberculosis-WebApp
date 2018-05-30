@@ -107,17 +107,38 @@ func parseToken(in JWToken, ar *APIResponse) {
 		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
 		return
 	}
+	var physicianID = -1
+	var physicianPwd = "default"
+	var physicianUser = "default"
+	err = db.QueryRow(`SELECT physician_id FROM Patients WHERE id=?`, id).Scan(&physicianID)
+	if err != nil && err != sql.ErrNoRows {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
+		return
+	}
+	err = db.QueryRow(`SELECT username FROM Accounts WHERE id=?`, physicianID).Scan(&physicianUser)
+	if err != nil && err != sql.ErrNoRows {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
+		return
+	}
+	err = db.QueryRow(`SELECT pass_hash FROM Accounts WHERE id=?`, physicianID).Scan(&physicianPwd)
+	if err != nil && err != sql.ErrNoRows {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
+		return
+	}
 	// DO NOT REMOVE THE FOLLOWING LINES
-	log.Println(id, readID)
-	if id != readID {
+	log.Println(id, readID, physicianID)
+	if id != readID && readID != physicianID {
 		ar.setErrorAndStatus(http.StatusUnauthorized, errors.New("Wrong user"), "Unauthorized")
 		return
 	}
 	// UP UNTIL HERE
 	err = bcrypt.CompareHashAndPassword([]byte(pwd), []byte(user.Password))
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusUnauthorized, err, "Unauthorized")
-		return
+		err = bcrypt.CompareHashAndPassword([]byte(physicianPwd), []byte(user.Password))
+		if err != nil {
+			ar.setErrorAndStatus(http.StatusUnauthorized, err, "Unauthorized")
+			return
+		}
 	}
 }
 
