@@ -1,5 +1,10 @@
 package main
 
+import (
+	"database/sql"
+	"github.com/pkg/errors"
+)
+
 // ScheduledDosage : Describes an instance of a dosage for the schedule
 type ScheduledDosage struct {
 	Dosage Dosage `json:"dosage"`
@@ -49,22 +54,67 @@ type Video struct {
 	Topic     string `json:"topic"`
 	Title     string `json:"title"`
 	Reference string `json:"reference"`
+	Language  string `json:"language"`
 }
 
-// UserValidation : ADD DOCUMENTATION
+// VideoQuiz : The video alongside it's paired quizzes
+type VideoQuiz struct {
+	Video   Video  `json:"video"`
+	Quizzes []Quiz `json:"quizzes"`
+}
+
+// Quiz : The quiz, belongs to a video.
+// contains a list of answers, the first answer is always the correct answer.
+type Quiz struct {
+	Question string   `json:"question"`
+	Answers  []string `json:"answers"`
+}
+
+// FAQ : Describes a Frequently Asked Question
+type FAQ struct {
+	Question string `json:"question"`
+	Answer   string `json:"answer"`
+	Language string `json:"language"`
+}
+
+// UserValidation : A set of values needed for authenticate a user
 type UserValidation struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-// JWToken : ADD DOCUMENTATION
+// JWToken : Contains the ingredients to access restricted areas
 type JWToken struct {
 	Token string `json:"token"`
+	ID    int    `json:"id"`
 }
 
-// APIResponse : Type used by the Response Channel
-// in the handlerWrapper (does not need json tags)
-type APIResponse struct {
-	Data       interface{}
-	StatusCode int
+// PatientInfo : Identifies a patient through his/her public data
+type PatientInfo struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+// PatientOverview : A complete overview of a patient
+type PatientOverview struct {
+	Username       string `json:"username"`
+	Name           string `json:"name"`
+	PhysicianName  string `json:"physician_name"`
+	PhysicianEmail string `json:"email"`
+}
+
+// PhysicianOverview : A complete overview of a physician
+type PhysicianOverview struct {
+	Username string `json:"username"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Token    string `json:"token"`
+}
+
+func errorWithRollback(err error, tx *sql.Tx) error {
+	err2 := tx.Rollback()
+	if err2 != nil {
+		err = errors.New(err.Error() + "\n Rollback failed:" + err2.Error())
+	}
+	return err
 }
