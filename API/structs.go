@@ -95,7 +95,7 @@ type PatientInfo struct {
 	Name string `json:"name"`
 }
 
-// An complete overview of a patient
+// PatientOverview : A complete overview of a patient
 type PatientOverview struct {
 	Username       string `json:"username"`
 	Name           string `json:"name"`
@@ -103,6 +103,7 @@ type PatientOverview struct {
 	PhysicianEmail string `json:"email"`
 }
 
+// PhysicianOverview : A complete overview of a physician
 type PhysicianOverview struct {
 	Username string `json:"username"`
 	Name     string `json:"name"`
