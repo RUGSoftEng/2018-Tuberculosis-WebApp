@@ -6,8 +6,20 @@ import (
 	_ "github.com/go-sql-driver/mysql" // anonymous import
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"math/rand"
 	http "net/http"
+	"time"
 )
+
+func randSeq() string {
+	rand.Seed(time.Now().UnixNano())
+	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	b := make([]rune, 8)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
+}
 
 // CREATE
 // expects a json file containing the new patient and a url encoded physician token
@@ -33,8 +45,9 @@ func createPatient(r *http.Request, ar *APIResponse) {
 	}
 
 	role := "patient"
-	result, err := tx.Exec(`INSERT INTO Accounts (name, username, pass_hash, role)
-                                VALUES(?, ?, ?, ?)`, patient.Name, patient.Username, patient.Password, role)
+	apiToken := randSeq()
+	result, err := tx.Exec(`INSERT INTO Accounts (name, username, pass_hash, role, api_token)
+                                VALUES(?, ?, ?, ?, ?)`, patient.Name, patient.Username, patient.Password, role, apiToken)
 	if err != nil {
 		me, ok := err.(*mysql.MySQLError)
 		if !ok {

@@ -36,7 +36,6 @@ type Patient struct {
 	Username string `json:"username"`
 	Name     string `json:"name"`
 	Password string `json:"password"`
-	APIToken string `json:"api_token"`
 }
 
 // Physician : Information of a patient
