@@ -4,7 +4,7 @@ CREATE TABLE Accounts(
        username		VARCHAR(200) 	NOT NULL  UNIQUE,
        pass_hash	VARCHAR(200) 	NOT NULL,
        role		VARCHAR(10) 	NOT NULL, 
-       api_token	VARCHAR(64)
+       api_token	INT
 );
 
 CREATE TABLE Physicians(

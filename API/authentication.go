@@ -11,6 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	http "net/http"
 	"strconv"
+	"strings"
 )
 
 //HashPassword hashes the given string
@@ -51,12 +52,26 @@ func login(r *http.Request, ar *APIResponse) {
 	}
 	var tokenID int
 	err = db.QueryRow(`SELECT id FROM Accounts WHERE username=?`, cred.Username).Scan(&tokenID)
+	var salt int
+	err = db.QueryRow(`SELECT api_token FROM Accounts WHERE username=?`, cred.Username).Scan(&salt)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
+		return
+	}
+	tokenString = Encode(tokenString, salt)
 	ar.Data = JWToken{Token: tokenString, ID: tokenID}
 }
 
 func parseToken(in JWToken, ar *APIResponse) {
 	content := in.Token
 	id := in.ID
+	var salt int
+	err := db.QueryRow(`SELECT api_token FROM Accounts WHERE id=?`, id).Scan(&salt)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
+		return
+	}
+	content = Decode(content, salt)
 	token, err := jwt.Parse(content, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("There was an error")
@@ -138,4 +153,38 @@ func authWrapper(handler func(r *http.Request, ar *APIResponse)) func(*http.Requ
 		}
 		handler(r, ar)
 	}
+}
+
+// Rotate Latin letters by the shift amount.
+func rotate(text string, shift int) string {
+	var letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	shift = (shift%26 + 26) % 26 // [0, 25]
+	b := make([]byte, len(text))
+	for i := 0; i < len(text); i++ {
+		t := text[i]
+		if strings.ContainsAny(letters, "t") {
+			var a int
+			switch {
+			case 'a' <= t && t <= 'z':
+				a = 'a'
+			case 'A' <= t && t <= 'Z':
+				a = 'A'
+			default:
+				b[i] = t
+				continue
+			}
+			b[i] = byte(a + ((int(t)-a)+shift)%26)
+		}
+	}
+	return string(b)
+}
+
+// Encode using Caesar Cipher.
+func Encode(plain string, shift int) (cipher string) {
+	return rotate(plain, shift)
+}
+
+// Decode using Caesar Cipher.
+func Decode(cipher string, shift int) (plain string) {
+	return rotate(cipher, -shift)
 }

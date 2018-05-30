@@ -6,6 +6,7 @@ import (
 	_ "github.com/go-sql-driver/mysql" // anonymous import
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"math/rand"
 	http "net/http"
 )
 
@@ -33,8 +34,9 @@ func createPatient(r *http.Request, ar *APIResponse) {
 	}
 
 	role := "patient"
-	result, err := tx.Exec(`INSERT INTO Accounts (name, username, pass_hash, role)
-                                VALUES(?, ?, ?, ?)`, patient.Name, patient.Username, patient.Password, role)
+	apiToken := rand.Intn(26)
+	result, err := tx.Exec(`INSERT INTO Accounts (name, username, pass_hash, role, api_token)
+                                VALUES(?, ?, ?, ?, ?)`, patient.Name, patient.Username, patient.Password, role, apiToken)
 	if err != nil {
 		me, ok := err.(*mysql.MySQLError)
 		if !ok {
