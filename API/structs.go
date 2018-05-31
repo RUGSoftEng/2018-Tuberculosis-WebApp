@@ -94,6 +94,22 @@ type PatientInfo struct {
 	Name string `json:"name"`
 }
 
+// PatientOverview : A complete overview of a patient
+type PatientOverview struct {
+	Username       string `json:"username"`
+	Name           string `json:"name"`
+	PhysicianName  string `json:"physician_name"`
+	PhysicianEmail string `json:"email"`
+}
+
+// PhysicianOverview : A complete overview of a physician
+type PhysicianOverview struct {
+	Username string `json:"username"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Token    string `json:"token"`
+}
+
 func errorWithRollback(err error, tx *sql.Tx) error {
 	err2 := tx.Rollback()
 	if err2 != nil {
