@@ -9,6 +9,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
+	"log"
 	http "net/http"
 	"strconv"
 	"strings"
@@ -20,7 +21,7 @@ func HashPassword(password string) (string, error) {
 	return string(bytes), err
 }
 
-//This function validates a password against a specific user, and issues a JWT Token
+//This function validates a password against a  specific user, and issues a JWT Token
 func login(r *http.Request, ar *APIResponse) {
 	cred := UserValidation{}
 	err := json.NewDecoder(r.Body).Decode(&cred)
@@ -34,7 +35,6 @@ func login(r *http.Request, ar *APIResponse) {
 		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
 		return
 	}
-
 	err = bcrypt.CompareHashAndPassword([]byte(password), []byte(cred.Password))
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusUnauthorized, err, "Unauthorized")
@@ -52,26 +52,26 @@ func login(r *http.Request, ar *APIResponse) {
 	}
 	var tokenID int
 	err = db.QueryRow(`SELECT id FROM Accounts WHERE username=?`, cred.Username).Scan(&tokenID)
-	var salt int
-	err = db.QueryRow(`SELECT api_token FROM Accounts WHERE username=?`, cred.Username).Scan(&salt)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
-		return
-	}
-	tokenString = Encode(tokenString, salt)
+	/*	var salt int
+		err = db.QueryRow(`SELECT api_token FROM Accounts WHERE username=?`, cred.Username).Scan(&salt)
+		if err != nil {
+			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
+			return
+		}*/
+	tokenString = Encode(tokenString, 10)
 	ar.Data = JWToken{Token: tokenString, ID: tokenID}
 }
 
 func parseToken(in JWToken, ar *APIResponse) {
 	content := in.Token
 	id := in.ID
-	var salt int
-	err := db.QueryRow(`SELECT api_token FROM Accounts WHERE id=?`, id).Scan(&salt)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
-		return
-	}
-	content = Decode(content, salt)
+	/*	var salt int
+		err := db.QueryRow(`SELECT api_token FROM Accounts WHERE id=?`, id).Scan(&salt)
+		if err != nil {
+			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
+			return
+		}*/
+	content = Decode(content, 10)
 	token, err := jwt.Parse(content, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("There was an error")
@@ -82,48 +82,64 @@ func parseToken(in JWToken, ar *APIResponse) {
 		ar.setErrorAndStatus(http.StatusUnauthorized, err, "Unauthorized")
 		return
 	}
-	if claims, ok := token.Claims.(jwt.MapClaims); !ok || !token.Valid {
-		ar.setErrorAndStatus(http.StatusUnauthorized, err, "Unauthorized")
+	claims, _ := token.Claims.(jwt.MapClaims)
+	ar.setErrorAndStatus(http.StatusUnauthorized, err, "Unauthorized")
 
-		var user UserValidation
-		err = mapstructure.Decode(claims, &user)
-		if err != nil {
-			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
-			return
-		}
-		var pwd string
-		err := db.QueryRow(`SELECT pass_hash FROM Accounts WHERE username=?`, user.Username).Scan(&pwd)
-		if err != nil {
-			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
-			return
-		}
-		var readID int
-		err = db.QueryRow(`SELECT id FROM Accounts WHERE username=?`, user.Username).Scan(&readID)
-		if err == sql.ErrNoRows {
-			ar.setErrorAndStatus(http.StatusUnauthorized, err, "Unauthorized")
-			return
-		}
-		if err != nil {
-			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
-			return
-		}
-		// DO NOT REMOVE THE FOLLOWING LINES
-		if id != readID {
-			ar.setErrorAndStatus(http.StatusUnauthorized, err, "Unauthorized")
-			return
-		}
-		// UP UNTIL HERE
-		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(pwd))
-		if err != nil {
-			ar.setErrorAndStatus(http.StatusUnauthorized, err, "Unauthorized")
-			return
-		}
+	var user UserValidation
+	err = mapstructure.Decode(claims, &user)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
 		return
 	}
-	/*
-		ar.StatusCode = http.StatusBadRequest
-		ar.Error = errors.Wrap(err, "Authentication failed: Mismatching credentials")
-	*/
+	var pwd string
+	err = db.QueryRow(`SELECT pass_hash FROM Accounts WHERE username=?`, user.Username).Scan(&pwd)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
+		return
+	}
+	var readID int
+	err = db.QueryRow(`SELECT id FROM Accounts WHERE username=?`, user.Username).Scan(&readID)
+	if err == sql.ErrNoRows {
+		ar.setErrorAndStatus(http.StatusUnauthorized, err, "Unauthorized")
+		return
+	}
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
+		return
+	}
+	var physicianID = -1
+	var physicianPwd = "default"
+	var physicianUser = "default"
+	err = db.QueryRow(`SELECT physician_id FROM Patients WHERE id=?`, id).Scan(&physicianID)
+	if err != nil && err != sql.ErrNoRows {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
+		return
+	}
+	err = db.QueryRow(`SELECT username FROM Accounts WHERE id=?`, physicianID).Scan(&physicianUser)
+	if err != nil && err != sql.ErrNoRows {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
+		return
+	}
+	err = db.QueryRow(`SELECT pass_hash FROM Accounts WHERE id=?`, physicianID).Scan(&physicianPwd)
+	if err != nil && err != sql.ErrNoRows {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
+		return
+	}
+	// DO NOT REMOVE THE FOLLOWING LINES
+	log.Println(id, readID, physicianID)
+	if id != readID && readID != physicianID {
+		ar.setErrorAndStatus(http.StatusUnauthorized, errors.New("Wrong user"), "Unauthorized")
+		return
+	}
+	// UP UNTIL HERE
+	err = bcrypt.CompareHashAndPassword([]byte(pwd), []byte(user.Password))
+	if err != nil {
+		err = bcrypt.CompareHashAndPassword([]byte(physicianPwd), []byte(user.Password))
+		if err != nil {
+			ar.setErrorAndStatus(http.StatusUnauthorized, err, "Unauthorized")
+			return
+		}
+	}
 }
 
 // Token authentication will probably be embedded in all the request that are give access
