@@ -15,9 +15,10 @@ type ScheduledDosage struct {
 // Dosage : Describes the time and number of pills is associated with a medicine
 // This can be different for different people
 type Dosage struct {
-	IntakeMoment  string   `json:"intake_moment"`
-	NumberOfPills int      `json:"amount"`
-	Medicine      Medicine `json:"medicine"`
+	IntakeIntervalStart string   `json:"intake_interval_start"`
+	IntakeIntervalEnd   string   `json:"intake_interval_end"`
+	NumberOfPills       int      `json:"amount"`
+	Medicine            Medicine `json:"medicine"`
 }
 
 // Medicine : Data for a medicine
@@ -108,6 +109,12 @@ type PhysicianOverview struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Token    string `json:"token"`
+}
+
+// InputScheduledDosage : Struct for handling the input for scheduled dosages
+type InputScheduledDosage struct {
+	Medicine Medicine `json:"medicine"`
+	Days     []string `json:"days"`
 }
 
 func errorWithRollback(err error, tx *sql.Tx) error {
