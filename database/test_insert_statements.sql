@@ -91,36 +91,6 @@ insert into Notes(patient_Id, question, day) values(
        2, 'A NOTE', '2018-02-20'
 );
 
-insert into Videos(topic, title, reference) values(
-       'GoTutorials',
-       'Golang REST API With Mux',
-       'https://www.youtube.com/watch?v=SonwZ6MF5BE'
-);
-
-insert into Videos(topic, title, reference) values(
-       'GoTutorials',
-       'Introduction - Go Lang Practical Programming Tutorial p.1',
-       'https://www.youtube.com/watch?v=G3PvTWRIhZA'
-);
-
-insert into Videos(topic, title, reference) values(
-       'Linux',
-       'The Complete Linux Course: Beginner to Power User',
-       'https://www.youtube.com/watch?v=wBp0Rb-ZJak'
-);
-
-insert into Videos(topic, title, reference) values(
-       'Tuberculosis',
-       'What happens to me and my body when I have tuberculosis?',
-       'https://youtu.be/fXiXGRlvH70'
-);
-
-insert into Quizzes(video, question, answers) values(
-       4,
-       'Tuberculosis is caused by',
-       'A bacteria:A virus:Fungi'
-);
-
 insert into FAQ(question, answer) values (
        'What is tuberculosis?',
        'Tuberculosis is a disease, caused by the bacterium called Mycobacterium tuberculosis. It can cause lung problems, like a dry cough, but it can also manifest with other symptoms.'
