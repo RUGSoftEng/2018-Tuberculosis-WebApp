@@ -11,7 +11,7 @@ insert into Quizzes(video, question, answers) values(
 
 insert into Quizzes(video, question, answers) values(
        1,
-       'What does your body to protect you from the TB',
+       'What does your body do to protect you from Tuberculosis',
        'It builds a wall around the bacteria:It destroys all the bacteria:It moves the bacteria to a different place'
 );
 
