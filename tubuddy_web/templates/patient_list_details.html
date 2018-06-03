@@ -1,0 +1,27 @@
+{% extends "patient_list.html" %}
+
+{% block info %}
+
+<h2>{Name of the patient.}</h2>
+	    <h3 >Treatment plan: {name}</h3>
+        <h1> with pk {{ pk }}</h1>
+
+    <div class="dropdown">
+        <button class="btn dropbtn btn-info btn-lg dropdown-toggle" type="button" id="menu1" data-toggle="dropdown">
+            Change treatment
+        </button>
+
+        <ul class="dropdown-menu" role="menu" aria-labelledby="menu1">
+          <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Treatment 1</a></li>
+          <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Treatment 2</a></li>
+          <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Treatment 3</a></li>
+        </ul>
+  </div>
+
+
+
+	  <button type="button" class="btn btn-info btn-lg">Delete patient</button>
+
+<button id="about-btn"> Click Me - I'm Javascript on Speed</button>
+<br>
+{% endblock %}

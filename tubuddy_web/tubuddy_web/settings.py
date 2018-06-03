@@ -37,8 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'jquery',
     'api',
     'debug_toolbar',
+    'widget_tweaks',
 ]
 
 MIDDLEWARE = [
@@ -102,6 +104,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+DEBUG_TOOLBAR_CONFIG = {
+    'INTERCEPT_REDIRECTS': False,
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
@@ -125,9 +130,11 @@ STATICFILES_DIRS = (
   os.path.join(BASE_DIR, 'static/'),
 )
 
+
 try:
     from .local_settings import *
 except ImportError:
     pass
 
 INTERNAL_IPS = ['127.0.0.1']
+
