@@ -40,7 +40,7 @@ insert into Quizzes(video, question, answers) values(
 
 insert into Quizzes(video, question, answers) values(
        2,
-       'When do I need contact a doctor?',
+       'When do I need to contact a doctor?',
        'In both of the other two cases:If I have a dry cough for three weeks:If I cough blood'
 );
 
