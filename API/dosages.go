@@ -40,9 +40,10 @@ func createDosage(r *http.Request, ar *APIResponse) {
 
 	vars := mux.Vars(r)
 	patientID := vars["id"]
-	_, err = tx.Exec(`INSERT INTO Dosages (patient_id, medicine_id, amount, intake_time) 
-                          VALUES (?, ?, ?, ?)`,
-		patientID, medicineID, dosage.NumberOfPills, dosage.IntakeMoment)
+	_, err = tx.Exec(`INSERT INTO Dosages (patient_id, medicine_id, amount,
+ intake_interval_start, intake_interval_end) 
+                          VALUES (?, ?, ?, ?, ?)`,
+		patientID, medicineID, dosage.NumberOfPills, dosage.IntakeIntervalStart, dosage.IntakeIntervalEnd)
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
 		return
@@ -55,12 +56,6 @@ func createDosage(r *http.Request, ar *APIResponse) {
 	ar.StatusCode = http.StatusCreated
 }
 
-// InputDosagesJSON : Temp struct
-type InputDosagesJSON struct {
-	Medicine Medicine `json:"medicine"`
-	Days     []string `json:"days"`
-}
-
 // CREATE
 func createScheduledDosages(r *http.Request, ar *APIResponse) {
 	// Scan Patient ID
@@ -68,7 +63,7 @@ func createScheduledDosages(r *http.Request, ar *APIResponse) {
 	patientID := vars["id"]
 
 	// Decode Request Body to JSON
-	in := InputDosagesJSON{}
+	in := InputScheduledDosage{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&in)
 	if err != nil {
@@ -126,10 +121,6 @@ func createScheduledDosages(r *http.Request, ar *APIResponse) {
 }
 
 // RETRIEVE
-// start/ end dates might be optional ?
-//  Possible defaults:
-//     startDate = [current_day]
-//     endDate   = startDate + 1 month
 func getDosages(r *http.Request, ar *APIResponse) {
 
 	vars := mux.Vars(r)
@@ -149,9 +140,9 @@ func getDosages(r *http.Request, ar *APIResponse) {
 		return
 	}
 
-	rows, err := db.Query(`SELECT amount, med_name, day, intake_time, taken
+	rows, err := db.Query(`SELECT amount, med_name, day, intake_interval_start, intake_interval_end, taken
                                FROM ScheduledDosages as SD JOIN 
-                                 (SELECT Dosages.id, amount, intake_time, med_name 
+                                 (SELECT Dosages.id, amount, intake_interval_start, intake_interval_end, med_name 
                                   FROM Dosages JOIN Medicines 
                                      ON Dosages.medicine_id = Medicines.id
                                   WHERE patient_id = ?) as DM
@@ -166,15 +157,15 @@ func getDosages(r *http.Request, ar *APIResponse) {
 	dosages := []ScheduledDosage{}
 	for rows.Next() {
 		var amount int
-		var medicine, day, intakeTime string
+		var medicine, day, intakeIntervalStart, intakeIntervalEnd string
 		var taken bool
-		err = rows.Scan(&amount, &medicine, &day, &intakeTime, &taken)
+		err = rows.Scan(&amount, &medicine, &day, &intakeIntervalStart, &intakeIntervalEnd, &taken)
 		if err != nil {
 			ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error during row scanning")
 			return
 		}
 		dosages = append(dosages, ScheduledDosage{
-			Dosage{intakeTime, amount, Medicine{medicine}},
+			Dosage{intakeIntervalStart, intakeIntervalEnd, amount, Medicine{medicine}},
 			day,
 			taken,
 		})

@@ -35,13 +35,15 @@ CREATE TABLE Medicines(
 );
 
 CREATE TABLE Dosages(
-       id		INT	NOT NULL PRIMARY KEY AUTO_INCREMENT,
-       patient_id	INT	NOT NULL,
-       medicine_id	INT	NOT NULL,
-       amount		TINYINT	NOT NULL,
-       intake_time	TIME	NOT NULL,
+       id			INT	NOT NULL PRIMARY KEY AUTO_INCREMENT,
+       patient_id		INT	NOT NULL,
+       medicine_id		INT	NOT NULL,
+       amount			TINYINT	NOT NULL,
+       intake_interval_start	TIME	NOT NULL,
+       intake_interval_end	TIME	NOT NULL,
        FOREIGN KEY (patient_id)     REFERENCES Patients(id) ON DELETE CASCADE,
-       FOREIGN KEY (medicine_id)    REFERENCES Medicines(id)
+       FOREIGN KEY (medicine_id)    REFERENCES Medicines(id),
+       UNIQUE KEY (patient_id, medicine_id)
 );
 
 CREATE TABLE ScheduledDosages(
