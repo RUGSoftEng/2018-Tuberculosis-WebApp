@@ -112,7 +112,7 @@ insert into Quizzes(video, question, answers) values(
 
 insert into Quizzes(video, question, answers) values(
        5,
-       'When should you stop taking the medication?',
+       'When can you stop taking the medication?',
        'When the doctor tells me to stop:After the period of six months:When I do not have symptoms anymore'
 );
 
