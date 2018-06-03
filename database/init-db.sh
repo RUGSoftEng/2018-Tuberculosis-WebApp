@@ -9,12 +9,17 @@ mysql -u ${name} --password=${pass} <<< "CREATE DATABASE ${DB_NAME}"
 
 # Inserting General Statements
 for f in DDL_statements.sql test_insert_statements.sql; do
-	 mysql -u ${name} --password=${pass} ${DB_NAME} < ${f}
+    mysql -u ${name} --password=${pass} ${DB_NAME} < ${f}
 done
 
 # Inserting videos and quizzes
 for f in vq-en.sql vq-nl.sql; do
-    	 mysql -u ${name} --password=${pass} ${DB_NAME} < video-quiz/${f}
+    mysql -u ${name} --password=${pass} ${DB_NAME} < video-quiz/${f}
+done
+
+#Inserting FAQs
+for f in faq-en.sql faq-nl.sql; do
+    mysql -u ${name} --password=${pass} ${DB_NAME} < faq/${f}
 done
 
 echo "Done"
