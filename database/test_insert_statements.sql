@@ -37,16 +37,16 @@ insert into Medicines(med_name) values(
        'Normal pills'
 );
 
-insert into Dosages(patient_id, medicine_id, amount, intake_time) values (
-       2, 1, 12, ADDTIME(CURTIME(), '00:10:00')
+insert into Dosages(patient_id, medicine_id, amount, intake_interval_start, intake_interval_end) values (
+       2, 1, 12, ADDTIME(CURTIME(), '00:10:00'), ADDTIME(CURTIME(), '02:10:00')
 );
 
-insert into Dosages(patient_id, medicine_id, amount, intake_time) values (
-       2, 2, 3, ADDTIME(CURTIME(), '01:09:00')
+insert into Dosages(patient_id, medicine_id, amount, intake_interval_start, intake_interval_end) values (
+       2, 2, 3, ADDTIME(CURTIME(), '01:09:00'), ADDTIME(CURTIME(), '02:09:00')
 );
 
-insert into Dosages(patient_id, medicine_id, amount, intake_time) values (
-       2, 3, 6, ADDTIME(CURTIME(), '10:10:00')
+insert into Dosages(patient_id, medicine_id, amount, intake_interval_start, intake_interval_end) values (
+       2, 3, 6, ADDTIME(CURTIME(), '10:10:00'), ADDTIME(CURTIME(), '11:10:00')
 );
 
 insert into ScheduledDosages (dosage, day, taken) values(
