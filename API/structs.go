@@ -32,7 +32,6 @@ type Note struct {
 }
 
 // NoteReturn : A object for returning Notes
-
 type NoteReturn struct {
 	ID        int    `json:"id"`
 	Note      string `json:"note"`
