@@ -96,7 +96,6 @@ func deleteNote(r *http.Request, ar *APIResponse) {
 
 func modifyNote(r *http.Request, ar *APIResponse) {
 	vars := mux.Vars(r)
-	patientID := vars["id"]
 	noteID := vars["note_id"]
 	note := Note{}
 	dec := json.NewDecoder(r.Body)
@@ -111,8 +110,7 @@ func modifyNote(r *http.Request, ar *APIResponse) {
 	_, err = tx.Exec(`UPDATE Notes SET
                           question = ?,
                           day = ?
-                          WHERE id = ? and patient_id = ?
-                          `, note.Note, time.Now(), noteID, patientID)
+                          WHERE id = ?`, note.Note, time.Now(), noteID)
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to insert note into the database.")
 		return
