@@ -96,7 +96,6 @@ func deleteNote(r *http.Request, ar *APIResponse) {
 
 func modifyNote(r *http.Request, ar *APIResponse) {
 	vars := mux.Vars(r)
-	patientID := vars["id"]
 	noteID := vars["note_id"]
 	note := Note{}
 	dec := json.NewDecoder(r.Body)
