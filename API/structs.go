@@ -32,6 +32,13 @@ type Note struct {
 	CreatedAt string `json:"created_at"`
 }
 
+// NoteReturn : A object for returning Notes
+type NoteReturn struct {
+	ID        int    `json:"id"`
+	Note      string `json:"note"`
+	CreatedAt string `json:"created_at"`
+}
+
 // Patient : Information of a patient
 type Patient struct {
 	Username string `json:"username"`

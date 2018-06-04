@@ -57,15 +57,16 @@ func getNotes(r *http.Request, ar *APIResponse) {
 		return
 	}
 
-	notes := []Note{}
+	notes := []NoteReturn{}
 	for rows.Next() {
 		var note, date string
-		err = rows.Scan(&note, &date)
+		var id int
+		err = rows.Scan(&id, &note, &date)
 		if err != nil {
 			ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error during row scanning")
 			return
 		}
-		notes = append(notes, Note{note, date})
+		notes = append(notes, NoteReturn{id, note, date})
 	}
 	if err = rows.Err(); err != nil {
 		ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error after scanning rows")
@@ -95,7 +96,6 @@ func deleteNote(r *http.Request, ar *APIResponse) {
 
 func modifyNote(r *http.Request, ar *APIResponse) {
 	vars := mux.Vars(r)
-	patientID := vars["id"]
 	noteID := vars["note_id"]
 	note := Note{}
 	dec := json.NewDecoder(r.Body)
@@ -110,8 +110,7 @@ func modifyNote(r *http.Request, ar *APIResponse) {
 	_, err = tx.Exec(`UPDATE Notes SET
                           question = ?,
                           day = ?
-                          WHERE id = ? and patient_id = ?
-                          `, note.Note, time.Now(), noteID, patientID)
+                          WHERE id = ?`, note.Note, time.Now(), noteID)
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to insert note into the database.")
 		return
