@@ -6,12 +6,13 @@ import (
 	_ "github.com/go-sql-driver/mysql" // anonymous import
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"math/rand"
 	http "net/http"
 )
 
 // CREATE
 // expects a json file containing the new patient and a url encoded physician token
-func pushPatient(r *http.Request, ar *APIResponse) {
+func createPatient(r *http.Request, ar *APIResponse) {
 	patient := Patient{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&patient)
@@ -33,8 +34,9 @@ func pushPatient(r *http.Request, ar *APIResponse) {
 	}
 
 	role := "patient"
-	result, err := tx.Exec(`INSERT INTO Accounts (name, username, pass_hash, role)
-                                VALUES(?, ?, ?, ?)`, patient.Name, patient.Username, patient.Password, role)
+	apiToken := rand.Intn(26)
+	result, err := tx.Exec(`INSERT INTO Accounts (name, username, pass_hash, role, api_token)
+                                VALUES(?, ?, ?, ?, ?)`, patient.Name, patient.Username, patient.Password, role, apiToken)
 	if err != nil {
 		me, ok := err.(*mysql.MySQLError)
 		if !ok {
@@ -79,7 +81,7 @@ func pushPatient(r *http.Request, ar *APIResponse) {
 }
 
 // UPDATE
-func modifyPatient(r *http.Request, ar *APIResponse) {
+func updatePatient(r *http.Request, ar *APIResponse) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	patient := Patient{}
@@ -127,55 +129,7 @@ func deletePatient(r *http.Request, ar *APIResponse) {
 
 	vars := mux.Vars(r)
 	id := vars["id"]
-	_, err = tx.Exec(`DELETE FROM Notes WHERE patient_id=?`, id)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "")
-		return
-	}
 
-	// Retrieve all dosage identifiers
-	rows, err := tx.Query(`SELECT id FROM Dosages
-                               WHERE patient_id = ?`, id)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "")
-		return
-	}
-
-	var dosageIDs []int
-	for rows.Next() {
-		var dosageID int
-		err = rows.Scan(&id)
-		if err != nil {
-			ar.setErrorAndStatus(StatusFailedOperation, errorWithRollback(err, tx), "Failed reading results")
-			return
-		}
-		dosageIDs = append(dosageIDs, dosageID)
-	}
-	if rows.Err() != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
-		return
-	}
-
-	// Delete all specific scheduled dosages attached to the patient
-	for _, dosageID := range dosageIDs {
-		_, err = tx.Exec(`DELETE FROM SchedulesDosages WHERE dosage=?`, dosageID)
-		if err != nil {
-			ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
-			return
-		}
-	}
-
-	_, err = tx.Exec(`DELETE FROM Dosages WHERE patient_id=?`, id)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
-		return
-	}
-
-	_, err = tx.Exec(`DELETE FROM Patients WHERE id=?`, id)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
-		return
-	}
 	_, err = tx.Exec(`DELETE FROM Accounts WHERE id=?`, id)
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
@@ -186,4 +140,83 @@ func deletePatient(r *http.Request, ar *APIResponse) {
 		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to commit changes to database.")
 		return
 	}
+}
+
+//GET
+
+func retrieveByID(r *http.Request, ar *APIResponse) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	patientOV := PatientOverview{}
+	var name string
+	var user string
+	err := db.QueryRow(`SELECT name, username FROM Accounts WHERE id=?`, id).Scan(&name, &user)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	var phyID int
+	err = db.QueryRow(`SELECT physician_id FROM Patients WHERE id=?`, id).Scan(&phyID)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	var physicianName string
+	var email string
+	err = db.QueryRow(`SELECT email FROM Physicians WHERE id=?`, phyID).Scan(&email)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	err = db.QueryRow(`SELECT name FROM Accounts WHERE id=?`, phyID).Scan(&physicianName)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	patientOV.Name = name
+	patientOV.Username = user
+	patientOV.PhysicianName = physicianName
+	patientOV.PhysicianEmail = email
+	ar.setResponse(patientOV)
+}
+
+func retrieveByUsername(r *http.Request, ar *APIResponse) {
+	vars := mux.Vars(r)
+	username := vars["username"]
+	patient := PatientOverview{}
+	var name string
+	err := db.QueryRow(`SELECT name FROM Accounts WHERE username=?`, username).Scan(&name)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	var id int
+	err = db.QueryRow(`SELECT id FROM Accounts WHERE username=?`, username).Scan(&id)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	var phyID int
+	err = db.QueryRow(`SELECT physician_id FROM Patients WHERE id=?`, id).Scan(&phyID)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	var physicianName string
+	var email string
+	err = db.QueryRow(`SELECT email FROM Physicians WHERE id=?`, phyID).Scan(&email)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	err = db.QueryRow(`SELECT name FROM Accounts WHERE id=?`, phyID).Scan(&physicianName)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	patient.Name = name
+	patient.Username = username
+	patient.PhysicianEmail = email
+	patient.PhysicianName = physicianName
+	ar.setResponse(patient)
 }

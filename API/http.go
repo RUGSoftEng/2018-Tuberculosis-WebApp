@@ -26,12 +26,25 @@ const (
 func main() {
 	var err error
 	var dbUser, dbUserPassword, dbName, listenLocation string
-	fmt.Scanf("%s", &dbUser)
-	fmt.Scanf("%s", &dbUserPassword)
-	fmt.Scanf("%s", &dbName)
-	fmt.Scanf("%s", &listenLocation)
-	db, err = sql.Open("mysql", dbUser+":"+dbUserPassword+"@/"+dbName)
 
+	_, err = fmt.Scanf("%s", &dbUser)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "Scanning of Database User failed").Error())
+	}
+	_, err = fmt.Scanf("%s", &dbUserPassword)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "Scanning of Database User's Password failed").Error())
+	}
+	_, err = fmt.Scanf("%s", &dbName)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "Scanning of Database Name failed").Error())
+	}
+	_, err = fmt.Scanf("%s", &listenLocation)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "Scanning of Listen Location failed").Error())
+	}
+
+	db, err = sql.Open("mysql", dbUser+":"+dbUserPassword+"@/"+dbName)
 	if err != nil {
 		log.Printf("encountered error while connecting to database: %v", err)
 	}
@@ -47,27 +60,36 @@ func main() {
 	getRouter.Handle("/api/general/videos/topics", handlerWrapper(getTopics))
 	getRouter.Handle("/api/general/faq", handlerWrapper(getFAQs))
 	getRouter.Handle("/api/general/physicians/{id:[0-9]+}/retrieve", handlerWrapper(authWrapper(getPatients)))
+	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/retrieveByID", handlerWrapper(retrieveByID))
+	getRouter.Handle("/api/accounts/patients/{username}/retrieveByUsername", handlerWrapper(retrieveByUsername))
+	getRouter.Handle("/api/accounts/physicians/{id:[0-9]+}/retrievePyByID", handlerWrapper(retrievePyByID))
+	getRouter.Handle("/api/accounts/physicians/{username}/retrievePyByUsername", handlerWrapper(retrievePyByUsername))
 
 	// POST Requests for Updating
 	postRouter := router.Methods("POST").Subrouter()
-	postRouter.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(authWrapper(modifyPatient)))
-	postRouter.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(authWrapper(modifyPhysician)))
+	postRouter.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(authWrapper(updatePatient)))
+	postRouter.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(authWrapper(updatePhysician)))
 	postRouter.Handle("/api/accounts/login", handlerWrapper(login))
 	postRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(authWrapper(updateScheduledDosage)))
+	postRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes/{note_id:[0-9]+}", handlerWrapper(authWrapper(modifyNote)))
 
 	// PUT Requests for Creating
 	putRouter := router.Methods("PUT").Subrouter()
-	putRouter.Handle("/api/accounts/patients", handlerWrapper(pushPatient))
-	putRouter.Handle("/api/accounts/physicians", handlerWrapper(pushPhysician))
-	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(pushDosage))
-	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(addScheduledDosages))
-	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(addNote))
-	putRouter.Handle("/api/general/videos", handlerWrapper(addVideo))
+	putRouter.Handle("/api/accounts/patients", handlerWrapper(createPatient))
+	putRouter.Handle("/api/accounts/physicians", handlerWrapper(createPhysician))
+	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(createDosage))
+	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(createScheduledDosages))
+	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(createNote))
+	putRouter.Handle("/api/general/videos", handlerWrapper(createVideo))
+	putRouter.Handle("/api/admin/faq", handlerWrapper(createFAQ))
+	putRouter.Handle("/api/admin/medicines/add", handlerWrapper(pushMedicine))
 
 	// DELETE Requests for Deleting
 	deleteRouter := router.Methods("DELETE").Subrouter()
 	deleteRouter.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(deletePatient))
 	deleteRouter.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(deletePhysician))
+	deleteRouter.Handle("/api/admin/medicines/{id:[0-9]+}/delete", handlerWrapper(deleteMedicine))
+	deleteRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes/{note_id:[0-9]+}", handlerWrapper(authWrapper(deleteNote)))
 
 	// Starting the router
 	err = http.ListenAndServe(listenLocation, router)
@@ -100,6 +122,10 @@ func (a *APIResponse) setResponse(data interface{}) {
 func (a *APIResponse) setResponseAndStatus(status int, data interface{}) {
 	a.StatusCode = status
 	a.Data = data
+}
+
+func (a *APIResponse) setStatus(status int) {
+	a.StatusCode = status
 }
 
 func handlerWrapper(handler func(r *http.Request, ar *APIResponse)) http.Handler {

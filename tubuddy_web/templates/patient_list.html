@@ -4,15 +4,16 @@
 	<!-- This is the list of the patients -->
 <div class="col-md-6 menu-container">
 	<ul class="list-group">
-	  <a  href="#" class="list-group-item list-group-item-action zoom">Rutger Berghuis</a>
-	  <a  href="#" class="list-group-item list-group-item-action zoom">Teodor Oanca</a>
-	  <a  href="#" class="list-group-item list-group-item-action zoom">Sten Sipma</a>
-	  <a  href="#" class="list-group-item list-group-item-action zoom">Giacomo Casoni</a>
-	  <a  href="#" class="list-group-item list-group-item-action zoom">Sytze Tempel</a>
-	  <a  href="#" class="list-group-item list-group-item-action zoom">Andrei Scurtu</a>
+{#	  <a  href="#" class="list-group-item list-group-item-action zoom">Rutger Berghuis</a>#}
+{#	  <a  href="#" class="list-group-item list-group-item-action zoom">Teodor Oanca</a>#}
+{#	  <a  href="#" class="list-group-item list-group-item-action zoom">Sten Sipma</a>#}
+{#	  <a  href="#" class="list-group-item list-group-item-action zoom">Giacomo Casoni</a>#}
+{#	  <a  href="#" class="list-group-item list-group-item-action zoom">Sytze Tempel</a>#}
+{#	  <a  href="#" class="list-group-item list-group-item-action zoom">Andrei Scurtu</a>#}
 
         {% for key, value  in patients.items %}
-            <a  href="{{ key }}" class="list-group-item list-group-item-action zoom">{{ value }}</a>
+{#            <a  href="{{ key }}" class="list-group-item list-group-item-action zoom">{{ value }}</a>#}
+            <a  href="{% url "api:patient_details" pk=key %}" class="list-group-item list-group-item-action zoom">{{ value }}</a>
         {% endfor %}
 	</ul>
 

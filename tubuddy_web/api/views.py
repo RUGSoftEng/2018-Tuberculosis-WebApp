@@ -88,41 +88,32 @@ print ("++++++++++++++++++++++++++")
 
 
 
+def retrieve(request):
+    header = {
+        'access_token': request.user.userprofile.access_token}
+    retrieve_url = "http://192.168.50.4:2002/api/general/physicians/"\
+                   +str(request.user.userprofile.id_big_database)+"/retrieve"
+    retrieve_req = requests.request('GET', url=retrieve_url, headers=header)
+    print (retrieve_req.text)
 
+    text = retrieve_req.text
+    text = text.split(',')
 
-def retrieve():
-    # header = {
-    #     'access_token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXNzd29yZCI6InBhc3MiLCJ1c2VybmFtZSI6IkhvdXNlIn0.JcFAPE8Y9xlgP9hbef0qTO5tZnQLSZDKOqL3MgIliuM'}
-    # retrieve_url = "http://192.168.50.4:2002/api/general/physicians/3/retrieve"
-    # retrieve_req = requests.request('GET', url=retrieve_url, headers=header)
-    # print (retrieve_req.text)
-    #
-    #
-    # text = retrieve_req.text
-    # # text = '[{"id":4,"name":"Andrei"},{"id":5,"name":"Cosmin"},{"id":6,"name":"Teodor"},{"id":7,"name":"Costelusu"},{"id":8,"name":"lelelelele"},{"id":9,"name":"bossu1"},{"id":10,"name":"bossu123"},{"id":11,"name":"bossu1234"},{"id":12,"name":"coiosu"}]'
-    # text = text.split(',')
-    #
-    # dict = {}
-    # if len(text) > 1:
-    #     for x in range(len(text)):
-    #         if x % 2 == 0:
-    #             # print (text[x].split(':')[1])
-    #             # print (text[x+1].split(':')[1].split('"')[1])
-    #             dict[text[x].split(':')[1]] = text[x+1].split(':')[1].split('"')[1]
-    #             # print ("+++++++++++++++++")
-    # return dict
-    return {}
+    dict = {}
+    if len(text) > 1:
+        for x in range(len(text)):
+            if x % 2 == 0:
+                # print (text[x].split(':')[1])
+                # print (text[x+1].split(':')[1].split('"')[1])
+                dict[text[x].split(':')[1]] = text[x+1].split(':')[1].split('"')[1]
+                # print ("+++++++++++++++++")
+    return dict
 
 
 @login_required
 def patient_list(request):
-    l = {'puli': "dadada",
-         'castravetoi': "sa fie paceeee"
-         }
-    # print (login_doctor_req.text)
-    # print (type(login_doctor_req.text))
     context = ({
-                'patients': retrieve()
+                'patients': retrieve(request)
                 })
     return render(request, "patient_list_landing.html", context=context)
 
@@ -134,7 +125,7 @@ def patient_details(request, pk):
     print("++++++++++++++++++++++++")
     l = [1, 2]
     context = ({'pk': pk,
-                'patients': retrieve()
+                'patients': retrieve(request)
                })
     return render(request, "patient_list_details.html", context=context)
 
@@ -153,11 +144,9 @@ def add_patient(request):
             print("username "+username)
             print(password)
             print(api_token)
-            add_patient_url = "http://192.168.50.4:2002/api/accounts/patients?token=HOUSE"
-            # add_patient_url = "http://192.168.50.4:2002/api/accounts/patients?token="
-            # User.objects.get().username
+            print(request.user.username)
+            add_patient_url = "http://192.168.50.4:2002/api/accounts/patients?token="+request.user.username.upper()
             print (add_patient_url)
-            import ipdb; ipdb.set_trace()
             data = {
                 "username": username,
                 "name": name,
@@ -168,13 +157,9 @@ def add_patient(request):
             req = requests.request('PUT', add_patient_url, json=data)
             print(req)
             if req.status_code == 500:
-                return render(request, "muie.html")
+                return render(request, "wrong.html")
             else:
-                # return HttpResponseRedirect("/")
-                context = ({
-                        'patients': retrieve()
-                        })
-                return render(request, "patient_list_landing.html", context=context)
+                return redirect('api:list')
 
     else:
         form = PatientForm()
@@ -186,10 +171,11 @@ def treatment(request):
     if request.method == 'POST':
         time = request.POST.get('time', False)
         date = request.POST.get('date', False)
+        option = request.POST.get('optradio', False)
         print (time)
         print (date)
-        return render(request, "patient_list_landing.html")
-        # return HttpResponseRedirect("/")
+        print (option)
+        return redirect('api:list')
     return render(request, "treatment.html")
 
 @user_passes_test(lambda u: not u.is_active)
@@ -210,7 +196,7 @@ def login(request):
             login_doctor_req = requests.request('POST', login_url, json=data)
 
             if login_doctor_req.status_code == 500:
-                return render(request, "muie.html")
+                return render(request, "wrong.html")
             else:
                 # a = UserProfile.objects.create_object(username=username, password=password)
                 print (login_doctor_req.text)
@@ -229,8 +215,7 @@ def login(request):
                 # user = authenticate(username=username, password=password)
                 auth_login(request, user)
 
-                # import ipdb; ipdb.set_trace()
-                return HttpResponseRedirect("/")
+                return redirect('api:list')
     else:
         form = LoginForm()
     return render(request, "login.html", {'form': form})
@@ -238,12 +223,6 @@ def login(request):
 
 @login_required
 def user_logout(request):
-    # import ipdb; ipdb.set_trace()
-    # user = request.user
-    #
-    # logout(request.user.delete())
-
-    # import ipdb; ipdb.set_trace()
 
     if request.method == 'POST':
 
@@ -252,11 +231,11 @@ def user_logout(request):
             user = request.user
             logout(request)
             user.delete()
-            return HttpResponseRedirect("/")
+            return redirect('api:login')
 
         elif request.POST.get("no_button"):
             print ("nuuuuu")
-            return HttpResponseRedirect("/")
+            return redirect('api:list')
 
     return render(request, "logout.html")
 
@@ -289,48 +268,19 @@ def register(request):
                 "email": email,
                 "creation_token": creation_token
             }
+            print (data)
             create_physician_url = "http://192.168.50.4:2002/api/accounts/physicians"
             create_physician_req = requests.request('PUT', url=create_physician_url, json=data)
             print (data)
             print (create_physician_req)
             print (create_physician_req.text)
 
-
             if create_physician_req.status_code == 500:
-                return render(request, "muie.html")
+                return render(request, "wrong.html")
             else:
-                return HttpResponseRedirect("/")
+                return redirect('api:login')
     else:
         form = RegisterForm()
     return render(request, "register.html", {'form': form})
 
 
-
-def test(request):
-    # print(request.readlines())
-    # import ipdb; ipdb.set_trace()
-    if request.method == 'POST':
-        import ipdb; ipdb.set_trace()
-        name = request.POST.get('name', False)
-        email = request.POST.get('email', False)
-        phone = request.POST.get('phone', False)
-        print (name)
-        print (email)
-        print (phone)
-        # return HttpResponseRedirect("http://www.google.com")
-        return render(request, "patient_list_landing.html")
-    return render(request, "test.html")
-
-def test2(request):
-    # print(request.readlines())
-    # import ipdb; ipdb.set_trace()
-    if request.method == 'POST':
-        name = request.POST.get('name', False)
-        email = request.POST.get('email', False)
-        phone = request.POST.get('phone', False)
-        print (name)
-        print (email)
-        print (phone)
-        # return HttpResponseRedirect("http://www.google.com")
-        return render(request, "patient_list_landing.html")
-    return render(request, "test2.html")

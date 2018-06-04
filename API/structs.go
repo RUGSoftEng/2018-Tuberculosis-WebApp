@@ -15,9 +15,10 @@ type ScheduledDosage struct {
 // Dosage : Describes the time and number of pills is associated with a medicine
 // This can be different for different people
 type Dosage struct {
-	IntakeMoment  string   `json:"intake_moment"`
-	NumberOfPills int      `json:"amount"`
-	Medicine      Medicine `json:"medicine"`
+	IntakeIntervalStart string   `json:"intake_interval_start"`
+	IntakeIntervalEnd   string   `json:"intake_interval_end"`
+	NumberOfPills       int      `json:"amount"`
+	Medicine            Medicine `json:"medicine"`
 }
 
 // Medicine : Data for a medicine
@@ -36,7 +37,6 @@ type Patient struct {
 	Username string `json:"username"`
 	Name     string `json:"name"`
 	Password string `json:"password"`
-	APIToken string `json:"api_token"`
 }
 
 // Physician : Information of a patient
@@ -54,6 +54,7 @@ type Video struct {
 	Topic     string `json:"topic"`
 	Title     string `json:"title"`
 	Reference string `json:"reference"`
+	Language  string `json:"language"`
 }
 
 // VideoQuiz : The video alongside it's paired quizzes
@@ -73,6 +74,7 @@ type Quiz struct {
 type FAQ struct {
 	Question string `json:"question"`
 	Answer   string `json:"answer"`
+	Language string `json:"language"`
 }
 
 // UserValidation : A set of values needed for authenticate a user
@@ -91,6 +93,28 @@ type JWToken struct {
 type PatientInfo struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
+}
+
+// PatientOverview : A complete overview of a patient
+type PatientOverview struct {
+	Username       string `json:"username"`
+	Name           string `json:"name"`
+	PhysicianName  string `json:"physician_name"`
+	PhysicianEmail string `json:"email"`
+}
+
+// PhysicianOverview : A complete overview of a physician
+type PhysicianOverview struct {
+	Username string `json:"username"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Token    string `json:"token"`
+}
+
+// InputScheduledDosage : Struct for handling the input for scheduled dosages
+type InputScheduledDosage struct {
+	Medicine Medicine `json:"medicine"`
+	Days     []string `json:"days"`
 }
 
 func errorWithRollback(err error, tx *sql.Tx) error {
