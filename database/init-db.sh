@@ -4,8 +4,7 @@ DB_NAME="TestDB"
 name="root"
 pass="root"
 
-mysql -u ${name} --password=${pass} <<< "DROP DATABASE IF EXISTS ${DB_NAME}"
-mysql -u ${name} --password=${pass} <<< "CREATE DATABASE ${DB_NAME}"
+mysql -u ${name} --password=${pass} -Nse 'show tables' ${DB_NAME} | while read table; do mysql -u ${name} --password=${pass} ${DB_NAME} -e "SET foreign_key_checks = 0;drop table $table; SET foreign_key_checks=1;"; done
 
 # Inserting General Statements
 for f in DDL_statements.sql test_insert_statements.sql; do
