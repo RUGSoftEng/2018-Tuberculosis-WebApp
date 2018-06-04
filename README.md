@@ -1,5 +1,12 @@
 # 2018-Tuberculosis
 
+master [![Build Status](https://travis-ci.org/RUGSoftEng/2018-Tuberculosis-WebApp.svg?branch=master)](https://travis-ci.org/RUGSoftEng/2018-Tuberculosis-WebApp)
+
+development [![Build Status](https://travis-ci.org/RUGSoftEng/2018-Tuberculosis-WebApp.svg?branch=development)](https://travis-ci.org/RUGSoftEng/2018-Tuberculosis-WebApp)
+
+dev-web [![Build Status](https://travis-ci.org/RUGSoftEng/2018-Tuberculosis-WebApp.svg?branch=dev-web)](https://travis-ci.org/RUGSoftEng/2018-Tuberculosis-WebApp)
+
+---
 * [Vagrant](#vagrant)
 * [API](#api)
 * [Database](#database)
@@ -46,7 +53,7 @@ Starting the API is currently done by ssh-ing to the VM and run `start_api` in t
 
 Note that the API is definitely not fully finished, so don't expect the smoothest behaviour. Please make an Issue or something if you want to report an error.
 ### Documentation
-Can be found in the [API Documentation](./docs/API_Documentation.md) file.
+Can be found in the [API Documentation](https://documenter.getpostman.com/view/4186694/tubuddy-api-documentation-for-android-and-ios/RW1aJKy3) file.
 
 ## Database
 The database TestDB automatically gets created when the Vagrant VM setup is ran. To avoid having to rerun the complete setup every time the database needs to be reset, it is possible to reset the database manually:
