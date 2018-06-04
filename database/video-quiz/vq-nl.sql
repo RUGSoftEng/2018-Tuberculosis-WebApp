@@ -120,7 +120,7 @@ insert into Quizzes(video, question, answers) values(
        'Na een periode van zes maanden:Wanneer ik geen symptomen meer heb:Wanneer de dokter mij vertelt dat ik mag stoppen'
 );
 
---Maybe remove this statement since the link is wrong..
+/*Maybe remove this statement since the link is wrong..*/
 insert into Videos(language, topic, title, reference) values (
        'NL',
        'Medicatie',
@@ -141,7 +141,7 @@ insert into Quizzes(video, question, answers) values(
        'Nee:Ja'
 );
 
---Maybe remove, dead link?
+/*Maybe remove, dead link?*/
 insert into Videos(language, topic, title, reference) values (
        'NL',
        'Infectie en Preventie',
