@@ -111,8 +111,7 @@ func modifyNote(r *http.Request, ar *APIResponse) {
 	_, err = tx.Exec(`UPDATE Notes SET
                           question = ?,
                           day = ?
-                          WHERE id = ? and patient_id = ?
-                          `, note.Note, time.Now(), noteID, patientID)
+                          WHERE id = ?`, note.Note, time.Now(), noteID)
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to insert note into the database.")
 		return
