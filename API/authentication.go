@@ -132,14 +132,6 @@ func parseToken(in JWToken, ar *APIResponse) {
 		return
 	}
 	// UP UNTIL HERE
-	err = bcrypt.CompareHashAndPassword([]byte(pwd), []byte(user.Password))
-	if err != nil {
-		err = bcrypt.CompareHashAndPassword([]byte(physicianPwd), []byte(user.Password))
-		if err != nil {
-			ar.setErrorAndStatus(http.StatusUnauthorized, err, "Unauthorized")
-			return
-		}
-	}
 }
 
 // Token authentication will probably be embedded in all the request that are give access
