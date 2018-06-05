@@ -27,3 +27,12 @@ hs_err_pid*
 # Some emacs files
 *~
 
+.vagrant/
+
+# Executable for the API
+API/API
+
+# Goland idea  folder
+.idea/
+
+database/regexp.txt
