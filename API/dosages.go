@@ -59,7 +59,7 @@ func createDosage(r *http.Request, ar *APIResponse) {
 }
 
 // RETRIEVE
-func getDosages(r *http.Request, ar *APIResponse) {
+func retrieveDosages(r *http.Request, ar *APIResponse) {
 	patientID, err := getPatientIDVariable(r)
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusBadRequest, err, "Cannot convert patient id to an integer")

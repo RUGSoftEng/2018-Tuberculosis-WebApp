@@ -50,6 +50,95 @@ func createPhysician(r *http.Request, ar *APIResponse) {
 	ar.StatusCode = http.StatusCreated
 }
 
+// RETRIEVE
+func retrievePatients(r *http.Request, ar *APIResponse) {
+	vars := mux.Vars(r)
+	physicianID := vars["id"]
+	rows, err := db.Query(`SELECT Accounts.id, Accounts.name 
+                              FROM Accounts INNER JOIN Patients 
+                              ON Accounts.id=Patients.id AND Patients.physician_id=?`, physicianID)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error during query")
+		return
+	}
+
+	patients := []PatientInfo{}
+	for rows.Next() {
+		var name string
+		var id int
+		err = rows.Scan(&id, &name)
+		if err != nil {
+			ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error during row scanning")
+			return
+		}
+		patients = append(patients, PatientInfo{id, name})
+	}
+	if err = rows.Err(); err != nil {
+		ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error after scanning rows")
+		return
+	}
+
+	ar.setResponse(patients)
+
+}
+
+// RETRIEVE
+func retrievePyByID(r *http.Request, ar *APIResponse) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	doc := PhysicianOverview{}
+	var name string
+	var user string
+	err := db.QueryRow(`SELECT name, username FROM Accounts WHERE id=?`, id).Scan(&name, &user)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	var email string
+	var token string
+	err = db.QueryRow(`SELECT email,token FROM Physicians WHERE id=?`, id).Scan(&email, &token)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	doc.Name = name
+	doc.Username = user
+	doc.Email = email
+	doc.Token = token
+	ar.setResponse(doc)
+}
+
+// RETRIEVE
+func retrievePyByUsername(r *http.Request, ar *APIResponse) {
+	vars := mux.Vars(r)
+	username := vars["username"]
+	doc := PhysicianOverview{}
+	var name string
+	err := db.QueryRow(`SELECT name FROM Accounts WHERE username=?`, username).Scan(&name)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	var id int
+	err = db.QueryRow(`SELECT id FROM Accounts WHERE username=?`, username).Scan(&id)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	var email string
+	var token string
+	err = db.QueryRow(`SELECT email,token FROM Physicians WHERE id=?`, id).Scan(&email, &token)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	doc.Name = name
+	doc.Username = username
+	doc.Email = email
+	doc.Token = token
+	ar.setResponse(doc)
+}
+
 // UPDATE
 func updatePhysician(r *http.Request, ar *APIResponse) {
 	physician := Physician{}
@@ -116,91 +205,4 @@ func deletePhysician(r *http.Request, ar *APIResponse) {
 		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to commit changes to database.")
 		return
 	}
-}
-
-// GET
-func getPatients(r *http.Request, ar *APIResponse) {
-	vars := mux.Vars(r)
-	physicianID := vars["id"]
-	rows, err := db.Query(`SELECT Accounts.id, Accounts.name 
-                              FROM Accounts INNER JOIN Patients 
-                              ON Accounts.id=Patients.id AND Patients.physician_id=?`, physicianID)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error during query")
-		return
-	}
-
-	patients := []PatientInfo{}
-	for rows.Next() {
-		var name string
-		var id int
-		err = rows.Scan(&id, &name)
-		if err != nil {
-			ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error during row scanning")
-			return
-		}
-		patients = append(patients, PatientInfo{id, name})
-	}
-	if err = rows.Err(); err != nil {
-		ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error after scanning rows")
-		return
-	}
-
-	ar.setResponse(patients)
-
-}
-
-func retrievePyByID(r *http.Request, ar *APIResponse) {
-	vars := mux.Vars(r)
-	id := vars["id"]
-	doc := PhysicianOverview{}
-	var name string
-	var user string
-	err := db.QueryRow(`SELECT name, username FROM Accounts WHERE id=?`, id).Scan(&name, &user)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
-		return
-	}
-	var email string
-	var token string
-	err = db.QueryRow(`SELECT email,token FROM Physicians WHERE id=?`, id).Scan(&email, &token)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
-		return
-	}
-	doc.Name = name
-	doc.Username = user
-	doc.Email = email
-	doc.Token = token
-	ar.setResponse(doc)
-}
-
-func retrievePyByUsername(r *http.Request, ar *APIResponse) {
-	vars := mux.Vars(r)
-	username := vars["username"]
-	doc := PhysicianOverview{}
-	var name string
-	err := db.QueryRow(`SELECT name FROM Accounts WHERE username=?`, username).Scan(&name)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
-		return
-	}
-	var id int
-	err = db.QueryRow(`SELECT id FROM Accounts WHERE username=?`, username).Scan(&id)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
-		return
-	}
-	var email string
-	var token string
-	err = db.QueryRow(`SELECT email,token FROM Physicians WHERE id=?`, id).Scan(&email, &token)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
-		return
-	}
-	doc.Name = name
-	doc.Username = username
-	doc.Email = email
-	doc.Token = token
-	ar.setResponse(doc)
 }

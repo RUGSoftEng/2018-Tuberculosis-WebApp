@@ -44,9 +44,7 @@ func createNote(r *http.Request, ar *APIResponse) {
 }
 
 // RETRIEVE
-// Possible to also add a time interval?
-// Or all 'untreated' notes
-func getNotes(r *http.Request, ar *APIResponse) {
+func retrieveNotes(r *http.Request, ar *APIResponse) {
 
 	vars := mux.Vars(r)
 	patientID := vars["id"]
@@ -76,8 +74,7 @@ func getNotes(r *http.Request, ar *APIResponse) {
 	ar.setResponse(notes)
 }
 
-//DELETE
-
+// DELETE
 func deleteNote(r *http.Request, ar *APIResponse) {
 	vars := mux.Vars(r)
 	patientID := vars["id"]
@@ -92,9 +89,8 @@ func deleteNote(r *http.Request, ar *APIResponse) {
 
 }
 
-//POST
-
-func modifyNote(r *http.Request, ar *APIResponse) {
+// UPDATE
+func updateNote(r *http.Request, ar *APIResponse) {
 	vars := mux.Vars(r)
 	noteID := vars["note_id"]
 	note := Note{}

@@ -7,8 +7,8 @@ import (
 	http "net/http"
 )
 
-// Create new medicine
-func pushMedicine(r *http.Request, ar *APIResponse) {
+// CREATE
+func createMedicine(r *http.Request, ar *APIResponse) {
 	medicine := Medicine{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&medicine)
@@ -36,6 +36,7 @@ func pushMedicine(r *http.Request, ar *APIResponse) {
 	ar.StatusCode = http.StatusCreated
 }
 
+// DELETE
 func deleteMedicine(r *http.Request, ar *APIResponse) {
 	vars := mux.Vars(r)
 	medID := vars["id"]
@@ -59,5 +60,4 @@ func deleteMedicine(r *http.Request, ar *APIResponse) {
 	}
 
 	ar.StatusCode = http.StatusOK
-
 }

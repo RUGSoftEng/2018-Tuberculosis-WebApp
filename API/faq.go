@@ -41,7 +41,7 @@ func createFAQ(r *http.Request, ar *APIResponse) {
 }
 
 // RETRIEVE
-func getFAQs(r *http.Request, ar *APIResponse) {
+func retrieveFAQs(r *http.Request, ar *APIResponse) {
 	lang, err := parseLanguage(r)
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusBadRequest, err, "")

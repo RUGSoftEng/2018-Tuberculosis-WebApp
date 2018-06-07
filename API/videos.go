@@ -43,7 +43,7 @@ func createVideo(r *http.Request, ar *APIResponse) {
 }
 
 // RETRIEVE
-func getTopics(r *http.Request, ar *APIResponse) {
+func retrieveTopics(r *http.Request, ar *APIResponse) {
 	lang, err := parseLanguage(r)
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusBadRequest, err, "")
@@ -73,7 +73,7 @@ func getTopics(r *http.Request, ar *APIResponse) {
 }
 
 // RETRIEVE
-func getVideoByTopic(r *http.Request, ar *APIResponse) {
+func retrieveVideoByTopic(r *http.Request, ar *APIResponse) {
 	vars := mux.Vars(r)
 	topic := vars["topic"]
 
