@@ -167,7 +167,7 @@ func updateScheduledDosage(r *http.Request, ar *APIResponse) {
 		_, err = tx.Exec("UPDATE ScheduledDosages SET taken = ? WHERE dosage = ? AND day = ?",
 			scheduledDosage.Taken, dosageID, scheduledDosage.Day)
 		if err != nil {
-			ar.setError(err, "Something went wrong during SQL Update query")
+			ar.setError(errorWithRollback(err, tx), "Something went wrong during SQL Update query")
 			return
 		}
 	}

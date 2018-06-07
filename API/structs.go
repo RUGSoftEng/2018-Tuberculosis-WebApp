@@ -21,6 +21,12 @@ type Dosage struct {
 	Medicine            Medicine `json:"medicine"`
 }
 
+// UpdateDosage : Used for updating the dosage: updates old with new
+type UpdateDosage struct {
+	OldDosage Dosage `json:"old_dosage"`
+	NewDosage Dosage `json:"new_dosage"`
+}
+
 // Medicine : Data for a medicine
 type Medicine struct {
 	Name string `json:"name"`

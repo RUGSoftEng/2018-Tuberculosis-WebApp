@@ -42,7 +42,7 @@ CREATE TABLE Dosages(
        intake_interval_start	TIME	NOT NULL,
        intake_interval_end	TIME	NOT NULL,
        FOREIGN KEY (patient_id)     REFERENCES Patients(id) ON DELETE CASCADE,
-       FOREIGN KEY (medicine_id)    REFERENCES Medicines(id),
+       FOREIGN KEY (medicine_id)    REFERENCES Medicines(id) ON DELETE CASCADE,
        UNIQUE KEY (patient_id, medicine_id)
 );
 
