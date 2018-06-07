@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 	http "net/http"
 	"strconv"
 	"strings"
@@ -10,6 +11,26 @@ import (
 // Retrieves the id variable from the url + converts the variable to an integer
 func getPatientIDVariable(r *http.Request) (patientID int, err error) {
 	patientID, err = strconv.Atoi(mux.Vars(r)["id"])
+	return
+}
+
+// Retrieves the value of the requested URL variable. Gives an error when variable does not exist
+func getURLVariable(r *http.Request, variable string) (v string, err error) {
+	v = mux.Vars(r)[variable]
+	err = nil
+	if v == "" {
+		err = errors.New("Empty URL variable: " + variable)
+	}
+	return
+}
+
+// Calls getURLVariable function and converts the returned string into and integer
+func getURLVariableInt(r *http.Request, variable string) (v int, err error) {
+	str, err := getURLVariable(r, variable)
+	if err != nil {
+		return -1, err
+	}
+	v, err = strconv.Atoi(str)
 	return
 }
 

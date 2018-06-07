@@ -84,6 +84,13 @@ type FAQ struct {
 	Language string `json:"language"`
 }
 
+// UpdateFAQ : Struct used for updating FAQ. Specifies the old question (identifier)
+//  + what the new faq should be.
+type UpdateFAQ struct {
+	Question string `json:"question"`
+	FAQ      FAQ    `json:"faq"`
+}
+
 // UserValidation : A set of values needed for authenticate a user
 type UserValidation struct {
 	Username string `json:"username"`

@@ -72,3 +72,63 @@ func getFAQs(r *http.Request, ar *APIResponse) {
 
 	ar.setResponse(faqs)
 }
+
+// UPDATE
+func updateFAQ(r *http.Request, ar *APIResponse) {
+	newFAQ := UpdateFAQ{}
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&newFAQ)
+	if err != nil {
+		ar.setError(err, "Error during JSON parse, expected an UpdateFAQ struct")
+		return
+	}
+
+	if !isCorrectLanguage(newFAQ.FAQ.Language) {
+		ar.setErrorAndStatus(http.StatusBadRequest, errors.New(""), "Invalid Language: "+newFAQ.FAQ.Language)
+		return
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		ar.setError(err, "Failed to start transaction.")
+		return
+	}
+
+	_, err = tx.Exec(`UPDATE FAQ SET language = ?, question = ?, answer = ? WHERE question = ?`,
+		newFAQ.FAQ.Language, newFAQ.FAQ.Question, newFAQ.FAQ.Answer, newFAQ.Question)
+	if err != nil {
+		ar.setError(errorWithRollback(err, tx), "Database failure")
+		return
+	}
+	if err = tx.Commit(); err != nil {
+		ar.setError(err, "Failed to commit changes to database.")
+		return
+	}
+}
+
+// DELETE
+func deleteFAQ(r *http.Request, ar *APIResponse) {
+	faq := FAQ{}
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&faq)
+	if err != nil {
+		ar.setError(err, "Error during JSON parse, expected an FAQ struct")
+		return
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		ar.setError(err, "Failed to start transaction.")
+		return
+	}
+
+	_, err = tx.Exec(`DELETE FROM FAQ WHERE question = ?`, faq.Question)
+	if err != nil {
+		ar.setError(errorWithRollback(err, tx), "Database failure")
+		return
+	}
+	if err = tx.Commit(); err != nil {
+		ar.setError(err, "Failed to commit changes to database.")
+		return
+	}
+}

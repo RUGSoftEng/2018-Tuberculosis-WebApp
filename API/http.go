@@ -72,6 +72,7 @@ func main() {
 	postRouter.Handle("/api/accounts/login", handlerWrapper(login))
 	postRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(authWrapper(updateScheduledDosage)))
 	postRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes/{note_id:[0-9]+}", handlerWrapper(authWrapper(modifyNote)))
+	postRouter.Handle("/api/admin/faq", handlerWrapper(updateFAQ))
 
 	// PUT Requests for Creating
 	putRouter := router.Methods("PUT").Subrouter()
@@ -90,6 +91,7 @@ func main() {
 	deleteRouter.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(deletePhysician))
 	deleteRouter.Handle("/api/admin/medicines/{id:[0-9]+}/delete", handlerWrapper(deleteMedicine))
 	deleteRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes/{note_id:[0-9]+}", handlerWrapper(authWrapper(deleteNote)))
+	deleteRouter.Handle("/api/admin/faq", handlerWrapper(deleteFAQ))
 
 	// Starting the router
 	err = http.ListenAndServe(listenLocation, router)

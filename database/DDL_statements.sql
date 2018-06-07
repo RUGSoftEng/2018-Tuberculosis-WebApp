@@ -71,9 +71,7 @@ CREATE TABLE Quizzes(
 );
 
 CREATE TABLE FAQ(
-       id	INT	NOT NULL PRIMARY KEY AUTO_INCREMENT,
-       language CHAR(2)	NOT NULL  DEFAULT 'EN',
-       question TEXT 	NOT NULL,
-       answer	TEXT 	NOT NULL
+       question VARCHAR(255) 	NOT NULL PRIMARY KEY,
+       language CHAR(2)	    	NOT NULL  DEFAULT 'EN',
+       answer	TEXT 		NOT NULL
 );
-
