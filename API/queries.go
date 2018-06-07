@@ -74,6 +74,19 @@ func queryDosageID(dosage Dosage, patientID int) (dosageID int, err error) {
 	return
 }
 
+func queryVideoID(video Video) (videoID int, err error) {
+	videoID = -1
+	row := db.QueryRow(`SELECT id FROM Videos WHERE topic = ? AND title = ?`, video.Topic, video.Title)
+	if err != nil {
+		return
+	}
+	err = row.Scan(&videoID)
+	if err != nil {
+		return
+	}
+	return
+}
+
 func queryQuizzes(videoID int) (quizzes []Quiz, err error) {
 	rows, err := db.Query(`SELECT question, answers FROM Quizzes WHERE video = ?`, videoID)
 	if err != nil {

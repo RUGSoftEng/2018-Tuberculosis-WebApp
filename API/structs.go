@@ -85,6 +85,20 @@ type Quiz struct {
 	Answers  []string `json:"answers"`
 }
 
+// ReferencedQuiz : Used for requests where a quiz is needed with its reference video (e.g. creating or deleting)
+type ReferencedQuiz struct {
+	Video Video `json:"video"`
+	Quiz  Quiz  `json:"quiz"`
+}
+
+// UpdateQuiz : Used when updating the quiz.
+// Contains original question + video reference + updated quiz
+type UpdateQuiz struct {
+	Video    Video  `json:"video"`
+	Question string `json:"question"`
+	Quiz     Quiz   `json:"quiz"`
+}
+
 // FAQ : Describes a Frequently Asked Question
 type FAQ struct {
 	Question string `json:"question"`

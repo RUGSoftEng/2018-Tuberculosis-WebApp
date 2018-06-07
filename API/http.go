@@ -58,7 +58,7 @@ func main() {
 	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(authWrapper(getNotes)))
 	getRouter.Handle("/api/general/videos/topics/{topic}", handlerWrapper(getVideoByTopic))
 	getRouter.Handle("/api/general/videos/topics", handlerWrapper(getTopics))
-	getRouter.Handle("/api/general/faq", handlerWrapper(getFAQs))
+	getRouter.Handle("/api/general/faqs", handlerWrapper(getFAQs))
 	getRouter.Handle("/api/general/physicians/{id:[0-9]+}/retrieve", handlerWrapper(authWrapper(getPatients)))
 	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/retrieveByID", handlerWrapper(retrieveByID))
 	getRouter.Handle("/api/accounts/patients/{username}/retrieveByUsername", handlerWrapper(retrieveByUsername))
@@ -72,8 +72,9 @@ func main() {
 	postRouter.Handle("/api/accounts/login", handlerWrapper(login))
 	postRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(authWrapper(updateScheduledDosage)))
 	postRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes/{note_id:[0-9]+}", handlerWrapper(authWrapper(modifyNote)))
-	postRouter.Handle("/api/admin/faq", handlerWrapper(updateFAQ))
-	postRouter.Handle("/api/admin/video", handlerWrapper(updateVideo))
+	postRouter.Handle("/api/admin/faqs", handlerWrapper(updateFAQ))
+	postRouter.Handle("/api/admin/videos", handlerWrapper(updateVideo))
+	postRouter.Handle("/api/admin/videos/quizzes", handlerWrapper(updateQuiz))
 
 	// PUT Requests for Creating
 	putRouter := router.Methods("PUT").Subrouter()
@@ -82,9 +83,10 @@ func main() {
 	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(createDosage))
 	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(createScheduledDosages))
 	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(createNote))
-	putRouter.Handle("/api/general/videos", handlerWrapper(createVideo))
-	putRouter.Handle("/api/admin/faq", handlerWrapper(createFAQ))
+	putRouter.Handle("/api/admin/videos", handlerWrapper(createVideo))
+	putRouter.Handle("/api/admin/faqs", handlerWrapper(createFAQ))
 	putRouter.Handle("/api/admin/medicines/add", handlerWrapper(pushMedicine))
+	putRouter.Handle("/api/admin/videos/quizzes", handlerWrapper(createQuiz))
 
 	// DELETE Requests for Deleting
 	deleteRouter := router.Methods("DELETE").Subrouter()
@@ -92,8 +94,9 @@ func main() {
 	deleteRouter.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(deletePhysician))
 	deleteRouter.Handle("/api/admin/medicines/{id:[0-9]+}/delete", handlerWrapper(deleteMedicine))
 	deleteRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes/{note_id:[0-9]+}", handlerWrapper(authWrapper(deleteNote)))
-	deleteRouter.Handle("/api/admin/faq", handlerWrapper(deleteFAQ))
-	deleteRouter.Handle("/api/admin/video", handlerWrapper(deleteVideo))
+	deleteRouter.Handle("/api/admin/faqs", handlerWrapper(deleteFAQ))
+	deleteRouter.Handle("/api/admin/videos", handlerWrapper(deleteVideo))
+	deleteRouter.Handle("/api/admin/videos/quizzes", handlerWrapper(deleteQuiz))
 
 	// Starting the router
 	err = http.ListenAndServe(listenLocation, router)
