@@ -70,6 +70,14 @@ type VideoQuiz struct {
 	Quizzes []Quiz `json:"quizzes"`
 }
 
+// UpdateVideo : Struct used for updating Video. Specifies the old video (identifier)
+//  + what the new video should be.
+type UpdateVideo struct {
+	Topic string `json:"topic"`
+	Title string `json:"title"`
+	Video Video  `json:"video"`
+}
+
 // Quiz : The quiz, belongs to a video.
 // contains a list of answers, the first answer is always the correct answer.
 type Quiz struct {

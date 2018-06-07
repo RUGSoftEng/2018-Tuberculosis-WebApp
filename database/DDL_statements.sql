@@ -59,14 +59,15 @@ CREATE TABLE Videos(
        language 	CHAR(2)	    	NOT NULL DEFAULT 'EN',
        topic		VARCHAR(255)	NOT NULL,
        title		VARCHAR(255)	NOT NULL,
-       reference 	VARCHAR(255)	NOT NULL
+       reference 	VARCHAR(255)	NOT NULL,
+       UNIQUE KEY (title, topic)
 );
 
 CREATE TABLE Quizzes(
        video		INT		NOT NULL,
        question		VARCHAR(255)	NOT NULL,
        answers		TEXT		NOT NULL,
-       FOREIGN KEY (video) REFERENCES Videos(id),
+       FOREIGN KEY (video) REFERENCES Videos(id) ON DELETE CASCADE,
        PRIMARY KEY (video, question)
 );
 
