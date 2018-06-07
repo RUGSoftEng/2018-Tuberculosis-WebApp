@@ -54,7 +54,7 @@ func main() {
 
 	// GET Requests for Retrieving
 	getRouter := router.Methods("GET").Subrouter()
-	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(authWrapper(getDosages)))
+	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(authWrapper(getScheduledDosages)))
 	getRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(authWrapper(getNotes)))
 	getRouter.Handle("/api/general/videos/topics/{topic}", handlerWrapper(getVideoByTopic))
 	getRouter.Handle("/api/general/videos/topics", handlerWrapper(getTopics))
@@ -97,7 +97,8 @@ func main() {
 	deleteRouter.Handle("/api/admin/faqs", handlerWrapper(deleteFAQ))
 	deleteRouter.Handle("/api/admin/videos", handlerWrapper(deleteVideo))
 	deleteRouter.Handle("/api/admin/videos/quizzes", handlerWrapper(deleteQuiz))
-
+	deleteRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(deleteScheduledDosage))
+	
 	// Starting the router
 	err = http.ListenAndServe(listenLocation, router)
 	if err != nil {
