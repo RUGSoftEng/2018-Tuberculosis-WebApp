@@ -152,17 +152,6 @@ func authenticate(r *http.Request, ar *APIResponse) {
 	parseToken(pass, ar)
 }
 
-func authWrapper(handler func(r *http.Request, ar *APIResponse)) func(*http.Request, *APIResponse) {
-	return func(r *http.Request, ar *APIResponse) {
-
-		authenticate(r, ar)
-		if ar.Error != nil {
-			return
-		}
-		handler(r, ar)
-	}
-}
-
 // Rotate Latin letters by the shift amount.
 func rotate(text string, shift int) string {
 	var letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
