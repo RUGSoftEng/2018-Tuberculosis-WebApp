@@ -19,7 +19,7 @@ func parseLanguage(r *http.Request) (string, error) {
 	if isCorrectLanguage(lang) {
 		return lang, nil
 	}
-	return lang, errors.New("Invalid Language '" + lang + "', must be one of [" + strings.Join(AvailableLanguages, ", ") + "]")
+	return lang, errors.New(ErrLang)
 }
 
 func isCorrectLanguage(lang string) bool {

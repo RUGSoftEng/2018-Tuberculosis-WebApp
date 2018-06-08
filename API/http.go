@@ -14,12 +14,6 @@ var (
 	db *sql.DB
 )
 
-// Custom made error codes
-const (
-	StatusFailedOperation             = 599
-	StatusDatabaseConstraintViolation = 598
-)
-
 func main() {
 	var err error
 	var dbUser, dbUserPassword, dbName, listenLocation string

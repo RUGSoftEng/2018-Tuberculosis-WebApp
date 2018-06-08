@@ -12,46 +12,46 @@ func createFAQ(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&newFAQ)
 	if err != nil {
-		ar.setErrorAndStatus(StatusFailedOperation, err, "Failed to decode JSON.")
+		ar.setErrorAndStatus(StatusInvalidJSON, err, ErrDecodeJSON)
 		return
 	}
 	if !isCorrectLanguage(newFAQ.Language) {
-		ar.setErrorAndStatus(http.StatusBadRequest, errors.New(""), "Invalid Language")
+		ar.setErrorAndStatus(StatusInvalidLanguage, errors.New(ErrLang))
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		ar.setErrorAndStatus(StatusDatabaseError, err, ErrDBTransactionStartFaillure)
 		return
 	}
 
 	_, err = tx.Exec(`INSERT INTO FAQ (question, answer, language) VALUES (?, ?, ?)`, newFAQ.Question, newFAQ.Answer, newFAQ.Language)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
+		ar.setErrorAndStatus(StatusDatabaseError, errorWithRollback(err, tx), ErrDBInsert)
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to commit changes to database.")
+		ar.setErrorAndStatus(StatusDatabaseError, err, ErrDBCommit)
 		return
 	}
 
-	ar.setStatus(http.StatusCreated)
+	ar.setStatus(StatusCreated)
 }
 
 // RETRIEVE
 func retrieveFAQs(r *http.Request, ar *APIResponse) {
 	lang, err := parseLanguage(r)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusBadRequest, err, "")
+		ar.setErrorAndStatus(StatusInvalidLanguage, err)
 		return
 	}
 
 	faqs := []FAQ{}
 	rows, err := db.Query(`SELECT question, answer FROM FAQ WHERE language = ?`, lang)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error during query")
+		ar.setErrorAndStatus(StatusDatabaseError, err, ErrDBSelect)
 		return
 	}
 
@@ -59,14 +59,14 @@ func retrieveFAQs(r *http.Request, ar *APIResponse) {
 		var question, answer string
 		err = rows.Scan(&question, &answer)
 		if err != nil {
-			ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error during row scanning")
+			ar.setErrorAndStatus(StatusDatabaseError, err, ErrDBScan)
 			return
 		}
 		faqs = append(faqs, FAQ{question, answer, lang})
 	}
 
 	if err = rows.Err(); err != nil {
-		ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error after scanning rows")
+		ar.setErrorAndStatus(StatusDatabaseError, err, ErrDBAfter)
 		return
 	}
 
@@ -79,29 +79,29 @@ func updateFAQ(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&newFAQ)
 	if err != nil {
-		ar.setError(err, "Error during JSON parse, expected an UpdateFAQ struct")
+		ar.setErrorAndStatus(StatusInvalidJSON, err, ErrDecodeJSON)
 		return
 	}
 
 	if !isCorrectLanguage(newFAQ.FAQ.Language) {
-		ar.setErrorAndStatus(http.StatusBadRequest, errors.New(""), "Invalid Language: "+newFAQ.FAQ.Language)
+		ar.setErrorAndStatus(StatusInvalidLanguage, errors.New(ErrLang))
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setError(err, "Failed to start transaction.")
+		ar.setErrorAndStatus(StatusDatabaseError, err, ErrDBTransactionStartFaillure)
 		return
 	}
 
 	_, err = tx.Exec(`UPDATE FAQ SET language = ?, question = ?, answer = ? WHERE question = ?`,
 		newFAQ.FAQ.Language, newFAQ.FAQ.Question, newFAQ.FAQ.Answer, newFAQ.Question)
 	if err != nil {
-		ar.setError(errorWithRollback(err, tx), "Database failure")
+		ar.setErrorAndStatus(StatusDatabaseError, errorWithRollback(err, tx), ErrDBUpdate)
 		return
 	}
 	if err = tx.Commit(); err != nil {
-		ar.setError(err, "Failed to commit changes to database.")
+		ar.setErrorAndStatus(StatusDatabaseError, err, ErrDBCommit)
 		return
 	}
 }
@@ -112,23 +112,23 @@ func deleteFAQ(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&faq)
 	if err != nil {
-		ar.setError(err, "Error during JSON parse, expected an FAQ struct")
+		ar.setErrorAndStatus(StatusDatabaseError, err, ErrDecodeJSON)
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setError(err, "Failed to start transaction.")
+		ar.setErrorAndStatus(StatusDatabaseError, err, ErrDBTransactionStartFaillure)
 		return
 	}
 
 	_, err = tx.Exec(`DELETE FROM FAQ WHERE question = ?`, faq.Question)
 	if err != nil {
-		ar.setError(errorWithRollback(err, tx), "Database failure")
+		ar.setErrorAndStatus(StatusDatabaseError, errorWithRollback(err, tx), ErrDBDelete)
 		return
 	}
 	if err = tx.Commit(); err != nil {
-		ar.setError(err, "Failed to commit changes to database.")
+		ar.setErrorAndStatus(StatusDatabaseError, err, ErrDBCommit)
 		return
 	}
 }
