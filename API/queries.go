@@ -19,7 +19,7 @@ func getURLVariable(r *http.Request, variable string) (v string, err error) {
 	v = mux.Vars(r)[variable]
 	err = nil
 	if v == "" {
-		err = errors.New("Empty URL variable: " + variable)
+		err = errors.New(ErrEmptyVariable)
 	}
 	return
 }

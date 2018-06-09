@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/pkg/errors"
 	http "net/http"
-	"strings"
 )
 
 var (

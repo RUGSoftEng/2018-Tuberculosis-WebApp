@@ -1,11 +1,12 @@
 package main
 
 import (
+	"database/sql"
 	"github.com/pkg/errors"
-	http "net/http"
 )
 
 const (
+	// ***** Status Code for the response *****
 	// *** Status for successfull requests (2xx)  ***
 
 	// StatusDefault : Default status for all requests
@@ -42,6 +43,8 @@ const (
 	StatusDatabaseConstraintViolation = 581
 	// StatusFailedOperation : ?
 	StatusFailedOperation = 599
+
+	// ***** End Status Codes *****
 )
 
 // APIResponse : Type used by the Response Channel
@@ -56,6 +59,19 @@ func (a *APIResponse) init() {
 	a.Data = nil
 	a.StatusCode = StatusDefault
 	a.Error = nil
+}
+
+func (a *APIResponse) setResponse(data interface{}) {
+	a.setResponseAndStatus(StatusDefault, data)
+}
+
+func (a *APIResponse) setResponseAndStatus(status int, data interface{}) {
+	a.StatusCode = status
+	a.Data = data
+}
+
+func (a *APIResponse) setStatus(status int) {
+	a.StatusCode = status
 }
 
 // Sets the error and the standard error message
@@ -73,15 +89,51 @@ func (a *APIResponse) setErrorAndStatus(status int, err error, errMessages ...st
 	a.Error = err
 }
 
-func (a *APIResponse) setResponse(data interface{}) {
-	a.setResponseAndStatus(StatusDefault, data)
+func (a *APIResponse) setErrorJSON(err error) {
+	a.setErrorAndStatus(StatusInvalidJSON, err, ErrDecodeJSON)
 }
 
-func (a *APIResponse) setResponseAndStatus(status int, data interface{}) {
-	a.StatusCode = status
-	a.Data = data
+func (a *APIResponse) setErrorVariable(err error) {
+	a.setErrorAndStatus(StatusClientError, err, ErrInvalidVariable)
 }
 
-func (a *APIResponse) setStatus(status int) {
-	a.StatusCode = status
+func (a *APIResponse) setErrorLanguage(err error) {
+	a.setErrorAndStatus(StatusInvalidLanguage, err, ErrLang)
+}
+
+func (a *APIResponse) setErrorDBBegin(err error) {
+	a.setErrorAndStatus(StatusDatabaseError, err, ErrDBTransactionStartFaillure)
+}
+
+/*
+func (a *APIResponse) setError.(err error) {
+	a.setErrorAndStatus(, err, )
+}
+*/
+
+func (a *APIResponse) setErrorDBScan(err error) {
+	status, message := selectErrorHandle(err)
+	a.setErrorAndStatus(status, err, message)
+}
+
+func (a *APIResponse) setErrorDBInsert(err error, tx *sql.Tx) {
+	a.setErrorAndStatus(StatusDatabaseError, errorWithRollback(err, tx), ErrDBInsert)
+}
+
+func (a *APIResponse) setErrorDBUpdate(err error, tx *sql.Tx) {
+	a.setErrorAndStatus(StatusDatabaseError, errorWithRollback(err, tx), ErrDBUpdate)
+}
+
+func (a *APIResponse) setErrorDBDelete(err error, tx *sql.Tx) {
+	a.setErrorAndStatus(StatusDatabaseError, errorWithRollback(err, tx), ErrDBDelete)
+}
+
+func (a *APIResponse) setErrorDBCommit(err error) {
+	a.setErrorAndStatus(StatusDatabaseError, err, ErrDBCommit)
+}
+func (a *APIResponse) setErrorDBSelect(err error) {
+	a.setErrorAndStatus(StatusDatabaseError, err, ErrDBSelect)
+}
+func (a *APIResponse) setErrorDBAfter(err error) {
+	a.setErrorAndStatus(StatusDatabaseError, err, ErrDBAfter)
 }

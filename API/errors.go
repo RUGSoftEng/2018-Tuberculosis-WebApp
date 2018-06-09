@@ -3,15 +3,21 @@ package main
 import (
 	"database/sql"
 	"github.com/pkg/errors"
-	http "net/http"
 )
 
+// Error Messages
 const (
-	// Error Messages :
+	// *** Client errors ***
+
 	// ErrLang : Error when language specified is invalid
 	ErrLang = "Invalid Language, languages must be one of ['EN', 'NL', 'DE', 'RO']"
 	// ErrDecodeJSON : Error message when decoding failed
-	ErrDecodeJSON                 = "Failed to decode JSON body"
+	ErrDecodeJSON      = "Failed to decode JSON body"
+	ErrObjectNotFound  = "A requested object does not exist in the database"
+	ErrInvalidVariable = "Invalid variable specified in url"
+	ErrEmptyVariable   = "Variable is empty"
+
+	// *** Server Errors ***
 	ErrDBTransactionStartFaillure = "Failed to start database transaction"
 	ErrDBInsert                   = "Failed to execute the insert statement"
 	ErrDBUpdate                   = "Failed to execute the update statement"
@@ -28,4 +34,16 @@ func errorWithRollback(err error, tx *sql.Tx) error {
 		err = errors.New(err.Error() + "\n Rollback failed:" + err2.Error())
 	}
 	return err
+}
+
+func selectErrorHandle(err error) (status int, errMessage string) {
+	switch err {
+	case sql.ErrNoRows:
+		status = StatusObjectNotFound
+		errMessage = ErrObjectNotFound
+	default:
+		status = StatusDatabaseError
+		errMessage = ErrDBScan
+	}
+	return
 }

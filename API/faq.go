@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
 	http "net/http"
 )
 
@@ -12,28 +11,28 @@ func createFAQ(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&newFAQ)
 	if err != nil {
-		ar.setErrorAndStatus(StatusInvalidJSON, err, ErrDecodeJSON)
+		ar.setErrorJSON(err)
 		return
 	}
 	if !isCorrectLanguage(newFAQ.Language) {
-		ar.setErrorAndStatus(StatusInvalidLanguage, errors.New(ErrLang))
+		ar.setErrorLanguage(err)
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setErrorAndStatus(StatusDatabaseError, err, ErrDBTransactionStartFaillure)
+		ar.setErrorDBBegin(err)
 		return
 	}
 
 	_, err = tx.Exec(`INSERT INTO FAQ (question, answer, language) VALUES (?, ?, ?)`, newFAQ.Question, newFAQ.Answer, newFAQ.Language)
 	if err != nil {
-		ar.setErrorAndStatus(StatusDatabaseError, errorWithRollback(err, tx), ErrDBInsert)
+		ar.setErrorDBInsert(err, tx)
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		ar.setErrorAndStatus(StatusDatabaseError, err, ErrDBCommit)
+		ar.setErrorDBCommit(err)
 		return
 	}
 
@@ -44,14 +43,14 @@ func createFAQ(r *http.Request, ar *APIResponse) {
 func retrieveFAQs(r *http.Request, ar *APIResponse) {
 	lang, err := parseLanguage(r)
 	if err != nil {
-		ar.setErrorAndStatus(StatusInvalidLanguage, err)
+		ar.setErrorLanguage(err)
 		return
 	}
 
 	faqs := []FAQ{}
 	rows, err := db.Query(`SELECT question, answer FROM FAQ WHERE language = ?`, lang)
 	if err != nil {
-		ar.setErrorAndStatus(StatusDatabaseError, err, ErrDBSelect)
+		ar.setErrorDBSelect(err)
 		return
 	}
 
@@ -59,14 +58,14 @@ func retrieveFAQs(r *http.Request, ar *APIResponse) {
 		var question, answer string
 		err = rows.Scan(&question, &answer)
 		if err != nil {
-			ar.setErrorAndStatus(StatusDatabaseError, err, ErrDBScan)
+			ar.setErrorDBScan(err)
 			return
 		}
 		faqs = append(faqs, FAQ{question, answer, lang})
 	}
 
 	if err = rows.Err(); err != nil {
-		ar.setErrorAndStatus(StatusDatabaseError, err, ErrDBAfter)
+		ar.setErrorDBAfter(err)
 		return
 	}
 
@@ -79,31 +78,32 @@ func updateFAQ(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&newFAQ)
 	if err != nil {
-		ar.setErrorAndStatus(StatusInvalidJSON, err, ErrDecodeJSON)
+		ar.setErrorJSON(err)
 		return
 	}
 
 	if !isCorrectLanguage(newFAQ.FAQ.Language) {
-		ar.setErrorAndStatus(StatusInvalidLanguage, errors.New(ErrLang))
+		ar.setErrorLanguage(err)
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setErrorAndStatus(StatusDatabaseError, err, ErrDBTransactionStartFaillure)
+		ar.setErrorDBBegin(err)
 		return
 	}
 
 	_, err = tx.Exec(`UPDATE FAQ SET language = ?, question = ?, answer = ? WHERE question = ?`,
 		newFAQ.FAQ.Language, newFAQ.FAQ.Question, newFAQ.FAQ.Answer, newFAQ.Question)
 	if err != nil {
-		ar.setErrorAndStatus(StatusDatabaseError, errorWithRollback(err, tx), ErrDBUpdate)
+		ar.setErrorDBUpdate(err, tx)
 		return
 	}
 	if err = tx.Commit(); err != nil {
-		ar.setErrorAndStatus(StatusDatabaseError, err, ErrDBCommit)
+		ar.setErrorDBCommit(err)
 		return
 	}
+	ar.setStatus(StatusUpdated)
 }
 
 // DELETE
@@ -112,23 +112,24 @@ func deleteFAQ(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&faq)
 	if err != nil {
-		ar.setErrorAndStatus(StatusDatabaseError, err, ErrDecodeJSON)
+		ar.setErrorJSON(err)
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setErrorAndStatus(StatusDatabaseError, err, ErrDBTransactionStartFaillure)
+		ar.setErrorDBBegin(err)
 		return
 	}
 
 	_, err = tx.Exec(`DELETE FROM FAQ WHERE question = ?`, faq.Question)
 	if err != nil {
-		ar.setErrorAndStatus(StatusDatabaseError, errorWithRollback(err, tx), ErrDBDelete)
+		ar.setErrorDBDelete(err, tx)
 		return
 	}
 	if err = tx.Commit(); err != nil {
-		ar.setErrorAndStatus(StatusDatabaseError, err, ErrDBCommit)
+		ar.setErrorDBCommit(err)
 		return
 	}
+	ar.setStatus(StatusDeleted)
 }
