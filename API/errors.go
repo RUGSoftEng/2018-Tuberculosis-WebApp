@@ -14,6 +14,7 @@ const (
 	ErrInvalidVariable = "Invalid variable specified in url"
 	ErrEmptyVariable   = "Variable is empty"
 	ErrDateFormat      = "Error wrong date format, expected YYYY-MM-DD"
+	ErrUsernameTaken   = "Username is already taken"
 
 	// *** Server Errors ***
 	ErrDBTransactionStartFaillure = "Failed to start database transaction"
@@ -24,6 +25,7 @@ const (
 	ErrDBSelect                   = "Failed to execute select statement"
 	ErrDBScan                     = "Failed to scan queried rows"
 	ErrDBAfter                    = "Error after iterating over rows"
+	ErrHash                       = "Failed to execute hash"
 )
 
 func errorWithRollback(err error, tx *sql.Tx) error {

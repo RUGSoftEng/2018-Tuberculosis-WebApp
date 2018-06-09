@@ -16,19 +16,19 @@ func createPatient(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&patient)
 	if err != nil {
-		ar.setErrorAndStatus(StatusFailedOperation, err, "Failed to decode incoming JSON.")
+		ar.setErrorJSON(err)
 		return
 	}
 
 	patient.Password, err = HashPassword(patient.Password)
 	if err != nil {
-		ar.setErrorAndStatus(StatusFailedOperation, err, "Failed to hash password")
+		ar.setErrorHash(err)
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction")
+		ar.setErrorDBBegin(err)
 		return
 	}
 

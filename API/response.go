@@ -25,7 +25,7 @@ const (
 	StatusClientError = 400
 	// StatusObjectNotFound : Status when an object requested could not be found
 	//  e.g. a medicine or patient does not exist.
-	StatusObjectNotFound = 400
+	StatusObjectNotFound = 496
 	// StatusUnauthorized : Status when authorisation is needed but failed
 	StatusUnauthorized = 401
 	// StatusInvalidJSON : Status when errored during decoding of the json body
@@ -138,6 +138,10 @@ func (a *APIResponse) setErrorDBAfter(err error) {
 
 func (a *APIResponse) setErrorDate(err error) {
 	a.setErrorAndStatus(StatusInvalidDate, err, ErrDateFormat)
+}
+
+func (a *APIResponse) setErrorHash(err error) {
+	a.setErrorAndStatus(StatusServerError, err, ErrHash)
 }
 
 /*
