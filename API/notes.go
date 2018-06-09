@@ -17,7 +17,7 @@ func createNote(r *http.Request, ar *APIResponse) {
 		return
 	}
 
-	patientID, err := getPatientIDVariable(r)
+	patientID, err := getURLVariable(r, "id")
 	if err != nil {
 		ar.setErrorVariable(err)
 		return
@@ -47,7 +47,7 @@ func createNote(r *http.Request, ar *APIResponse) {
 
 // RETRIEVE
 func retrieveNotes(r *http.Request, ar *APIResponse) {
-	patientID, err := getPatientIDVariable(r)
+	patientID, err := getURLVariable(r, "id")
 	if err != nil {
 		ar.setErrorVariable(err)
 		return
@@ -119,7 +119,7 @@ func updateNote(r *http.Request, ar *APIResponse) {
 
 // DELETE
 func deleteNote(r *http.Request, ar *APIResponse) {
-	patientID, err := getPatientIDVariable(r)
+	patientID, err := getURLVariable(r, "id")
 	if err != nil {
 		ar.setErrorVariable(err)
 		return

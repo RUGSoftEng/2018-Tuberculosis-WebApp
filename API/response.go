@@ -32,7 +32,8 @@ const (
 	StatusInvalidJSON = 499
 	// StatusInvalidLanguage : Langauge specified is not supported / invalid
 	StatusInvalidLanguage = 498
-
+	// StatusInvalidDate : Date given is invalid
+	StatusInvalidDate = 497
 	// * Server Side (5xx) *
 
 	// StatusServerError : Default status if something went wrong in the server
@@ -105,14 +106,13 @@ func (a *APIResponse) setErrorDBBegin(err error) {
 	a.setErrorAndStatus(StatusDatabaseError, err, ErrDBTransactionStartFaillure)
 }
 
-/*
-func (a *APIResponse) setError.(err error) {
-	a.setErrorAndStatus(, err, )
-}
-*/
-
 func (a *APIResponse) setErrorDBScan(err error) {
-	status, message := selectErrorHandle(err)
+	status, message := selectErrorHandle(err, StatusDatabaseError, ErrDBScan)
+	a.setErrorAndStatus(status, err, message)
+}
+
+func (a *APIResponse) setErrorDBSelect(err error) {
+	status, message := selectErrorHandle(err, StatusDatabaseError, ErrDBSelect)
 	a.setErrorAndStatus(status, err, message)
 }
 
@@ -131,9 +131,17 @@ func (a *APIResponse) setErrorDBDelete(err error, tx *sql.Tx) {
 func (a *APIResponse) setErrorDBCommit(err error) {
 	a.setErrorAndStatus(StatusDatabaseError, err, ErrDBCommit)
 }
-func (a *APIResponse) setErrorDBSelect(err error) {
-	a.setErrorAndStatus(StatusDatabaseError, err, ErrDBSelect)
-}
+
 func (a *APIResponse) setErrorDBAfter(err error) {
 	a.setErrorAndStatus(StatusDatabaseError, err, ErrDBAfter)
 }
+
+func (a *APIResponse) setErrorDate(err error) {
+	a.setErrorAndStatus(StatusInvalidDate, err, ErrDateFormat)
+}
+
+/*
+func (a *APIResponse) setError.(err error) {
+	a.setErrorAndStatus(, err, )
+}
+*/

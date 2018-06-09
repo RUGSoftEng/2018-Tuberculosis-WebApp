@@ -8,14 +8,12 @@ import (
 // Error Messages
 const (
 	// *** Client errors ***
-
-	// ErrLang : Error when language specified is invalid
-	ErrLang = "Invalid Language, languages must be one of ['EN', 'NL', 'DE', 'RO']"
-	// ErrDecodeJSON : Error message when decoding failed
+	ErrLang            = "Invalid Language, languages must be one of ['EN', 'NL', 'DE', 'RO']"
 	ErrDecodeJSON      = "Failed to decode JSON body"
 	ErrObjectNotFound  = "A requested object does not exist in the database"
 	ErrInvalidVariable = "Invalid variable specified in url"
 	ErrEmptyVariable   = "Variable is empty"
+	ErrDateFormat      = "Error wrong date format, expected YYYY-MM-DD"
 
 	// *** Server Errors ***
 	ErrDBTransactionStartFaillure = "Failed to start database transaction"
@@ -36,14 +34,14 @@ func errorWithRollback(err error, tx *sql.Tx) error {
 	return err
 }
 
-func selectErrorHandle(err error) (status int, errMessage string) {
+func selectErrorHandle(err error, stdStatus int, stdMessage string) (status int, errMessage string) {
 	switch err {
 	case sql.ErrNoRows:
 		status = StatusObjectNotFound
 		errMessage = ErrObjectNotFound
 	default:
-		status = StatusDatabaseError
-		errMessage = ErrDBScan
+		status = stdStatus
+		errMessage = stdMessage
 	}
 	return
 }

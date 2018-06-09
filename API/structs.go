@@ -9,8 +9,8 @@ type ScheduledDosage struct {
 
 // InputScheduledDosage : Struct for handling the input for scheduled dosages
 type InputScheduledDosage struct {
-	Medicine Medicine `json:"medicine"`
-	Days     []string `json:"days"`
+	Dosage Dosage   `json:"dosage"`
+	Days   []string `json:"days"`
 }
 
 // Dosage : Describes the time and number of pills is associated with a medicine

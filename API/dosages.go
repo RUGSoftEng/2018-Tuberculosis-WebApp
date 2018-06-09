@@ -16,7 +16,7 @@ func createDosage(r *http.Request, ar *APIResponse) {
 		return
 	}
 
-	patientID, err := getPatientIDVariable(r)
+	patientID, err := getURLVariable(r, "id")
 	if err != nil {
 		ar.setErrorVariable(err)
 		return
@@ -55,7 +55,7 @@ func createDosage(r *http.Request, ar *APIResponse) {
 
 // RETRIEVE
 func retrieveDosages(r *http.Request, ar *APIResponse) {
-	patientID, err := getPatientIDVariable(r)
+	patientID, err := getURLVariable(r, "id")
 	if err != nil {
 		ar.setErrorVariable(err)
 		return
@@ -95,7 +95,7 @@ func retrieveDosages(r *http.Request, ar *APIResponse) {
 
 // UPDATE
 func updateDosage(r *http.Request, ar *APIResponse) {
-	patientID, err := getPatientIDVariable(r)
+	patientID, err := getURLVariable(r, "id")
 	if err != nil {
 		ar.setErrorVariable(err)
 		return
@@ -147,7 +147,7 @@ func updateDosage(r *http.Request, ar *APIResponse) {
 
 // DELETE
 func deleteDosage(r *http.Request, ar *APIResponse) {
-	patientID, err := getPatientIDVariable(r)
+	patientID, err := getURLVariable(r, "id")
 	if err != nil {
 		ar.setErrorVariable(err)
 		return
