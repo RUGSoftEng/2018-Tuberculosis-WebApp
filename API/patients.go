@@ -11,7 +11,6 @@ import (
 )
 
 // CREATE
-// expects a json file containing the new patient and a url encoded physician token
 func createPatient(r *http.Request, ar *APIResponse) {
 	patient := Patient{}
 	dec := json.NewDecoder(r.Body)
@@ -80,6 +79,85 @@ func createPatient(r *http.Request, ar *APIResponse) {
 	ar.StatusCode = http.StatusCreated
 }
 
+// RETRIEVE
+func retrieveByID(r *http.Request, ar *APIResponse) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	patientOV := PatientOverview{}
+	var name string
+	var user string
+	err := db.QueryRow(`SELECT name, username FROM Accounts WHERE id=?`, id).Scan(&name, &user)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	var phyID int
+	err = db.QueryRow(`SELECT physician_id FROM Patients WHERE id=?`, id).Scan(&phyID)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	var physicianName string
+	var email string
+	err = db.QueryRow(`SELECT email FROM Physicians WHERE id=?`, phyID).Scan(&email)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	err = db.QueryRow(`SELECT name FROM Accounts WHERE id=?`, phyID).Scan(&physicianName)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	patientOV.Name = name
+	patientOV.Username = user
+	patientOV.PhysicianName = physicianName
+	patientOV.PhysicianEmail = email
+	ar.setResponse(patientOV)
+}
+
+// RETRIEVE
+func retrieveByUsername(r *http.Request, ar *APIResponse) {
+	vars := mux.Vars(r)
+	username := vars["username"]
+	patient := PatientOverview{}
+	var name string
+	err := db.QueryRow(`SELECT name FROM Accounts WHERE username=?`, username).Scan(&name)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	var id int
+	err = db.QueryRow(`SELECT id FROM Accounts WHERE username=?`, username).Scan(&id)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	var phyID int
+	err = db.QueryRow(`SELECT physician_id FROM Patients WHERE id=?`, id).Scan(&phyID)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	var physicianName string
+	var email string
+	err = db.QueryRow(`SELECT email FROM Physicians WHERE id=?`, phyID).Scan(&email)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	err = db.QueryRow(`SELECT name FROM Accounts WHERE id=?`, phyID).Scan(&physicianName)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+	patient.Name = name
+	patient.Username = username
+	patient.PhysicianEmail = email
+	patient.PhysicianName = physicianName
+	ar.setResponse(patient)
+}
+
 // UPDATE
 func updatePatient(r *http.Request, ar *APIResponse) {
 	vars := mux.Vars(r)
@@ -140,83 +218,4 @@ func deletePatient(r *http.Request, ar *APIResponse) {
 		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to commit changes to database.")
 		return
 	}
-}
-
-//GET
-
-func retrieveByID(r *http.Request, ar *APIResponse) {
-	vars := mux.Vars(r)
-	id := vars["id"]
-	patientOV := PatientOverview{}
-	var name string
-	var user string
-	err := db.QueryRow(`SELECT name, username FROM Accounts WHERE id=?`, id).Scan(&name, &user)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
-		return
-	}
-	var phyID int
-	err = db.QueryRow(`SELECT physician_id FROM Patients WHERE id=?`, id).Scan(&phyID)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
-		return
-	}
-	var physicianName string
-	var email string
-	err = db.QueryRow(`SELECT email FROM Physicians WHERE id=?`, phyID).Scan(&email)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
-		return
-	}
-	err = db.QueryRow(`SELECT name FROM Accounts WHERE id=?`, phyID).Scan(&physicianName)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
-		return
-	}
-	patientOV.Name = name
-	patientOV.Username = user
-	patientOV.PhysicianName = physicianName
-	patientOV.PhysicianEmail = email
-	ar.setResponse(patientOV)
-}
-
-func retrieveByUsername(r *http.Request, ar *APIResponse) {
-	vars := mux.Vars(r)
-	username := vars["username"]
-	patient := PatientOverview{}
-	var name string
-	err := db.QueryRow(`SELECT name FROM Accounts WHERE username=?`, username).Scan(&name)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
-		return
-	}
-	var id int
-	err = db.QueryRow(`SELECT id FROM Accounts WHERE username=?`, username).Scan(&id)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
-		return
-	}
-	var phyID int
-	err = db.QueryRow(`SELECT physician_id FROM Patients WHERE id=?`, id).Scan(&phyID)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
-		return
-	}
-	var physicianName string
-	var email string
-	err = db.QueryRow(`SELECT email FROM Physicians WHERE id=?`, phyID).Scan(&email)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
-		return
-	}
-	err = db.QueryRow(`SELECT name FROM Accounts WHERE id=?`, phyID).Scan(&physicianName)
-	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
-		return
-	}
-	patient.Name = name
-	patient.Username = username
-	patient.PhysicianEmail = email
-	patient.PhysicianName = physicianName
-	ar.setResponse(patient)
 }

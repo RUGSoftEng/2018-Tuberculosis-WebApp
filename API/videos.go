@@ -43,7 +43,7 @@ func createVideo(r *http.Request, ar *APIResponse) {
 }
 
 // RETRIEVE
-func getTopics(r *http.Request, ar *APIResponse) {
+func retrieveTopics(r *http.Request, ar *APIResponse) {
 	lang, err := parseLanguage(r)
 	if err != nil {
 		ar.setErrorAndStatus(http.StatusBadRequest, err, "")
@@ -73,7 +73,7 @@ func getTopics(r *http.Request, ar *APIResponse) {
 }
 
 // RETRIEVE
-func getVideoByTopic(r *http.Request, ar *APIResponse) {
+func retrieveVideoByTopic(r *http.Request, ar *APIResponse) {
 	vars := mux.Vars(r)
 	topic := vars["topic"]
 
@@ -111,4 +111,67 @@ func getVideoByTopic(r *http.Request, ar *APIResponse) {
 		return
 	}
 	ar.setResponse(videos)
+}
+
+// UPDATE
+func updateVideo(r *http.Request, ar *APIResponse) {
+	newVideo := UpdateVideo{}
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&newVideo)
+	if err != nil {
+		ar.setError(err, "Error during JSON parse, expected an UpdateVideo struct")
+		return
+	}
+
+	if !isCorrectLanguage(newVideo.Video.Language) {
+		ar.setErrorAndStatus(http.StatusBadRequest, errors.New(""), "Invalid Language "+newVideo.Video.Language)
+		return
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		ar.setError(err, "Failed to start transaction.")
+		return
+	}
+
+	_, err = tx.Exec(`UPDATE Videos SET topic = ?, title = ?, reference = ?, language = ? 
+                 WHERE topic = ? AND title = ?`,
+		newVideo.Video.Topic, newVideo.Video.Title, newVideo.Video.Reference, newVideo.Video.Language,
+		newVideo.Topic, newVideo.Title)
+	if err != nil {
+		ar.setError(errorWithRollback(err, tx), "Database failure")
+		return
+	}
+	if err = tx.Commit(); err != nil {
+		ar.setError(err, "Failed to commit changes to database.")
+		return
+	}
+}
+
+// DELETE
+func deleteVideo(r *http.Request, ar *APIResponse) {
+	video := Video{}
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&video)
+	if err != nil {
+		ar.setError(err, "Error during JSON parse, expected a Video struct")
+		return
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		ar.setError(err, "Failed to start transaction.")
+		return
+	}
+
+	_, err = tx.Exec(`DELETE FROM Videos WHERE topic = ? AND title = ?`,
+		video.Topic, video.Title)
+	if err != nil {
+		ar.setError(errorWithRollback(err, tx), "Database failure")
+		return
+	}
+	if err = tx.Commit(); err != nil {
+		ar.setError(err, "Failed to commit changes to database.")
+		return
+	}
 }

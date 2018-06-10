@@ -26,15 +26,15 @@ insert into Patients(id, physician_id) values(
 );
 
 insert into Medicines(med_name) values(
-       'Highly experimental pills'
+       'Rifampicin'
 );
 
 insert into Medicines(med_name) values(
-       'Safe pills'
+       'Isoniazid'
 );
 
 insert into Medicines(med_name) values(
-       'Normal pills'
+       'Pyrazinamide'
 );
 
 insert into Dosages(patient_id, medicine_id, amount, intake_interval_start, intake_interval_end) values (
@@ -89,14 +89,4 @@ insert into Notes(patient_Id, question, day) values(
 
 insert into Notes(patient_Id, question, day) values(
        2, 'A NOTE', '2018-02-20'
-);
-
-insert into FAQ(question, answer) values (
-       'What is tuberculosis?',
-       'Tuberculosis is a disease, caused by the bacterium called Mycobacterium tuberculosis. It can cause lung problems, like a dry cough, but it can also manifest with other symptoms.'
-);
-
-insert into FAQ(question, answer) values (
-       'How do you get tuberculosis?',
-       'Tuberculosis is spread via the air. You can get it for example. when someone coughs or talks to you. The bacteria are present in small droplets in the air and you could inhale those droplets.'
 );

@@ -42,7 +42,7 @@ CREATE TABLE Dosages(
        intake_interval_start	TIME	NOT NULL,
        intake_interval_end	TIME	NOT NULL,
        FOREIGN KEY (patient_id)     REFERENCES Patients(id) ON DELETE CASCADE,
-       FOREIGN KEY (medicine_id)    REFERENCES Medicines(id),
+       FOREIGN KEY (medicine_id)    REFERENCES Medicines(id) ON DELETE CASCADE,
        UNIQUE KEY (patient_id, medicine_id)
 );
 
@@ -59,21 +59,20 @@ CREATE TABLE Videos(
        language 	CHAR(2)	    	NOT NULL DEFAULT 'EN',
        topic		VARCHAR(255)	NOT NULL,
        title		VARCHAR(255)	NOT NULL,
-       reference 	VARCHAR(255)	NOT NULL
+       reference 	VARCHAR(255)	NOT NULL,
+       UNIQUE KEY (title, topic)
 );
 
 CREATE TABLE Quizzes(
        video		INT		NOT NULL,
        question		VARCHAR(255)	NOT NULL,
        answers		TEXT		NOT NULL,
-       FOREIGN KEY (video) REFERENCES Videos(id),
+       FOREIGN KEY (video) REFERENCES Videos(id) ON DELETE CASCADE,
        PRIMARY KEY (video, question)
 );
 
 CREATE TABLE FAQ(
-       id	INT	NOT NULL PRIMARY KEY AUTO_INCREMENT,
-       language CHAR(2)	NOT NULL  DEFAULT 'EN',
-       question TEXT 	NOT NULL,
-       answer	TEXT 	NOT NULL
+       question VARCHAR(255) 	NOT NULL PRIMARY KEY,
+       language CHAR(2)	    	NOT NULL  DEFAULT 'EN',
+       answer	TEXT 		NOT NULL
 );
-

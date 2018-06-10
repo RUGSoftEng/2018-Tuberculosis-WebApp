@@ -21,6 +21,12 @@ type Dosage struct {
 	Medicine            Medicine `json:"medicine"`
 }
 
+// UpdateDosage : Used for updating the dosage: updates old with new
+type UpdateDosage struct {
+	OldDosage Dosage `json:"old_dosage"`
+	NewDosage Dosage `json:"new_dosage"`
+}
+
 // Medicine : Data for a medicine
 type Medicine struct {
 	Name string `json:"name"`
@@ -70,6 +76,14 @@ type VideoQuiz struct {
 	Quizzes []Quiz `json:"quizzes"`
 }
 
+// UpdateVideo : Struct used for updating Video. Specifies the old video (identifier)
+//  + what the new video should be.
+type UpdateVideo struct {
+	Topic string `json:"topic"`
+	Title string `json:"title"`
+	Video Video  `json:"video"`
+}
+
 // Quiz : The quiz, belongs to a video.
 // contains a list of answers, the first answer is always the correct answer.
 type Quiz struct {
@@ -77,11 +91,32 @@ type Quiz struct {
 	Answers  []string `json:"answers"`
 }
 
+// ReferencedQuiz : Used for requests where a quiz is needed with its reference video (e.g. creating or deleting)
+type ReferencedQuiz struct {
+	Video Video `json:"video"`
+	Quiz  Quiz  `json:"quiz"`
+}
+
+// UpdateQuiz : Used when updating the quiz.
+// Contains original question + video reference + updated quiz
+type UpdateQuiz struct {
+	Video    Video  `json:"video"`
+	Question string `json:"question"`
+	Quiz     Quiz   `json:"quiz"`
+}
+
 // FAQ : Describes a Frequently Asked Question
 type FAQ struct {
 	Question string `json:"question"`
 	Answer   string `json:"answer"`
 	Language string `json:"language"`
+}
+
+// UpdateFAQ : Struct used for updating FAQ. Specifies the old question (identifier)
+//  + what the new faq should be.
+type UpdateFAQ struct {
+	Question string `json:"question"`
+	FAQ      FAQ    `json:"faq"`
 }
 
 // UserValidation : A set of values needed for authenticate a user
