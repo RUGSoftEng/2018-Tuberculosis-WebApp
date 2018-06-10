@@ -1,0 +1,11 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "The API for interaction with the backend of the TuBuddy Tuberculosis Treatment Application.",
+        "title": "TuBuddy API",
+        "contact": {},
+        "license": {},
+        "version": "1.0"
+    },
+    "paths": {}
+}

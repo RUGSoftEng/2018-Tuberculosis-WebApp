@@ -1,0 +1,9 @@
+info:
+  contact: {}
+  description: The API for interaction with the backend of the TuBuddy Tuberculosis
+    Treatment Application.
+  license: {}
+  title: TuBuddy API
+  version: "1.0"
+paths: {}
+swagger: "2.0"

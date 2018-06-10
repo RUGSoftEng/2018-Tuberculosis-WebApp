@@ -1,3 +1,6 @@
+// @title TuBuddy API
+// @version 1.0
+// @description The API for interaction with the backend of the TuBuddy Tuberculosis Treatment Application.
 package main
 
 import (
@@ -6,6 +9,7 @@ import (
 	_ "github.com/go-sql-driver/mysql" // anonymous import
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"github.com/swaggo/http-swagger"
 	"log"
 	http "net/http"
 )
@@ -42,6 +46,9 @@ func main() {
 
 	log.Printf("Connected to database '%s', and listening on '%s'...", dbName, listenLocation)
 	router := mux.NewRouter()
+
+	// Documentation
+	router.PathPrefix("/api/docs/").Handler(httpSwagger.WrapHandler)
 
 	// GET Requests for Retrieving
 	getRouter := router.Methods("GET").Subrouter()
