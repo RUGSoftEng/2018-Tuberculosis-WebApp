@@ -1,15 +1,16 @@
 package main
 
-import (
-	"database/sql"
-	"github.com/pkg/errors"
-)
-
 // ScheduledDosage : Describes an instance of a dosage for the schedule
 type ScheduledDosage struct {
 	Dosage Dosage `json:"dosage"`
 	Day    string `json:"date"`
 	Taken  bool   `json:"taken"`
+}
+
+// InputScheduledDosage : Struct for handling the input for scheduled dosages
+type InputScheduledDosage struct {
+	Dosage Dosage   `json:"dosage"`
+	Days   []string `json:"days"`
 }
 
 // Dosage : Describes the time and number of pills is associated with a medicine
@@ -45,23 +46,6 @@ type NoteReturn struct {
 	CreatedAt string `json:"created_at"`
 }
 
-// Patient : Information of a patient
-type Patient struct {
-	Username string `json:"username"`
-	Name     string `json:"name"`
-	Password string `json:"password"`
-}
-
-// Physician : Information of a patient
-type Physician struct {
-	Username      string `json:"username"`
-	Name          string `json:"name"`
-	Password      string `json:"password"`
-	APIToken      string `json:"api_token"`
-	Email         string `json:"email"`
-	CreationToken string `json:"creation_token"`
-}
-
 // Video : A video with their reference
 type Video struct {
 	Topic     string `json:"topic"`
@@ -70,18 +54,18 @@ type Video struct {
 	Language  string `json:"language"`
 }
 
-// VideoQuiz : The video alongside it's paired quizzes
-type VideoQuiz struct {
-	Video   Video  `json:"video"`
-	Quizzes []Quiz `json:"quizzes"`
-}
-
 // UpdateVideo : Struct used for updating Video. Specifies the old video (identifier)
 //  + what the new video should be.
 type UpdateVideo struct {
 	Topic string `json:"topic"`
 	Title string `json:"title"`
 	Video Video  `json:"video"`
+}
+
+// VideoQuiz : The video alongside it's paired quizzes
+type VideoQuiz struct {
+	Video   Video  `json:"video"`
+	Quizzes []Quiz `json:"quizzes"`
 }
 
 // Quiz : The quiz, belongs to a video.
@@ -131,6 +115,23 @@ type JWToken struct {
 	ID    int    `json:"id"`
 }
 
+// Patient : Information of a patient
+type Patient struct {
+	Username string `json:"username"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
+}
+
+// Physician : Information of a patient
+type Physician struct {
+	Username      string `json:"username"`
+	Name          string `json:"name"`
+	Password      string `json:"password"`
+	APIToken      string `json:"api_token"`
+	Email         string `json:"email"`
+	CreationToken string `json:"creation_token"`
+}
+
 // PatientInfo : Identifies a patient through his/her public data
 type PatientInfo struct {
 	ID   int    `json:"id"`
@@ -151,18 +152,4 @@ type PhysicianOverview struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Token    string `json:"token"`
-}
-
-// InputScheduledDosage : Struct for handling the input for scheduled dosages
-type InputScheduledDosage struct {
-	Medicine Medicine `json:"medicine"`
-	Days     []string `json:"days"`
-}
-
-func errorWithRollback(err error, tx *sql.Tx) error {
-	err2 := tx.Rollback()
-	if err2 != nil {
-		err = errors.New(err.Error() + "\n Rollback failed:" + err2.Error())
-	}
-	return err
 }

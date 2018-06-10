@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	_ "github.com/go-sql-driver/mysql" // anonymous import
-	"github.com/gorilla/mux"
 	http "net/http"
 )
 
@@ -13,51 +12,57 @@ func createMedicine(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&medicine)
 	if err != nil {
-		ar.setErrorAndStatus(StatusFailedOperation, err, "Failed to decode JSON.")
+		ar.setErrorJSON(err)
 		return
 	}
-	tx, err := db.Begin()
 
+	tx, err := db.Begin()
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		ar.setErrorDBBegin(err)
 		return
 	}
 
 	_, err = tx.Exec(`INSERT INTO Medicines(med_name) VALUES (?)`, medicine.Name)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
+		ar.setErrorDBInsert(err, tx)
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to commit changes to database.")
+		ar.setErrorDBCommit(err)
 		return
 	}
-	ar.StatusCode = http.StatusCreated
+	ar.setStatus(StatusCreated)
 }
+
+// RETRIEVE: ?
+
+// UPDATE: ?
 
 // DELETE
 func deleteMedicine(r *http.Request, ar *APIResponse) {
-	vars := mux.Vars(r)
-	medID := vars["id"]
+	medID, err := getURLVariable(r, "id")
+	if err != nil {
+		ar.setErrorVariable(err)
+		return
+	}
 
 	tx, err := db.Begin()
-
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		ar.setErrorDBBegin(err)
 		return
 	}
 
 	_, err = tx.Exec(`DELETE FROM Medicines WHERE id=?`, medID)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
+		ar.setErrorDBDelete(err, tx)
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to commit changes to database.")
+		ar.setErrorDBCommit(err)
 		return
 	}
 
-	ar.StatusCode = http.StatusOK
+	ar.setStatus(StatusDeleted)
 }

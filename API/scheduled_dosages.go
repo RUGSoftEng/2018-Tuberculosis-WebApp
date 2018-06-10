@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	_ "github.com/go-sql-driver/mysql" // anonymous import
 	http "net/http"
@@ -11,9 +10,9 @@ import (
 // CREATE
 func createScheduledDosages(r *http.Request, ar *APIResponse) {
 	// Scan Patient ID
-	patientID, err := getPatientIDVariable(r)
+	patientID, err := getURLVariableInt(r, "id")
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusBadRequest, err, "Cannot convert patient id to an integer")
+		ar.setErrorVariable(err)
 		return
 	}
 
@@ -22,40 +21,20 @@ func createScheduledDosages(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err = dec.Decode(&in)
 	if err != nil {
-		ar.setErrorAndStatus(StatusFailedOperation, err, "Failed to decode JSON.")
+		ar.setErrorJSON(err)
+		return
+	}
+
+	dosageID, err := queryDosageID(in.Dosage, patientID)
+	if err != nil {
+		ar.setErrorDBSelect(err)
 		return
 	}
 
 	// Start Database Transaction
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
-		return
-	}
-
-	// Query Medicine ID
-	var medicineID int
-	err = tx.QueryRow(`SELECT id FROM Medicines WHERE med_name = ?`, in.Medicine.Name).Scan(&medicineID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			ar.setErrorAndStatus(http.StatusNotFound, err, "Unknown medicine.")
-		} else {
-			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to execute query.")
-		}
-		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
-		return
-	}
-
-	// Query Dosage ID
-	var dosageID int
-	err = tx.QueryRow(`SELECT id FROM Dosages WHERE medicine_id = ? AND patient_id = ?`, medicineID, patientID).Scan(&dosageID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			ar.setErrorAndStatus(http.StatusNotFound, err, "Unknown dosage.")
-		} else {
-			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to execute query.")
-		}
-		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
+		ar.setErrorDBBegin(err)
 		return
 	}
 
@@ -63,23 +42,23 @@ func createScheduledDosages(r *http.Request, ar *APIResponse) {
 	for _, day := range in.Days {
 		_, err := tx.Exec(`INSERT INTO ScheduledDosages VALUES (?, ?, ?)`, dosageID, day, false)
 		if err != nil {
-			ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
+			ar.setErrorDBInsert(err, tx)
 			return
 		}
 	}
 
 	if err = tx.Commit(); err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to commit changes to database.")
+		ar.setErrorDBCommit(err)
 		return
 	}
-	ar.StatusCode = http.StatusCreated
+	ar.setStatus(StatusCreated)
 }
 
 // RETRIEVE
 func retrieveScheduledDosages(r *http.Request, ar *APIResponse) {
-	patientID, err := getPatientIDVariable(r)
+	patientID, err := getURLVariable(r, "id")
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusBadRequest, err, "Cannot convert patient id to an integer")
+		ar.setErrorVariable(err)
 		return
 	}
 
@@ -88,12 +67,12 @@ func retrieveScheduledDosages(r *http.Request, ar *APIResponse) {
 	const dform = "2006-01-02" // specifies YYYY-MM-DD format
 	startDate, err := time.Parse(dform, from)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusBadRequest, err, "Error wrong from date, expected: yyyy-mm-dd")
+		ar.setErrorDate(err)
 		return
 	}
 	endDate, err := time.Parse(dform, until)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusBadRequest, err, "Error wrong until date, expected: yyyy-mm-dd")
+		ar.setErrorDate(err)
 		return
 	}
 
@@ -107,7 +86,7 @@ func retrieveScheduledDosages(r *http.Request, ar *APIResponse) {
                                WHERE day BETWEEN ? AND ?`,
 		patientID, startDate.Format(dform), endDate.Format(dform))
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error during query")
+		ar.setErrorDBSelect(err)
 		return
 	}
 
@@ -118,7 +97,7 @@ func retrieveScheduledDosages(r *http.Request, ar *APIResponse) {
 		var taken bool
 		err = rows.Scan(&amount, &medicine, &day, &intakeIntervalStart, &intakeIntervalEnd, &taken)
 		if err != nil {
-			ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error during row scanning")
+			ar.setErrorDBScan(err)
 			return
 		}
 		dosages = append(dosages, ScheduledDosage{
@@ -128,18 +107,19 @@ func retrieveScheduledDosages(r *http.Request, ar *APIResponse) {
 		})
 	}
 	if err = rows.Err(); err != nil {
-		ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error after scanning rows")
+		ar.setErrorDBAfter(err)
 		return
 	}
+
 	ar.setResponse(dosages)
 }
 
 // UPDATE
 func updateScheduledDosage(r *http.Request, ar *APIResponse) {
 	// Scan patient ID
-	patientID, err := getPatientIDVariable(r)
+	patientID, err := getURLVariableInt(r, "id")
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusBadRequest, err, "Cannot convert patient id to an integer")
+		ar.setErrorVariable(err)
 		return
 	}
 
@@ -148,42 +128,44 @@ func updateScheduledDosage(r *http.Request, ar *APIResponse) {
 	decoder := json.NewDecoder(r.Body)
 	err = decoder.Decode(&scheduledDosages)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusBadRequest, err, "Unable to decode given json data")
+		ar.setErrorJSON(err)
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setError(err, "Unable to start database transaction")
+		ar.setErrorDBBegin(err)
 		return
 	}
 
 	for _, scheduledDosage := range scheduledDosages {
 		dosageID, err := queryDosageID(scheduledDosage.Dosage, patientID)
 		if err != nil {
-			ar.setErrorAndStatus(http.StatusBadRequest, err, "")
+			ar.setErrorDBSelect(errorWithRollback(err, tx))
 			return
 		}
 		_, err = tx.Exec("UPDATE ScheduledDosages SET taken = ? WHERE dosage = ? AND day = ?",
 			scheduledDosage.Taken, dosageID, scheduledDosage.Day)
 		if err != nil {
-			ar.setError(errorWithRollback(err, tx), "Something went wrong during SQL Update query")
+			ar.setErrorDBUpdate(err, tx)
 			return
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		ar.setError(err, "Unable to commit changes to the database")
+		ar.setErrorDBCommit(err)
 		return
 	}
+
+	ar.setStatus(StatusUpdated)
 }
 
 // DELETE
 func deleteScheduledDosage(r *http.Request, ar *APIResponse) {
 	// Scan patient ID
-	patientID, err := getPatientIDVariable(r)
+	patientID, err := getURLVariableInt(r, "id")
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusBadRequest, err, "Cannot convert patient id to an integer")
+		ar.setErrorVariable(err)
 		return
 	}
 
@@ -191,27 +173,33 @@ func deleteScheduledDosage(r *http.Request, ar *APIResponse) {
 	scheduledDosage := ScheduledDosage{}
 	decoder := json.NewDecoder(r.Body)
 	err = decoder.Decode(&scheduledDosage)
+	if err != nil {
+		ar.setErrorJSON(err)
+		return
+	}
 
 	dosageID, err := queryDosageID(scheduledDosage.Dosage, patientID)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusBadRequest, err, "")
+		ar.setErrorDBSelect(err)
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setError(err, "Unable to start database transaction")
+		ar.setErrorDBBegin(err)
 		return
 	}
 
 	_, err = tx.Exec(`DELETE FROM ScheduledDosages WHERE dosage = ? AND day = ?`, dosageID, scheduledDosage.Day)
 	if err != nil {
-		ar.setError(errorWithRollback(err, tx), "Database failure")
+		ar.setErrorDBDelete(err, tx)
 		return
 	}
 
 	if err := tx.Commit(); err != nil {
-		ar.setError(err, "Unable to commit changes to the database")
+		ar.setErrorDBCommit(err)
 		return
 	}
+
+	ar.setStatus(StatusDeleted)
 }

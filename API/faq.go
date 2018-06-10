@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
 	http "net/http"
 )
 
@@ -12,46 +11,46 @@ func createFAQ(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&newFAQ)
 	if err != nil {
-		ar.setErrorAndStatus(StatusFailedOperation, err, "Failed to decode JSON.")
+		ar.setErrorJSON(err)
 		return
 	}
 	if !isCorrectLanguage(newFAQ.Language) {
-		ar.setErrorAndStatus(http.StatusBadRequest, errors.New(""), "Invalid Language")
+		ar.setErrorLanguage(err)
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		ar.setErrorDBBegin(err)
 		return
 	}
 
 	_, err = tx.Exec(`INSERT INTO FAQ (question, answer, language) VALUES (?, ?, ?)`, newFAQ.Question, newFAQ.Answer, newFAQ.Language)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
+		ar.setErrorDBInsert(err, tx)
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to commit changes to database.")
+		ar.setErrorDBCommit(err)
 		return
 	}
 
-	ar.setStatus(http.StatusCreated)
+	ar.setStatus(StatusCreated)
 }
 
 // RETRIEVE
 func retrieveFAQs(r *http.Request, ar *APIResponse) {
 	lang, err := parseLanguage(r)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusBadRequest, err, "")
+		ar.setErrorLanguage(err)
 		return
 	}
 
 	faqs := []FAQ{}
 	rows, err := db.Query(`SELECT question, answer FROM FAQ WHERE language = ?`, lang)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error during query")
+		ar.setErrorDBSelect(err)
 		return
 	}
 
@@ -59,14 +58,14 @@ func retrieveFAQs(r *http.Request, ar *APIResponse) {
 		var question, answer string
 		err = rows.Scan(&question, &answer)
 		if err != nil {
-			ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error during row scanning")
+			ar.setErrorDBScan(err)
 			return
 		}
 		faqs = append(faqs, FAQ{question, answer, lang})
 	}
 
 	if err = rows.Err(); err != nil {
-		ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error after scanning rows")
+		ar.setErrorDBAfter(err)
 		return
 	}
 
@@ -79,31 +78,32 @@ func updateFAQ(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&newFAQ)
 	if err != nil {
-		ar.setError(err, "Error during JSON parse, expected an UpdateFAQ struct")
+		ar.setErrorJSON(err)
 		return
 	}
 
 	if !isCorrectLanguage(newFAQ.FAQ.Language) {
-		ar.setErrorAndStatus(http.StatusBadRequest, errors.New(""), "Invalid Language: "+newFAQ.FAQ.Language)
+		ar.setErrorLanguage(err)
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setError(err, "Failed to start transaction.")
+		ar.setErrorDBBegin(err)
 		return
 	}
 
 	_, err = tx.Exec(`UPDATE FAQ SET language = ?, question = ?, answer = ? WHERE question = ?`,
 		newFAQ.FAQ.Language, newFAQ.FAQ.Question, newFAQ.FAQ.Answer, newFAQ.Question)
 	if err != nil {
-		ar.setError(errorWithRollback(err, tx), "Database failure")
+		ar.setErrorDBUpdate(err, tx)
 		return
 	}
 	if err = tx.Commit(); err != nil {
-		ar.setError(err, "Failed to commit changes to database.")
+		ar.setErrorDBCommit(err)
 		return
 	}
+	ar.setStatus(StatusUpdated)
 }
 
 // DELETE
@@ -112,23 +112,24 @@ func deleteFAQ(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&faq)
 	if err != nil {
-		ar.setError(err, "Error during JSON parse, expected an FAQ struct")
+		ar.setErrorJSON(err)
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setError(err, "Failed to start transaction.")
+		ar.setErrorDBBegin(err)
 		return
 	}
 
 	_, err = tx.Exec(`DELETE FROM FAQ WHERE question = ?`, faq.Question)
 	if err != nil {
-		ar.setError(errorWithRollback(err, tx), "Database failure")
+		ar.setErrorDBDelete(err, tx)
 		return
 	}
 	if err = tx.Commit(); err != nil {
-		ar.setError(err, "Failed to commit changes to database.")
+		ar.setErrorDBCommit(err)
 		return
 	}
+	ar.setStatus(StatusDeleted)
 }

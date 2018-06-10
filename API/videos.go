@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	_ "github.com/go-sql-driver/mysql" // anonymous import
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	http "net/http"
 )
 
@@ -14,44 +13,45 @@ func createVideo(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&video)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusBadRequest, err, "Unexpected error during JSON decoding")
+		ar.setErrorJSON(err)
 		return
 	}
 
 	if !isCorrectLanguage(video.Language) {
-		ar.setErrorAndStatus(http.StatusBadRequest, errors.New(""), "Invalid Language")
+		ar.setErrorLanguage(err)
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start new transaction")
+		ar.setErrorDBBegin(err)
 		return
 	}
 	_, err = tx.Exec(`INSERT INTO Videos (language, topic, title, reference) VALUES (?, ?, ?, ?)`,
 		video.Language, video.Topic, video.Title, video.Reference)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
+		ar.setErrorDBInsert(err, tx)
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to commit changes to database.")
+		ar.setErrorDBCommit(err)
 		return
 	}
-	ar.StatusCode = http.StatusCreated
+
+	ar.setStatus(StatusCreated)
 }
 
 // RETRIEVE
 func retrieveTopics(r *http.Request, ar *APIResponse) {
 	lang, err := parseLanguage(r)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusBadRequest, err, "")
+		ar.setErrorLanguage(err)
 		return
 	}
 	rows, err := db.Query(`SELECT DISTINCT topic FROM Videos WHERE language = ?`, lang)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error when querying the database")
+		ar.setErrorDBSelect(err)
 		return
 	}
 
@@ -60,15 +60,16 @@ func retrieveTopics(r *http.Request, ar *APIResponse) {
 		var topic string
 		err = rows.Scan(&topic)
 		if err != nil {
-			ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error during row scanning")
+			ar.setErrorDBScan(err)
 			return
 		}
 		topics = append(topics, topic)
 	}
 	if err = rows.Err(); err != nil {
-		ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error after scanning rows")
+		ar.setErrorDBAfter(err)
 		return
 	}
+
 	ar.setResponse(topics)
 }
 
@@ -79,14 +80,14 @@ func retrieveVideoByTopic(r *http.Request, ar *APIResponse) {
 
 	lang, err := parseLanguage(r)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusBadRequest, err, "")
+		ar.setErrorLanguage(err)
 		return
 	}
 
 	rows, err := db.Query(`SELECT id, topic, title, reference FROM Videos WHERE topic = ? AND language = ?`,
 		topic, lang)
 	if err != nil {
-		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error when querying the database")
+		ar.setErrorDBSelect(err)
 		return
 	}
 
@@ -96,20 +97,21 @@ func retrieveVideoByTopic(r *http.Request, ar *APIResponse) {
 		var topic, title, reference string
 		err = rows.Scan(&id, &topic, &title, &reference)
 		if err != nil {
-			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error during row scanning")
+			ar.setErrorDBScan(err)
 			return
 		}
 		video := Video{topic, title, reference, lang}
 		quizzes, err := queryQuizzes(id)
 		if err != nil {
-			ar.setError(err, "Error during querying quizzes")
+			ar.setErrorDBSelect(err)
 		}
 		videos = append(videos, VideoQuiz{video, quizzes})
 	}
 	if err = rows.Err(); err != nil {
-		ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error after scanning rows")
+		ar.setErrorDBAfter(err)
 		return
 	}
+
 	ar.setResponse(videos)
 }
 
@@ -119,18 +121,18 @@ func updateVideo(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&newVideo)
 	if err != nil {
-		ar.setError(err, "Error during JSON parse, expected an UpdateVideo struct")
+		ar.setErrorJSON(err)
 		return
 	}
 
 	if !isCorrectLanguage(newVideo.Video.Language) {
-		ar.setErrorAndStatus(http.StatusBadRequest, errors.New(""), "Invalid Language "+newVideo.Video.Language)
+		ar.setErrorLanguage(err)
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setError(err, "Failed to start transaction.")
+		ar.setErrorDBBegin(err)
 		return
 	}
 
@@ -139,13 +141,15 @@ func updateVideo(r *http.Request, ar *APIResponse) {
 		newVideo.Video.Topic, newVideo.Video.Title, newVideo.Video.Reference, newVideo.Video.Language,
 		newVideo.Topic, newVideo.Title)
 	if err != nil {
-		ar.setError(errorWithRollback(err, tx), "Database failure")
+		ar.setErrorDBUpdate(err, tx)
 		return
 	}
 	if err = tx.Commit(); err != nil {
-		ar.setError(err, "Failed to commit changes to database.")
+		ar.setErrorDBCommit(err)
 		return
 	}
+
+	ar.setStatus(StatusUpdated)
 }
 
 // DELETE
@@ -154,24 +158,26 @@ func deleteVideo(r *http.Request, ar *APIResponse) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&video)
 	if err != nil {
-		ar.setError(err, "Error during JSON parse, expected a Video struct")
+		ar.setErrorJSON(err)
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		ar.setError(err, "Failed to start transaction.")
+		ar.setErrorDBBegin(err)
 		return
 	}
 
 	_, err = tx.Exec(`DELETE FROM Videos WHERE topic = ? AND title = ?`,
 		video.Topic, video.Title)
 	if err != nil {
-		ar.setError(errorWithRollback(err, tx), "Database failure")
+		ar.setErrorDBDelete(err, tx)
 		return
 	}
 	if err = tx.Commit(); err != nil {
-		ar.setError(err, "Failed to commit changes to database.")
+		ar.setErrorDBCommit(err)
 		return
 	}
+
+	ar.setStatus(StatusDeleted)
 }
