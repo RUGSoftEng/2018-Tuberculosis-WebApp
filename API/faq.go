@@ -5,8 +5,13 @@ import (
 	http "net/http"
 )
 
-// CREATE
-func createFAQ(r *http.Request, ar *APIResponse) {
+// CreateFAQ
+// @Description Creation of a new FAQ
+// @ID create-faq
+// @Accept json
+// @Router /api/admin/faqs [put]
+// @Tag faq create put admin
+func CreateFAQ(r *http.Request, ar *APIResponse) {
 	newFAQ := FAQ{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&newFAQ)

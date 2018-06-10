@@ -1,11 +1,12 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "The API for interaction with the backend of the TuBuddy Tuberculosis Treatment Application.",
+        "description": "Test description",
         "title": "TuBuddy API",
         "contact": {},
         "license": {},
         "version": "1.0"
     },
+    "host": "192.168.50:2002",
     "paths": {}
 }

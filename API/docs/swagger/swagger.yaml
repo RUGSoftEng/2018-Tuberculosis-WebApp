@@ -1,7 +1,7 @@
+host: 192.168.50:2002
 info:
   contact: {}
-  description: The API for interaction with the backend of the TuBuddy Tuberculosis
-    Treatment Application.
+  description: Test description
   license: {}
   title: TuBuddy API
   version: "1.0"

@@ -1,6 +1,7 @@
 // @title TuBuddy API
 // @version 1.0
 // @description The API for interaction with the backend of the TuBuddy Tuberculosis Treatment Application.
+// @host 192.168.50:2002
 package main
 
 import (
@@ -84,7 +85,7 @@ func main() {
 	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(createNote))
 	putRouter.Handle("/api/accounts/physicians", handlerWrapper(createPhysician))
 	putRouter.Handle("/api/admin/videos", handlerWrapper(createVideo))
-	putRouter.Handle("/api/admin/faqs", handlerWrapper(createFAQ))
+	putRouter.Handle("/api/admin/faqs", handlerWrapper(CreateFAQ))
 	putRouter.Handle("/api/admin/medicines", handlerWrapper(createMedicine))
 	putRouter.Handle("/api/admin/videos/quizzes", handlerWrapper(createQuiz))
 
@@ -105,4 +106,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+// @description Test description
+// @tag testing function
+// @router /api/admin/faqs [put]
+func Testfunction() {
+	return
 }
