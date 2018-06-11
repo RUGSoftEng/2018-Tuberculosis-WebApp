@@ -3,7 +3,7 @@
 {% block info %}
 
 <h2>{Name of the patient.}</h2>
-	    <h3 >Treatment plan: {name}</h3>
+{#	    <h3 >Treatment plan: {name}</h3>#}
         <h1> with pk {{ pk }}</h1>
 
 {#    <div class="dropdown">#}
@@ -19,8 +19,8 @@
 {#  </div>#}
 
 
-      <button type="button" class="btn btn-info btn-lg">Create new dosage</button><br>
-      <button type="button" class="btn btn-info btn-lg">Add scheduled dosage</button><br>
+    <a href="{% url 'api:create_dosage' pk=pk %}"><button type="button" class="btn btn-info btn-lg">Create new dosage</button><br></a>
+{#    <a href="{% url 'api:scheduled_dosage' %}"><button type="button" class="btn btn-info btn-lg">Add scheduled dosage</button><br></a>#}
       <button type="button" class="btn btn-info btn-lg">Delete patient</button><br>
 
 {#<button id="about-btn"> Click Me - I'm Javascript on Speed</button>#}

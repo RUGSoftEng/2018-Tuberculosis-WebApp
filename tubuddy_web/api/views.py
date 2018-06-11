@@ -139,11 +139,11 @@ def add_patient(request):
             name = form.cleaned_data['name']
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
-            api_token = form.cleaned_data['api_token']
+            # api_token = form.cleaned_data['api_token']
             print("name "+name)
             print("username "+username)
             print(password)
-            print(api_token)
+            # print(api_token)
             print(request.user.username)
             add_patient_url = "http://192.168.50.4:2002/api/accounts/patients?token="+request.user.username.upper()
             print (add_patient_url)
@@ -151,7 +151,7 @@ def add_patient(request):
                 "username": username,
                 "name": name,
                 "password": password,
-                "api_token": api_token
+                "api_token": 00
             }
             print(data)
             req = requests.request('PUT', add_patient_url, json=data)
@@ -169,14 +169,65 @@ def add_patient(request):
 
 def treatment(request):
     if request.method == 'POST':
-        time = request.POST.get('time', False)
         date = request.POST.get('date', False)
         option = request.POST.get('optradio', False)
-        print (time)
         print (date)
         print (option)
         return redirect('api:list')
     return render(request, "treatment.html")
+
+
+
+@login_required
+def create_dosage(request, pk):
+    # pk = 8
+    if request.method == 'POST':
+        header = {
+            'access_token': request.user.userprofile.access_token}
+        date = request.POST.get('date', False)
+        time1 = request.POST.get('time1', False)
+        time2 = request.POST.get('time2', False)
+        option = request.POST.get('optradio', False)
+        print (time1)
+        print (time2)
+
+        date = date.split(",")
+        date = [x.strip() for x in date]
+        url = "http://192.168.50.4:2002/api/accounts/patients/"+str(pk)+"/dosages"
+
+        data1 = {
+            "intake_interval_start": "{}".format(time1),
+            "intake_interval_end": "{}".format(time2),
+            "amount": 3,
+            "medicine": {
+                "name": "{}".format(option)
+            }
+        }
+        print (data1)
+
+        req1 = requests.request('PUT', url=url, headers=header, json=data1)
+
+        data2 = {
+             "medicine": {
+                "name": "{}".format(option)
+             },
+             "days": date
+        }
+
+
+
+
+        url = "http://192.168.50.4:2002/api/accounts/patients/" + str(pk) + "/dosages/scheduled"
+        req2 = requests.request('PUT', url=url, headers=header, json=data2)
+
+        print (date)
+        # print (option)
+        # print (data)
+        # print (schedule_req.text)
+        return redirect('api:list')
+    return render(request, "create_dosage.html")
+
+
 
 @user_passes_test(lambda u: not u.is_active)
 def login(request):
@@ -247,24 +298,20 @@ def register(request):
             username = form.cleaned_data['username']
             name = form.cleaned_data['name']
             password = form.cleaned_data['password']
-            api_token = form.cleaned_data['api_token']
             email = form.cleaned_data['email']
             creation_token = form.cleaned_data['creation_token']
             print (username)
             print (name)
             print (password)
-            print (api_token)
             print (email)
             print (creation_token)
             print("name " + name)
             print("username " + username)
             print(password)
-            print(api_token)
             data = {
                 "username": username,
                 "name": name,
                 "password": password,
-                "api_token": api_token,
                 "email": email,
                 "creation_token": creation_token
             }
