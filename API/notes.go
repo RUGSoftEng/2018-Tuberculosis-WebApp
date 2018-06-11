@@ -80,7 +80,7 @@ func retrieveNotes(r *http.Request, ar *APIResponse) {
 
 // UPDATE
 func updateNote(r *http.Request, ar *APIResponse) {
-	noteID, err := getURLVariable(r, "id")
+	noteID, err := getURLVariable(r, "note_id")
 	if err != nil {
 		ar.setErrorVariable(err)
 		return
