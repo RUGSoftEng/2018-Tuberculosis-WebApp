@@ -1,8 +1,9 @@
 insert into Videos(topic, title, reference) values (
-       'Tuberculosis',
+       'Symptoms',
        'What happens to me and my body when I have tuberculosis?',
        'https://youtu.be/fXiXGRlvH70'
 );
+
 insert into Quizzes(video, question, answers) values(
        1,
        'Tuberculosis is caused by:',
@@ -11,7 +12,7 @@ insert into Quizzes(video, question, answers) values(
 
 insert into Quizzes(video, question, answers) values(
        1,
-       'What does your body do to protect you from Tuberculosis?',
+       'What does your body do to protect you from tuberculosis?',
        'It builds a wall around the bacteria:It destroys all the bacteria:It moves the bacteria to a different place'
 );
 
@@ -22,10 +23,11 @@ insert into Quizzes(video, question, answers) values(
 );
 
 insert into Videos(topic, title, reference) values (
-       'Tuberculosis',
+       'Symptoms',
        'Signs that I might have TB',
        'https://youtu.be/_GCGhSnmtyg'
 );
+
 insert into Quizzes(video, question, answers) values(
        2,
        'What is the most common symptom?',
@@ -45,7 +47,7 @@ insert into Quizzes(video, question, answers) values(
 );
 
 insert into Videos(topic, title, reference) values (
-       'Tuberculosis',
+       'Symptoms',
        'What is latent tuberculosis and when does it become active tuberculosis? ',
        'https://youtu.be/XJUGtouYizM'
 );
@@ -69,8 +71,8 @@ insert into Quizzes(video, question, answers) values(
 );
 
 insert into Videos(topic, title, reference) values (
-       'Tuberculosis',
-       'treatment for tuberculosis',
+       'Medication',
+       'Treatment for tuberculosis',
        'https://youtu.be/y4YobMWMoyU'
 );
 
@@ -93,7 +95,7 @@ insert into Quizzes(video, question, answers) values(
 );
 
 insert into Videos(topic, title, reference) values (
-       'Tuberculosis',
+       'Medication',
        'Why do I have to take the medication for so long?',
        'https://youtu.be/29rigqhJgRk '
 );
@@ -117,13 +119,13 @@ insert into Quizzes(video, question, answers) values(
 );
 
 insert into Videos(topic, title, reference) values (
-       'Tuberculosis',
+       'Medication',
        'Why am I hiding that I have tuberculosis',
        'https://youtu.be/aq9Nuq2fDwY '
 );
 
 insert into Videos(topic, title, reference) values (
-       'Tuberculosis',
+       'Infection & Prevention',
        'How can I prevent infecting someone else: how contagious is the disease?',
        'https://youtu.be/n7blVDVDAaU '
 );
@@ -135,19 +137,19 @@ insert into Quizzes(video, question, answers) values(
 );
 
 insert into Videos(topic, title, reference) values (
-       'Tuberculosis',
+       'Infection & Prevention',
        'How can I prevent infecting someone else: how and when to wear a TB mask?',
        'https://youtu.be/hP7R3f5YzVg '
 );
 
 insert into Quizzes(video, question, answers) values(
        8,
-       'when should you wear the mask?',
+       'When should you wear the mask?',
        'When I am with other people (if they do not have a mask):Always,like in my own room, in other rooms and outside:Only when I cough'
 );
 
 insert into Videos(topic, title, reference) values (
-       'Tuberculosis',
+       'Infection & Prevention',
        'How can I prevent infecting someone else: how to cough safely?',
        'https://youtu.be/KTbgaQvIUwI '
 );
@@ -159,7 +161,7 @@ insert into Quizzes(video, question, answers) values(
 );
 
 insert into Videos(topic, title, reference) values (
-       'Tuberculosis',
+       'Support',
        'How can I help a loved one who has tuberculosis? ',
        'https://youtu.be/o3RxQZCNFk0 '
 );
