@@ -91,6 +91,107 @@
 - Split the main.go file into sub files + created a makefile
 - Split the main.go file into sub files + created a makefile
 - Added safesql tool for spotting SQL Injection vunerabilities + reformatted the makefile
-- Removed exampleHandler + changes the response channel to accept unmarshelled data and a statuscode
-- Removed exampleHandler + changes the response channel to accept unmarshelled data and a statuscode
-- Removed exampleHandler + changes the response channel to accept unmarshelled data and a statuscode
+- Removed exampleHandler + changes the response channel to accept unmarshalled data and a statuscode
+- Removed exampleHandler + changes the response channel to accept unmarshalled data and a statuscode
+- Removed exampleHandler + changes the response channel to accept unmarshalled data and a statuscode
+
+- Setting up Postman local testing + created authWrapper
+- Setting up Postman local testing + created authWrapper
+- Setting up Postman local testing + created authWrapper
+- Setting up Postman local testing + created authWrapper
+- Setting up Postman local testing + created authWrapper
+- WebApp group meeting
+- WebApp group meeting
+- WebApp group meeting
+- WebApp group meeting
+- Fixing windows compatibility for vagrant setup
+- Fixing windows compatibility for vagrant setup
+- Looking into Travis CI
+- Looking into Travis CI
+- Adding Travis CI to the WebApp repository
+- Adding Travis CI to the WebApp repository
+- Adding Travis CI to the WebApp repository
+- Adding Travis CI to the WebApp repository
+- Recreation of database model
+- Recreation of database model
+- Fixed some errors due to refactoring
+- Fixed some errors due to refactoring
+- Fixed some errors due to refactoring
+- Fixed some errors due to refactoring
+- Created a new version for the api documentation
+- Created a new version for the api documentation
+- Created a new version for the api documentation
+- Created a new version for the api documentation
+- Refactoring api error setting
+- Refactoring api error setting
+- Refactoring api error setting
+- Refactoring api error setting
+- Changed dependency downloading
+- Added some additional loggin for api requests
+- Added some additional loggin for api requests
+- Data base creation / test insertion checks to Travis CI
+- Created new database call for adding ScheduledDosages
+- Updated API documentation
+- Updated API documentation
+- Updated API documentation
+- Updated API documentation
+- Updated API documentation
+- Group meeting
+- Group meeting
+- Adjusting Vagrant networking
+- Adjusting Vagrant networking
+- Adjusting Vagrant networking
+- Adjusting Vagrant networking
+- Adjusting Vagrant networking
+- Adjusting Vagrant networking
+- Adjusting Vagrant networking
+- Group meeting
+- Working on api quizzes + faq
+- Working on api quizzes + faq
+- Working on api quizzes + faq
+- Working on api quizzes + faq
+- Working on api quizzes + faq
+- Working on api quizzes + faq
+- Adjusting the database model
+- Adjusting the database model
+- Adjusting the database model
+- Adjusting the database model
+- Added language compatibility for FAQ & Videos
+- Added language compatibility for FAQ & Videos
+- Added language compatibility for FAQ & Videos
+- Added language compatibility for FAQ & Videos
+- Added language compatibility for FAQ & Videos
+- Added ON DELETE CASCADE constraints to database
+- Added ON DELETE CASCADE constraints to database
+- Refactored some api function names
+- Added time intervals to dosages
+- Added time intervals to dosages
+- Created insert statements for Video, Quizzes and FAQs for EN and NL
+- Created insert statements for Video, Quizzes and FAQs for EN and NL
+- Created insert statements for Video, Quizzes and FAQs for EN and NL
+- Created insert statements for Video, Quizzes and FAQs for EN and NL
+- Created insert statements for Video, Quizzes and FAQs for EN and NL
+- Created insert statements for Video, Quizzes and FAQs for EN and NL
+- Created insert statements for Video, Quizzes and FAQs for EN and NL
+- Created insert statements for Video, Quizzes and FAQs for EN and NL
+- Some final presentation preparations
+- Some final presentation preparations
+- Some final presentation preparations
+- Made all C.R.U.D methods for Videos, Quizzes, Dosages, Scheduled Dosages and FAQs + some minor refactoring
+- Made all C.R.U.D methods for Videos, Quizzes, Dosages, Scheduled Dosages and FAQs + some minor refactoring
+- Made all C.R.U.D methods for Videos, Quizzes, Dosages, Scheduled Dosages and FAQs + some minor refactoring
+- Made all C.R.U.D methods for Videos, Quizzes, Dosages, Scheduled Dosages and FAQs + some minor refactoring
+- Made all C.R.U.D methods for Videos, Quizzes, Dosages, Scheduled Dosages and FAQs + some minor refactoring
+- Made all C.R.U.D methods for Videos, Quizzes, Dosages, Scheduled Dosages and FAQs + some minor refactoring
+- Made all C.R.U.D methods for Videos, Quizzes, Dosages, Scheduled Dosages and FAQs + some minor refactoring
+- Made all C.R.U.D methods for Videos, Quizzes, Dosages, Scheduled Dosages and FAQs + some minor refactoring
+- Made all C.R.U.D methods for Videos, Quizzes, Dosages, Scheduled Dosages and FAQs + some minor refactoring
+- Refactoring of errors: more status codes + and constant error messages
+- Refactoring of errors: more status codes + and constant error messages
+- Refactoring of errors: more status codes + and constant error messages
+- Refactoring of errors: more status codes + and constant error messages
+- Refactoring of errors: more status codes + and constant error messages
+- Refactoring of errors: more status codes + and constant error messages
+- Refactoring of errors: more status codes + and constant error messages
+- Refactoring of errors: more status codes + and constant error messages
+- Refactoring of errors: more status codes + and constant error messages
