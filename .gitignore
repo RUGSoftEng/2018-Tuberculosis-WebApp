@@ -31,3 +31,8 @@ hs_err_pid*
 
 # Executable for the API
 API/API
+
+# Goland idea  folder
+.idea/
+
+database/regexp.txt

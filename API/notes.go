@@ -4,71 +4,123 @@ import (
 	"encoding/json"
 	_ "github.com/go-sql-driver/mysql" // anonymous import
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	http "net/http"
+	"time"
 )
 
 // CREATE
-func addNote(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
+func createNote(r *http.Request, ar *APIResponse) {
 	// verify patient
-	vars := mux.Vars(r)
-	patientID := vars["id"]
-
 	note := Note{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&note)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error during JSON decoding")
+		ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error during JSON decoding.")
 		return
 	}
 
-	trans, err := db.Begin()
+	tx, err := db.Begin()
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Failed to start new transaction")
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start new transaction.")
 		return
 	}
-	_, err = trans.Exec(
+
+	vars := mux.Vars(r)
+	patientID := vars["id"]
+	_, err = tx.Exec(
 		`INSERT INTO Notes (patient_id, question, day) VALUES (?, ?, ?)`,
 		patientID, note.Note, note.CreatedAt)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Failed to insert note into the database")
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to insert note into the database.")
 		return
 	}
 
-	if err = trans.Commit(); err != nil {
-		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+	if err = tx.Commit(); err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to commit changes to database.")
 		return
 	}
-	responseChan <- APIResponse{nil, http.StatusCreated}
+
+	ar.StatusCode = http.StatusCreated
 }
 
 // RETRIEVE
 // Possible to also add a time interval?
 // Or all 'untreated' notes
-func getNotes(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
+func getNotes(r *http.Request, ar *APIResponse) {
 
 	vars := mux.Vars(r)
 	patientID := vars["id"]
 
 	rows, err := db.Query(`SELECT question, day FROM Notes WHERE patient_id = ?`, patientID)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error during query")
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error during query")
 		return
 	}
 
-	notes := []Note{}
+	notes := []NoteReturn{}
 	for rows.Next() {
 		var note, date string
-		err = rows.Scan(&note, &date)
+		var id int
+		err = rows.Scan(&id, &note, &date)
 		if err != nil {
-			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
+			ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error during row scanning")
 			return
 		}
-		notes = append(notes, Note{note, date})
+		notes = append(notes, NoteReturn{id, note, date})
 	}
 	if err = rows.Err(); err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
+		ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error after scanning rows")
 		return
 	}
-	responseChan <- APIResponse{notes, http.StatusOK}
+
+	ar.setResponse(notes)
+}
+
+//DELETE
+
+func deleteNote(r *http.Request, ar *APIResponse) {
+	vars := mux.Vars(r)
+	patientID := vars["id"]
+	noteID := vars["note_id"]
+	_, err := db.Exec("DELETE FROM Notes WHERE id=? and patient_id=?", noteID, patientID)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error during query")
+		return
+	}
+
+	ar.StatusCode = http.StatusOK
+
+}
+
+//POST
+
+func modifyNote(r *http.Request, ar *APIResponse) {
+	vars := mux.Vars(r)
+	noteID := vars["note_id"]
+	note := Note{}
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&note)
+
+	tx, err := db.Begin()
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start new transaction.")
+		return
+	}
+
+	_, err = tx.Exec(`UPDATE Notes SET
+                          question = ?,
+                          day = ?
+                          WHERE id = ?`, note.Note, time.Now(), noteID)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to insert note into the database.")
+		return
+	}
+
+	if err = tx.Commit(); err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to commit changes to database.")
+		return
+	}
+
+	ar.StatusCode = http.StatusCreated
+
 }

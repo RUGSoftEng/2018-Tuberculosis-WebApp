@@ -5,61 +5,123 @@ import (
 	"encoding/json"
 	_ "github.com/go-sql-driver/mysql" // anonymous import
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	http "net/http"
 	"time"
 )
 
 // CREATE
-func pushDosage(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
-	vars := mux.Vars(r)
-	patientID := vars["id"]
+func createDosage(r *http.Request, ar *APIResponse) {
 	dosage := Dosage{}
-	var medicineID int
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&dosage)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Failed to decode JSON")
+		ar.setErrorAndStatus(StatusFailedOperation, err, "Failed to decode JSON.")
 		return
 	}
+
 	tx, err := db.Begin()
 	if err != nil {
-		errorChan <- errors.Wrap(err, "failed to start transaction")
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
 		return
 	}
+
+	var medicineID int
 	err = tx.QueryRow(`SELECT id FROM Medicines WHERE med_name = ?`,
 		dosage.Medicine.Name).Scan(&medicineID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			errorChan <- errors.Wrap(err, "Unknown medicine")
+			ar.setErrorAndStatus(http.StatusNotFound, err, "Unknown medicine.")
 		} else {
-			errorChan <- errors.Wrap(err, "Failed to execute query")
+			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to execute query.")
 		}
-		tx.Rollback()
+		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
 		return
 	}
-	_, err = tx.Exec(`INSERT INTO Dosages (patient_id, medicine_id, amount, intake_time) 
-                          VALUES (?, ?, ?, ?)`,
-		patientID, medicineID, dosage.NumberOfPills, dosage.IntakeMoment)
+
+	vars := mux.Vars(r)
+	patientID := vars["id"]
+	_, err = tx.Exec(`INSERT INTO Dosages (patient_id, medicine_id, amount,
+ intake_interval_start, intake_interval_end) 
+                          VALUES (?, ?, ?, ?, ?)`,
+		patientID, medicineID, dosage.NumberOfPills, dosage.IntakeIntervalStart, dosage.IntakeIntervalEnd)
 	if err != nil {
-		errorChan <- err
-		tx.Rollback()
+		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to commit changes to database.")
 		return
 	}
-	responseChan <- APIResponse{nil, http.StatusCreated}
+	ar.StatusCode = http.StatusCreated
+}
+
+// CREATE
+func createScheduledDosages(r *http.Request, ar *APIResponse) {
+	// Scan Patient ID
+	vars := mux.Vars(r)
+	patientID := vars["id"]
+
+	// Decode Request Body to JSON
+	in := InputScheduledDosage{}
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&in)
+	if err != nil {
+		ar.setErrorAndStatus(StatusFailedOperation, err, "Failed to decode JSON.")
+		return
+	}
+
+	// Start Database Transaction
+	tx, err := db.Begin()
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to start transaction.")
+		return
+	}
+
+	// Query Medicine ID
+	var medicineID int
+	err = tx.QueryRow(`SELECT id FROM Medicines WHERE med_name = ?`, in.Medicine.Name).Scan(&medicineID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ar.setErrorAndStatus(http.StatusNotFound, err, "Unknown medicine.")
+		} else {
+			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to execute query.")
+		}
+		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
+		return
+	}
+
+	// Query Dosage ID
+	var dosageID int
+	err = tx.QueryRow(`SELECT id FROM Dosages WHERE medicine_id = ? AND patient_id = ?`, medicineID, patientID).Scan(&dosageID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ar.setErrorAndStatus(http.StatusNotFound, err, "Unknown dosage.")
+		} else {
+			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to execute query.")
+		}
+		ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
+		return
+	}
+
+	// Add a ScheduledDosage for each given day
+	for _, day := range in.Days {
+		_, err := tx.Exec(`INSERT INTO ScheduledDosages VALUES (?, ?, ?)`, dosageID, day, false)
+		if err != nil {
+			ar.setErrorAndStatus(http.StatusInternalServerError, errorWithRollback(err, tx), "Database failure")
+			return
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Failed to commit changes to database.")
+		return
+	}
+	ar.StatusCode = http.StatusCreated
 }
 
 // RETRIEVE
-// start/ end dates might be optional ?
-//  Possible defaults:
-//     startDate = [current_day]
-//     endDate   = startDate + 1 month
-func getDosages(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
+func getDosages(r *http.Request, ar *APIResponse) {
 
 	vars := mux.Vars(r)
 	patientID := vars["id"]
@@ -69,18 +131,18 @@ func getDosages(r *http.Request, responseChan chan APIResponse, errorChan chan e
 	const dform = "2006-01-02" // specifies YYYY-MM-DD format
 	startDate, err := time.Parse(dform, from)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error in parsing starting date")
+		ar.setErrorAndStatus(http.StatusBadRequest, err, "Error wrong from date, expected: yyyy-mm-dd")
 		return
 	}
 	endDate, err := time.Parse(dform, until)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error in parsing end time")
+		ar.setErrorAndStatus(http.StatusBadRequest, err, "Error wrong until date, expected: yyyy-mm-dd")
 		return
 	}
 
-	rows, err := db.Query(`SELECT amount, med_name, day, intake_time, taken
+	rows, err := db.Query(`SELECT amount, med_name, day, intake_interval_start, intake_interval_end, taken
                                FROM ScheduledDosages as SD JOIN 
-                                 (SELECT Dosages.id, amount, intake_time, med_name 
+                                 (SELECT Dosages.id, amount, intake_interval_start, intake_interval_end, med_name 
                                   FROM Dosages JOIN Medicines 
                                      ON Dosages.medicine_id = Medicines.id
                                   WHERE patient_id = ?) as DM
@@ -88,29 +150,75 @@ func getDosages(r *http.Request, responseChan chan APIResponse, errorChan chan e
                                WHERE day BETWEEN ? AND ?`,
 		patientID, startDate.Format(dform), endDate.Format(dform))
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error during query")
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Unexpected error during query")
 		return
 	}
 
 	dosages := []ScheduledDosage{}
 	for rows.Next() {
 		var amount int
-		var medicine, day, intakeTime string
+		var medicine, day, intakeIntervalStart, intakeIntervalEnd string
 		var taken bool
-		err = rows.Scan(&amount, &medicine, &day, &intakeTime, &taken)
+		err = rows.Scan(&amount, &medicine, &day, &intakeIntervalStart, &intakeIntervalEnd, &taken)
 		if err != nil {
-			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
+			ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error during row scanning")
 			return
 		}
 		dosages = append(dosages, ScheduledDosage{
-			Dosage{intakeTime, amount, Medicine{medicine}},
+			Dosage{intakeIntervalStart, intakeIntervalEnd, amount, Medicine{medicine}},
 			day,
 			taken,
 		})
 	}
 	if err = rows.Err(); err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
+		ar.setErrorAndStatus(StatusFailedOperation, err, "Unexpected error after scanning rows")
 		return
 	}
-	responseChan <- APIResponse{dosages, http.StatusOK}
+	ar.setResponse(dosages)
+}
+
+// UPDATE
+func updateScheduledDosage(r *http.Request, ar *APIResponse) {
+	// Scan patient ID
+	patientID, err := getPatientIDVariable(r)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusBadRequest, err, "Cannot convert patient id to an integer")
+		return
+	}
+
+	// Read input scheduled dosages
+	scheduledDosages := []ScheduledDosage{}
+	decoder := json.NewDecoder(r.Body)
+	err = decoder.Decode(&scheduledDosages)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusBadRequest, err, "Uanble to decode given json data")
+		return
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		ar.setError(err, "Uanble to start database transaction")
+		return
+	}
+
+	for _, scheduledDosage := range scheduledDosages {
+		dosageID, err := queryDosageID(scheduledDosage.Dosage, patientID)
+		if err != nil {
+			ar.setErrorAndStatus(http.StatusBadRequest, err, "")
+			return
+		}
+		_, err = tx.Exec("UPDATE ScheduledDosages SET taken = ? WHERE dosage = ? AND day = ?",
+			scheduledDosage.Taken, dosageID, scheduledDosage.Day)
+		if err != nil {
+			ar.setError(err, "Something went wrong during SQL Update query")
+			return
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		ar.setError(err, "Unable to commit changes to the database")
+		return
+	}
+
+	ar.StatusCode = http.StatusOK
 }
