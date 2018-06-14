@@ -58,7 +58,7 @@ func login(r *http.Request, ar *APIResponse) {
 		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
 		return
 	}
-	tokenString = Encode(tokenString, 10)
+	tokenString = Encode(tokenString, salt)
 	ar.Data = JWToken{Token: tokenString, ID: tokenID}
 }
 
@@ -71,7 +71,7 @@ func parseToken(in JWToken, ar *APIResponse) {
 		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
 		return
 	}
-	content = Decode(content, 10)
+	content = Decode(content, salt)
 	token, err := jwt.Parse(content, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("There was an error")
