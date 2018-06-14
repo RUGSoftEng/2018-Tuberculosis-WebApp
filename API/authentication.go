@@ -52,26 +52,26 @@ func login(r *http.Request, ar *APIResponse) {
 	}
 	var tokenID int
 	err = db.QueryRow(`SELECT id FROM Accounts WHERE username=?`, cred.Username).Scan(&tokenID)
-	/*	var salt int
-		err = db.QueryRow(`SELECT api_token FROM Accounts WHERE username=?`, cred.Username).Scan(&salt)
-		if err != nil {
-			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
-			return
-		}*/
-	tokenString = Encode(tokenString, 10)
+	var salt int
+	err = db.QueryRow(`SELECT api_token FROM Accounts WHERE username=?`, cred.Username).Scan(&salt)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
+		return
+	}
+	tokenString = Encode(tokenString, salt)
 	ar.Data = JWToken{Token: tokenString, ID: tokenID}
 }
 
 func parseToken(in JWToken, ar *APIResponse) {
 	content := in.Token
 	id := in.ID
-	/*	var salt int
-		err := db.QueryRow(`SELECT api_token FROM Accounts WHERE id=?`, id).Scan(&salt)
-		if err != nil {
-			ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
-			return
-		}*/
-	content = Decode(content, 10)
+	var salt int
+	err := db.QueryRow(`SELECT api_token FROM Accounts WHERE id=?`, id).Scan(&salt)
+	if err != nil {
+		ar.setErrorAndStatus(http.StatusInternalServerError, err, "Database failure")
+		return
+	}
+	content = Decode(content, salt)
 	token, err := jwt.Parse(content, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("There was an error")
