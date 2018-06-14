@@ -77,9 +77,9 @@ func main() {
 	putRouter := router.Methods("PUT").Subrouter()
 	putRouter.Handle("/api/accounts/patients", handlerWrapper(createPatient))
 	putRouter.Handle("/api/accounts/physicians", handlerWrapper(createPhysician))
-	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(createDosage))
-	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(createScheduledDosages))
-	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(createNote))
+	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages", handlerWrapper(authWrapper(createDosage)))
+	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/dosages/scheduled", handlerWrapper(authWrapper(createScheduledDosages)))
+	putRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes", handlerWrapper(authWrapper(createNote)))
 	putRouter.Handle("/api/general/videos", handlerWrapper(createVideo))
 	putRouter.Handle("/api/admin/faq", handlerWrapper(createFAQ))
 	putRouter.Handle("/api/admin/medicines/add", handlerWrapper(pushMedicine))
@@ -87,7 +87,7 @@ func main() {
 	// DELETE Requests for Deleting
 	deleteRouter := router.Methods("DELETE").Subrouter()
 	deleteRouter.Handle("/api/accounts/patients/{id:[0-9]+}", handlerWrapper(deletePatient))
-	deleteRouter.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(deletePhysician))
+	deleteRouter.Handle("/api/accounts/physicians/{id:[0-9]+}", handlerWrapper(authWrapper(deletePhysician)))
 	deleteRouter.Handle("/api/admin/medicines/{id:[0-9]+}/delete", handlerWrapper(deleteMedicine))
 	deleteRouter.Handle("/api/accounts/patients/{id:[0-9]+}/notes/{note_id:[0-9]+}", handlerWrapper(authWrapper(deleteNote)))
 
