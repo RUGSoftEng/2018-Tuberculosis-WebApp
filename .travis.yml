@@ -1,0 +1,19 @@
+os:
+ - linux
+
+language: go
+go:
+ - "1.10"
+
+services:
+ - mysql
+
+before_script:
+ - mysql -e "CREATE DATABASE TestDB"
+ - make deps_check -C ./API
+
+script:
+ - mysql -u root --password="" TestDB < ./database/DDL_statements.sql
+ - mysql -u root --password="" TestDB < ./database/test_insert_statements.sql
+ - make check -C ./API
+ - make build -C ./API

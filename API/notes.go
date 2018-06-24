@@ -3,72 +3,150 @@ package main
 import (
 	"encoding/json"
 	_ "github.com/go-sql-driver/mysql" // anonymous import
-	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	http "net/http"
 )
 
 // CREATE
-func addNote(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
+func createNote(r *http.Request, ar *APIResponse) {
 	// verify patient
-	vars := mux.Vars(r)
-	patientID := vars["id"]
-
 	note := Note{}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&note)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error during JSON decoding")
+		ar.setErrorJSON(err)
 		return
 	}
 
-	trans, err := db.Begin()
+	patientID, err := getURLVariable(r, "id")
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Failed to start new transaction")
+		ar.setErrorVariable(err)
 		return
 	}
-	_, err = trans.Exec(
+
+	tx, err := db.Begin()
+	if err != nil {
+		ar.setErrorDBBegin(err)
+		return
+	}
+
+	_, err = tx.Exec(
 		`INSERT INTO Notes (patient_id, question, day) VALUES (?, ?, ?)`,
 		patientID, note.Note, note.CreatedAt)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Failed to insert note into the database")
+		ar.setErrorDBInsert(err, tx)
 		return
 	}
 
-	if err = trans.Commit(); err != nil {
-		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+	if err = tx.Commit(); err != nil {
+		ar.setErrorDBCommit(err)
 		return
 	}
-	responseChan <- APIResponse{nil, http.StatusCreated}
+
+	ar.setStatus(StatusCreated)
 }
 
 // RETRIEVE
-// Possible to also add a time interval?
-// Or all 'untreated' notes
-func getNotes(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
-
-	vars := mux.Vars(r)
-	patientID := vars["id"]
-
-	rows, err := db.Query(`SELECT question, day FROM Notes WHERE patient_id = ?`, patientID)
+func retrieveNotes(r *http.Request, ar *APIResponse) {
+	patientID, err := getURLVariable(r, "id")
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error during query")
+		ar.setErrorVariable(err)
 		return
 	}
 
-	notes := []Note{}
+	rows, err := db.Query(`SELECT id, question, day FROM Notes WHERE patient_id = ?`, patientID)
+	if err != nil {
+		ar.setErrorDBSelect(err)
+		return
+	}
+
+	notes := []NoteReturn{}
 	for rows.Next() {
 		var note, date string
-		err = rows.Scan(&note, &date)
+		var id int
+		err = rows.Scan(&id, &note, &date)
 		if err != nil {
-			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
+			ar.setErrorDBScan(err)
 			return
 		}
-		notes = append(notes, Note{note, date})
+		notes = append(notes, NoteReturn{id, note, date})
 	}
 	if err = rows.Err(); err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
+		ar.setErrorDBAfter(err)
 		return
 	}
-	responseChan <- APIResponse{notes, http.StatusOK}
+
+	ar.setResponse(notes)
+}
+
+// UPDATE
+func updateNote(r *http.Request, ar *APIResponse) {
+	noteID, err := getURLVariable(r, "note_id")
+	if err != nil {
+		ar.setErrorVariable(err)
+		return
+	}
+
+	note := Note{}
+	dec := json.NewDecoder(r.Body)
+	err = dec.Decode(&note)
+	if err != nil {
+		ar.setErrorJSON(err)
+		return
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		ar.setErrorDBBegin(err)
+		return
+	}
+
+	_, err = tx.Exec(`UPDATE Notes SET
+                          question = ?,
+                          day = ?
+                          WHERE id = ?`, note.Note, note.CreatedAt, noteID)
+	if err != nil {
+		ar.setErrorDBUpdate(err, tx)
+		return
+	}
+
+	if err = tx.Commit(); err != nil {
+		ar.setErrorDBCommit(err)
+		return
+	}
+
+	ar.setStatus(StatusUpdated)
+}
+
+// DELETE
+func deleteNote(r *http.Request, ar *APIResponse) {
+	patientID, err := getURLVariable(r, "id")
+	if err != nil {
+		ar.setErrorVariable(err)
+		return
+	}
+
+	noteID, err := getURLVariable(r, "note_id")
+	if err != nil {
+		ar.setErrorVariable(err)
+		return
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		ar.setErrorDBBegin(err)
+		return
+	}
+
+	_, err = db.Exec("DELETE FROM Notes WHERE id=? and patient_id=?", noteID, patientID)
+	if err != nil {
+		ar.setErrorDBDelete(err, tx)
+		return
+	}
+
+	if err = tx.Commit(); err != nil {
+		ar.setErrorDBCommit(err)
+		return
+	}
+
+	ar.setStatus(StatusDeleted)
 }

@@ -1,116 +1,188 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	_ "github.com/go-sql-driver/mysql" // anonymous import
-	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	http "net/http"
-	"time"
 )
 
 // CREATE
-func pushDosage(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
-	vars := mux.Vars(r)
-	patientID := vars["id"]
+func createDosage(r *http.Request, ar *APIResponse) {
 	dosage := Dosage{}
-	var medicineID int
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&dosage)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Failed to decode JSON")
+		ar.setErrorJSON(err)
 		return
 	}
-	tx, err := db.Begin()
+
+	patientID, err := getURLVariable(r, "id")
 	if err != nil {
-		errorChan <- errors.Wrap(err, "failed to start transaction")
+		ar.setErrorVariable(err)
 		return
 	}
-	err = tx.QueryRow(`SELECT id FROM Medicines WHERE med_name = ?`,
+
+	var medicineID int
+	err = db.QueryRow(`SELECT id FROM Medicines WHERE med_name = ?`,
 		dosage.Medicine.Name).Scan(&medicineID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			errorChan <- errors.Wrap(err, "Unknown medicine")
-		} else {
-			errorChan <- errors.Wrap(err, "Failed to execute query")
-		}
-		tx.Rollback()
+		ar.setErrorDBScan(err)
 		return
 	}
-	_, err = tx.Exec(`INSERT INTO Dosages (patient_id, medicine_id, amount, intake_time) 
-                          VALUES (?, ?, ?, ?)`,
-		patientID, medicineID, dosage.NumberOfPills, dosage.IntakeMoment)
+
+	tx, err := db.Begin()
 	if err != nil {
-		errorChan <- err
-		tx.Rollback()
+		ar.setErrorDBBegin(err)
+		return
+	}
+
+	_, err = tx.Exec(`INSERT INTO Dosages (patient_id, medicine_id, amount,
+                          intake_interval_start, intake_interval_end) 
+                          VALUES (?, ?, ?, ?, ?)`,
+		patientID, medicineID, dosage.NumberOfPills,
+		dosage.IntakeIntervalStart, dosage.IntakeIntervalEnd)
+	if err != nil {
+		ar.setErrorDBInsert(err, tx)
 		return
 	}
 
 	if err = tx.Commit(); err != nil {
-		errorChan <- errors.Wrap(err, "Failed to commit changes to database.")
+		ar.setErrorDBCommit(err)
 		return
 	}
-	responseChan <- APIResponse{nil, http.StatusCreated}
+	ar.setStatus(StatusCreated)
 }
 
 // RETRIEVE
-// start/ end dates might be optional ?
-//  Possible defaults:
-//     startDate = [current_day]
-//     endDate   = startDate + 1 month
-func getDosages(r *http.Request, responseChan chan APIResponse, errorChan chan error) {
-
-	vars := mux.Vars(r)
-	patientID := vars["id"]
-
-	from := r.URL.Query().Get("from") // maybe check if specified
-	until := r.URL.Query().Get("until")
-	const dform = "2006-01-02" // specifies YYYY-MM-DD format
-	startDate, err := time.Parse(dform, from)
+func retrieveDosages(r *http.Request, ar *APIResponse) {
+	patientID, err := getURLVariable(r, "id")
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error in parsing starting date")
-		return
-	}
-	endDate, err := time.Parse(dform, until)
-	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error in parsing end time")
+		ar.setErrorVariable(err)
 		return
 	}
 
-	rows, err := db.Query(`SELECT amount, med_name, day, intake_time, taken
-                               FROM ScheduledDosages as SD JOIN 
-                                 (SELECT Dosages.id, amount, intake_time, med_name 
-                                  FROM Dosages JOIN Medicines 
-                                     ON Dosages.medicine_id = Medicines.id
-                                  WHERE patient_id = ?) as DM
-                               ON SD.dosage = DM.id
-                               WHERE day BETWEEN ? AND ?`,
-		patientID, startDate.Format(dform), endDate.Format(dform))
+	dosages := []Dosage{}
+	rows, err := db.Query(`SELECT amount, med_name, intake_interval_start, intake_interval_end
+                          FROM Dosages JOIN Medicines 
+                             ON Dosages.medicine_id = Medicines.id 
+                          WHERE patient_id = ?`, patientID)
 	if err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error during query")
+		ar.setErrorDBSelect(err)
 		return
 	}
 
-	dosages := []ScheduledDosage{}
 	for rows.Next() {
 		var amount int
-		var medicine, day, intakeTime string
-		var taken bool
-		err = rows.Scan(&amount, &medicine, &day, &intakeTime, &taken)
+		var medicine, intakeIntervalStart, intakeIntervalEnd string
+		err = rows.Scan(&amount, &medicine, &intakeIntervalStart, &intakeIntervalEnd)
 		if err != nil {
-			errorChan <- errors.Wrap(err, "Unexpected error during row scanning")
+			ar.setErrorDBScan(err)
 			return
 		}
-		dosages = append(dosages, ScheduledDosage{
-			Dosage{intakeTime, amount, Medicine{medicine}},
-			day,
-			taken,
-		})
+		dosages = append(dosages, Dosage{
+			intakeIntervalStart,
+			intakeIntervalEnd,
+			amount,
+			Medicine{medicine}})
 	}
+
 	if err = rows.Err(); err != nil {
-		errorChan <- errors.Wrap(err, "Unexpected error after scanning rows")
+		ar.setErrorDBAfter(err)
 		return
 	}
-	responseChan <- APIResponse{dosages, http.StatusOK}
+	ar.setResponse(dosages)
+}
+
+// UPDATE
+func updateDosage(r *http.Request, ar *APIResponse) {
+	patientID, err := getURLVariable(r, "id")
+	if err != nil {
+		ar.setErrorVariable(err)
+		return
+	}
+
+	dosage := UpdateDosage{}
+	decoder := json.NewDecoder(r.Body)
+	err = decoder.Decode(&dosage)
+	if err != nil {
+		ar.setErrorJSON(err)
+		return
+	}
+
+	oldMedicineID, err := queryMedicineID(dosage.OldDosage.Medicine)
+	if err != nil {
+		ar.setErrorDBSelect(err)
+		return
+	}
+	newMedicineID, err := queryMedicineID(dosage.NewDosage.Medicine)
+	if err != nil {
+		ar.setErrorDBSelect(err)
+		return
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		ar.setErrorDBBegin(err)
+		return
+	}
+
+	_, err = tx.Exec(`UPDATE Dosages SET medicine_id = ?, amount = ?, 
+                          intake_interval_start = ?, intake_interval_end = ? 
+                          WHERE patient_id = ? AND medicine_id = ?`,
+		newMedicineID, dosage.NewDosage.NumberOfPills,
+		dosage.NewDosage.IntakeIntervalStart,
+		dosage.NewDosage.IntakeIntervalEnd,
+		patientID, oldMedicineID)
+	if err != nil {
+		ar.setErrorDBUpdate(err, tx)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		ar.setErrorDBCommit(err)
+		return
+	}
+	ar.setStatus(StatusUpdated)
+}
+
+// DELETE
+func deleteDosage(r *http.Request, ar *APIResponse) {
+	patientID, err := getURLVariable(r, "id")
+	if err != nil {
+		ar.setErrorVariable(err)
+		return
+	}
+
+	dosage := Dosage{}
+	decoder := json.NewDecoder(r.Body)
+	err = decoder.Decode(&dosage)
+	if err != nil {
+		ar.setErrorJSON(err)
+		return
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		ar.setErrorDBBegin(err)
+		return
+	}
+
+	medicineID, err := queryMedicineID(dosage.Medicine)
+	if err != nil {
+		ar.setErrorDBSelect(err)
+		return
+	}
+
+	_, err = tx.Exec(`DELETE FROM Dosages WHERE patient_id = ? AND medicine_id = ?`,
+		patientID, medicineID)
+	if err != nil {
+		ar.setErrorDBDelete(err, tx)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		ar.setErrorDBCommit(err)
+		return
+	}
+	ar.setStatus(StatusDeleted)
 }

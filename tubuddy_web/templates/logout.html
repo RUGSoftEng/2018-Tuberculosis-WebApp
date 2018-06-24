@@ -1,0 +1,67 @@
+
+
+{% load static %}
+{% load widget_tweaks %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>TuBuddy</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+   <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}">
+
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+{#  <script src="../static/js/myscripts.js"></script>#}
+    <script src="{% static 'js/myscripts.js' %}">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+
+     <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
+
+
+</head>
+<body>
+
+
+
+
+
+
+<div id="add_treatment_form">
+    <form name="treatment" action="" method="POST">
+        {% csrf_token %}
+        <div class="container">
+          <div class="panel panel-primary jumbotron">
+                <h2>
+                    Sure wanna logout?
+                </h2>
+
+        <button type="submit" name="yes_button" class="btn btn-primary btn-lg" value="Yes" />YES</button>
+        <button type="submit" name="no_button" class="btn btn-secondary btn-lg" value="No" />NO</button>
+
+            </div>
+
+           </div>
+
+        </div>
+    </form>
+
+</div>
+
+
+
+
+
+
+
+
+</body>
+</html>

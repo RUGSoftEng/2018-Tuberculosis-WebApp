@@ -1,0 +1,2547 @@
+{
+	"info": {
+		"_postman_id": "f006c37e-392f-4d29-b7a4-1f8a81387480",
+		"name": "TuBuddy - API Documentation",
+		"description": "This is the API for the _Tuberculosis Treatment Application: **TuBuddy**_. The main task of the API is to provide an easy and secure way to access the database.\n\nThis is mainly meant for the Android and iOS apps, therefore it does not include all availible requests.\n\n# General Information\nVariables which need to be filled in by the user are specified by double curly braces: `{{variable}}`\n\nMore information on how to run the api can be found at out [GitHub Repository](https://github.com/RUGSoftEng/2018-Tuberculosis-WebApp)\n\n# Location\nIf you are using Vagrant, the ip location can change every time you restart the API or restart the birtualbox. This address can be seen when you run the api, or with the `get_ip` command in the virtualbox.\n\n# Error Codes\nCurrently the error codes given by the API response are not very descriptive (usually just *500 Internal Server Error*). We will try to add better error codes in the future.\n\n# Feedback\nThis is a work in progress documentation. Therefore, please notify us when there are any problems, inconsistencies or errors with the documentation. Other feedback is also always welcome! \nIt is possible to contact us on Slack, or make a new [issue](https://github.com/RUGSoftEng/2018-Tuberculosis-WebApp/issues/new) (preferably an issue for problems, otherwise there is a chance we will forget :p).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Patients",
+			"description": "",
+			"item": [
+				{
+					"name": "Create Patient",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "f7088ccc-3b9b-463c-b741-d8b0e148897d",
+								"type": "text/javascript",
+								"exec": [
+									"pm.variables.set(\"creation_token\", \"11tokn\");",
+									"pm.variables.set(\"AccountUsername\", \"NewPatient\");",
+									"pm.variables.set(\"AccountName\", \"Sir Patient\");",
+									"pm.variables.set(\"AccountPassword\", \"test_password\");",
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "9f203b9f-eb59-44d6-aa11-f467d1132d4c",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 201 (Created)\", function() {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Signals the body contains JSON data."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"{{AccountUsername}}\",\n  \"name\": \"{{AccountName}}\",\n  \"password\": \"{{AccountPassword}}\",\n  \"api_token\": \"\"\n}"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/accounts/patients?token={{creation_token}}",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"accounts",
+								"patients"
+							],
+							"query": [
+								{
+									"key": "token",
+									"value": "{{creation_token}}",
+									"description": "The token received from the physician, necessary for creating a new account."
+								}
+							]
+						},
+						"description": "Request for creating a new patient"
+					},
+					"response": [
+						{
+							"id": "4615fcee-bb23-4721-841e-f15e7ef905d3",
+							"name": "Wrong Creation Token (500 Internal Server Error)",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"description": "Signals the body contains JSON data.",
+										"disabled": false
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"username\": \"{{example_patient_username}}\",\n\t\"name\": \"{{example_patient_name}}\",\n\t\"password\": \"{{example_patient_password}}\",\n\t\"api_token\": \"\"\n}"
+								},
+								"url": {
+									"raw": "{{ip}}:{{port}}/api/accounts/patients?token={{example_creation_token}}",
+									"host": [
+										"{{ip}}"
+									],
+									"port": "{{port}}",
+									"path": [
+										"api",
+										"accounts",
+										"patients"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "{{example_creation_token}}",
+											"description": "The token received from the physician, necessary for creating a new account."
+										}
+									]
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "22",
+									"name": "Content-Length",
+									"description": "The length of the response body in octets (8-bit bytes)"
+								},
+								{
+									"key": "Content-Type",
+									"value": "text/plain; charset=utf-8",
+									"name": "Content-Type",
+									"description": "The mime type of this content"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 26 Apr 2018 18:34:49 GMT",
+									"name": "Date",
+									"description": "The date and time that the message was sent"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff",
+									"name": "X-Content-Type-Options",
+									"description": "The only defined value, \"nosniff\", prevents Internet Explorer from MIME-sniffing a response away from the declared content-type"
+								}
+							],
+							"cookie": [],
+							"body": "Internal Server Error\n"
+						},
+						{
+							"id": "69dead85-37ff-4844-b709-3e82feb3fc11",
+							"name": "Successful Creation (201 Created)",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"description": "Signals the body contains JSON data.",
+										"disabled": false
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"username\": \"{{example_patient_username}}\",\n\t\"name\": \"{{example_patient_name}}\",\n\t\"password\": \"{{example_patient_password}}\",\n\t\"api_token\": \"\"\n}"
+								},
+								"url": {
+									"raw": "{{ip}}:{{port}}/api/accounts/patients?token={{example_creation_token}}",
+									"host": [
+										"{{ip}}"
+									],
+									"port": "{{port}}",
+									"path": [
+										"api",
+										"accounts",
+										"patients"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "{{example_creation_token}}",
+											"description": "The token received from the physician, necessary for creating a new account."
+										}
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "0",
+									"name": "Content-Length",
+									"description": "The length of the response body in octets (8-bit bytes)"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 26 Apr 2018 18:33:20 GMT",
+									"name": "Date",
+									"description": "The date and time that the message was sent"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Login",
+			"description": "A folder of the API Calls meant for loggin in users",
+			"item": [
+				{
+					"name": "Login User",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "316aa9f0-20f2-48e5-adc0-8238c90db85c",
+								"type": "text/javascript",
+								"exec": [
+									"pm.variables.set(\"AccountUsername\", \"NewPatient\")",
+									"pm.variables.set(\"AccountPassword\", \"test_password\")"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "353ad7e4-60b6-41d4-9155-d04f7aa3b7e9",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200 (OK)\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Header has Content-Type\", function() {",
+									"    pm.response.to.have.header(\"Content-Type\");",
+									"});",
+									"",
+									"",
+									"var jsonData = pm.response.json();",
+									"pm.variables.set(\"token\", jsonData.token);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Signals the body contains JSON data."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\": \"{{AccountUsername}}\",\n\t\"password\": \"{{AccountPassword}}\"\n}"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/accounts/login",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"accounts",
+								"login"
+							]
+						},
+						"description": "A simple login request for any user"
+					},
+					"response": [
+						{
+							"id": "bdf1b82c-5464-437e-8a57-89aec10834e0",
+							"name": "User Login Faillure (500 Internal Server Error)",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"disabled": false
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"username\": \"{{example_patient_username}}\",\n\t\"password\": \"{{example_patient_password}}\"\n}"
+								},
+								"url": {
+									"raw": "{{ip}}:{{port}}/api/accounts/login",
+									"host": [
+										"{{ip}}"
+									],
+									"port": "{{port}}",
+									"path": [
+										"api",
+										"accounts",
+										"login"
+									]
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "22",
+									"name": "Content-Length",
+									"description": "The length of the response body in octets (8-bit bytes)"
+								},
+								{
+									"key": "Content-Type",
+									"value": "text/plain; charset=utf-8",
+									"name": "Content-Type",
+									"description": "The mime type of this content"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 26 Apr 2018 15:57:35 GMT",
+									"name": "Date",
+									"description": "The date and time that the message was sent"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff",
+									"name": "X-Content-Type-Options",
+									"description": "The only defined value, \"nosniff\", prevents Internet Explorer from MIME-sniffing a response away from the declared content-type"
+								}
+							],
+							"cookie": [],
+							"body": "Internal Server Error\n"
+						},
+						{
+							"id": "5fd1c358-e50c-457d-aa85-c0a108960242",
+							"name": "Successfull User Login (200 OK)",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"disabled": false
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"username\": \"{{example_patient_username}}\",\n\t\"password\": \"{{example_patient_password}}\"\n}"
+								},
+								"url": {
+									"raw": "{{ip}}:{{port}}/api/accounts/login",
+									"host": [
+										"{{ip}}"
+									],
+									"port": "{{port}}",
+									"path": [
+										"api",
+										"accounts",
+										"login"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "163",
+									"name": "Content-Length",
+									"description": "The length of the response body in octets (8-bit bytes)"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "The mime type of this content"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 26 Apr 2018 15:56:37 GMT",
+									"name": "Date",
+									"description": "The date and time that the message was sent"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"token\": \"String containing api_token for authorization of requests\",\n    \"id\": \"integer with the patient ID number\"\n}"
+						}
+					]
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "98078604-8802-41c9-bd20-fbfe6e1fe67b",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "23095f5f-d78f-4888-b3c8-9accc891e2d8",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Videos",
+			"description": "Collection for interacting with the videos",
+			"item": [
+				{
+					"name": "Create Video",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Signals the body contains JSON data."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"topic\": \"Symptoms\",\n    \"title\": \"Signs that I might have TB\",\n    \"reference\": \"https://youtu.be/_GCGhSnmtyg\",\n    \"language\": \"EN\"\n}"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/admin/videos",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"admin",
+								"videos"
+							]
+						},
+						"description": "Creates a new video"
+					},
+					"response": []
+				},
+				{
+					"name": "Retrieve Video Topics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "30d57fdd-5fcf-45cb-8101-2ceb24dd4ce2",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200 (OK)\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Header has Content-Type\", function() {",
+									"    pm.response.to.have.header(\"Content-Type\");",
+									"});",
+									""
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "bc053e8a-4921-4af8-b9aa-56f295e47af0",
+								"type": "text/javascript",
+								"exec": [
+									"pm.variables.set(\"language\", \"EN\")"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/general/videos/topics?language={{language}}",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"general",
+								"videos",
+								"topics"
+							],
+							"query": [
+								{
+									"key": "language",
+									"value": "{{language}}",
+									"description": "Specifies the language of the retrieved video. Must be one of 'EN', 'NL', 'DE' or 'RO'. Specifying nothing will select 'EN'."
+								}
+							]
+						},
+						"description": "Retrieve all the video topics"
+					},
+					"response": [
+						{
+							"id": "0d2e8e50-a574-4ffa-9beb-ae5fde6d4e6e",
+							"name": "Retrieve Topics Success (200 OK)",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "{{ip}}:{{port}}/api/general/videos/topics?language={{example_video_language}}",
+									"host": [
+										"{{ip}}"
+									],
+									"port": "{{port}}",
+									"path": [
+										"api",
+										"general",
+										"videos",
+										"topics"
+									],
+									"query": [
+										{
+											"key": "language",
+											"value": "{{example_video_language}}",
+											"description": "Specifies the language of the retrieved video. Must be one of 'EN', 'NL', 'DE' or 'RO'. Specifying nothing will select 'EN'."
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "23",
+									"name": "Content-Length",
+									"description": "The length of the response body in octets (8-bit bytes)"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "The mime type of this content"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 26 Apr 2018 16:29:42 GMT",
+									"name": "Date",
+									"description": "The date and time that the message was sent"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    \"Topic1\",\n    \"Topic2\"\n]"
+						}
+					]
+				},
+				{
+					"name": "Retrieve Videos by Topic",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "b8dd1c44-da8a-4285-be51-ad7369542aa0",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200 (OK)\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Header has Content-Type\", function() {",
+									"    pm.response.to.have.header(\"Content-Type\");",
+									"});",
+									"",
+									""
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "da176b61-0b9b-4d0e-a9aa-9a8a15d8542f",
+								"type": "text/javascript",
+								"exec": [
+									"pm.variables.set(\"topic\", \"Symptoms\")",
+									"pm.variables.set(\"language\", \"EN\")"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/general/videos/topics/{{topic}}?language={{language}}",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"general",
+								"videos",
+								"topics",
+								"{{topic}}"
+							],
+							"query": [
+								{
+									"key": "language",
+									"value": "{{language}}",
+									"description": "Specifies the language of the retrieved video. Must be one of 'EN', 'NL', 'DE' or 'RO'. Specifying nothing will select 'EN'."
+								}
+							]
+						},
+						"description": "Retrieves all videos with a specified topic"
+					},
+					"response": [
+						{
+							"id": "d87fb5f9-0e56-4115-b12f-924de48aff95",
+							"name": "Retrieve Success (200 OK)",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "{{ip}}:{{port}}/api/general/videos/topics/{{example_video_topic}}?language={{example_video_language}}",
+									"host": [
+										"{{ip}}"
+									],
+									"port": "{{port}}",
+									"path": [
+										"api",
+										"general",
+										"videos",
+										"topics",
+										"{{example_video_topic}}"
+									],
+									"query": [
+										{
+											"key": "language",
+											"value": "{{example_video_language}}",
+											"description": "Specifies the language of the retrieved video. Must be one of 'EN', 'NL', 'DE' or 'RO'. Specifying nothing will select 'EN'."
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "137",
+									"name": "Content-Length",
+									"description": "The length of the response body in octets (8-bit bytes)"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "The mime type of this content"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 26 Apr 2018 16:37:00 GMT",
+									"name": "Date",
+									"description": "The date and time that the message was sent"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"video\": {\n            \"topic\": \"Tuberculosis\",\n            \"title\": \"What happens to me and my body when I have tuberculosis?\",\n            \"reference\": \"https://youtu.be/fXiXGRlvH70\"\n        },\n        \"quizzes\": [\n            {\n                \"question\": \"Tuberculosis is caused by\",\n                \"answers\": [\n                    \"A bacteria\",\n                    \"A virus\",\n                    \"Fungi\"\n                ]\n            }\n        ]\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Update Video",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Signals the body contains JSON data."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"topic\": \"Symptomses\",\n\t\"title\": \"What happens to me and my body when I have tuberculosis?\",\n\t\"video\": {\n\t\t    \"topic\": \"Symptoms\",\n            \"title\": \"What happens to me and my body when I have tuberculosis?\",\n            \"reference\": \"https://youtu.be/fXiXGRlvH70\",\n            \"language\": \"EN\"\n\t}\n}"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/admin/videos",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"admin",
+								"videos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Video",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Signals the body contains JSON data."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"topic\": \"Symptoms\",\n    \"title\": \"What happens to me and my body when I have tuberculosis?\",\n    \"reference\": \"https://youtu.be/fXiXGRlvH70\",\n\t\"language\": \"EN\"\n}"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/admin/videos",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"admin",
+								"videos"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Quizzes",
+			"description": "",
+			"item": [
+				{
+					"name": "Create Quiz",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Signals the body contains JSON data."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"video\": {\n        \"topic\": \"Symptoms\",\n        \"title\": \"What happens to me and my body when I have tuberculosis?\",\n        \"reference\": \"https://youtu.be/fXiXGRlvH70\",\n        \"language\": \"EN\"\n\t},\n    \"quiz\": {\n        \"question\": \"How is this a quiz?\",\n        \"answers\": [\n            \"It is one\",\n            \"Because I said so\",\n            \"It is not a quiz\"\n            ]\n    }\n}\n"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/admin/videos/quizzes",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"admin",
+								"videos",
+								"quizzes"
+							]
+						},
+						"description": "Creates a quiz, which is attached to a specified video"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Quiz",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Signals the body contains JSON data."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"video\": {\n        \"topic\": \"Symptoms\",\n        \"title\": \"What happens to me and my body when I have tuberculosis?\",\n        \"reference\": \"https://youtu.be/fXiXGRlvH70\",\n        \"language\": \"EN\"\n\t},\n\t\"question\": \"How is this a quiz?\",\n    \"quiz\": {\n        \"question\": \"How is this not a quiz?\",\n        \"answers\": [\n            \"Because I said so\",\n            \"It is one\",\n            \"It is not a quiz\"\n            ]\n    }\n}\n"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/admin/videos/quizzes",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"admin",
+								"videos",
+								"quizzes"
+							]
+						},
+						"description": "Updates a quiz, which is attached to a specified video"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Quiz",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Signals the body contains JSON data."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"video\": {\n        \"topic\": \"Symptoms\",\n        \"title\": \"What happens to me and my body when I have tuberculosis?\",\n        \"reference\": \"https://youtu.be/fXiXGRlvH70\",\n        \"language\": \"EN\"\n\t},\n    \"quiz\": {\n        \"question\": \"How is this not a quiz?\",\n        \"answers\": [\n            \"Because I said so\",\n            \"It is one\",\n            \"It is not a quiz\"\n            ]\n    }\n}\n"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/admin/videos/quizzes",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"admin",
+								"videos",
+								"quizzes"
+							]
+						},
+						"description": "Deletes a quiz, which is attached to a specified video"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Notes",
+			"description": "",
+			"item": [
+				{
+					"name": "Create Note",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "72d0550d-608c-499e-b488-c2c79424881f",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 201 (Created)\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "2cbfd0be-7ff5-48fb-9243-ea0cc12a712f",
+								"type": "text/javascript",
+								"exec": [
+									"pm.variables.set(\"patient_id\", \"3\");",
+									"pm.variables.set(\"access_token\", \"{{token}}\");",
+									"pm.variables.set(\"Note\", \"Note for testing purposes\");",
+									"pm.variables.set(\"CreationDate\", \"2018:01:03\");",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "access_token",
+								"value": "{{access_token}}",
+								"description": "The token received from the login request. Necessary for authorization."
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Signals the body contains JSON data."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"note\": \"{{Note}}\",\n\t\"created_at\": \"{{CreationDate}}\"\n}"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/accounts/patients/{{patient_id}}/notes",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"accounts",
+								"patients",
+								"{{patient_id}}",
+								"notes"
+							]
+						},
+						"description": "Adds a new note to the database for a specified patient."
+					},
+					"response": [
+						{
+							"id": "64dd7ce0-3bbf-4485-882a-9adf43ce1d57",
+							"name": "Success (201 Created)",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "access_token",
+										"value": "{{example_access_token}}",
+										"description": "The token received from the login request. Necessary for authorization."
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"description": "Signals the body contains JSON data."
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"note\": \"{{example_note_text}}\",\n\t\"created_at\": \"{{example_creation_date}}\"\n}"
+								},
+								"url": {
+									"raw": "{{ip}}:{{port}}/api/accounts/patients/{{example_patient_id}}/notes",
+									"host": [
+										"{{ip}}"
+									],
+									"port": "{{port}}",
+									"path": [
+										"api",
+										"accounts",
+										"patients",
+										"{{example_patient_id}}",
+										"notes"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "0",
+									"name": "Content-Length",
+									"description": "The length of the response body in octets (8-bit bytes)"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 26 Apr 2018 18:45:54 GMT",
+									"name": "Date",
+									"description": "The date and time that the message was sent"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Retrieve Notes",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "a66f7976-9808-4e9f-8fe4-df2838bb4eda",
+								"type": "text/javascript",
+								"exec": [
+									"pm.variables.set(\"patient_id\", \"3\");",
+									"pm.variables.set(\"access_token\", \"{{token}}\");"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "a8346265-c1e1-4549-90a8-fc0338c0bed3",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200 (OK)\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Header has Content-Type\", function() {",
+									"    pm.response.to.have.header(\"Content-Type\");",
+									"});",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "access_token",
+								"value": "{{access_token}}",
+								"description": "The token received from the login request. Necessary for authorization."
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/accounts/patients/{{patient_id}}/notes",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"accounts",
+								"patients",
+								"{{patient_id}}",
+								"notes"
+							]
+						},
+						"description": "Retrieves all notes from the specified patient."
+					},
+					"response": [
+						{
+							"id": "40b6b620-a84a-41a9-8fc9-ff0b860187f6",
+							"name": "Retrieve Success (200 OK)",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "access_token",
+										"value": "{{example_access_token}}",
+										"description": "The token received from the login request. Necessary for authorization."
+									}
+								],
+								"body": {},
+								"url": {
+									"raw": "{{ip}}:{{port}}/api/accounts/patients/{{example_patient_id}}/notes",
+									"host": [
+										"{{ip}}"
+									],
+									"port": "{{port}}",
+									"path": [
+										"api",
+										"accounts",
+										"patients",
+										"{{example_patient_id}}",
+										"notes"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "59",
+									"name": "Content-Length",
+									"description": "The length of the response body in octets (8-bit bytes)"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "The mime type of this content"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 26 Apr 2018 18:47:56 GMT",
+									"name": "Date",
+									"description": "The date and time that the message was sent"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n    \t\"id\": 4,\n        \"note\": \"New Note for Testing\",\n        \"created_at\": \"2018-01-03\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Update Note",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "aae39181-d477-4606-92cb-598391cadb1a",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200 (OK)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "19b87d7d-e67c-41a8-ba0a-89cc1a613d64",
+								"type": "text/javascript",
+								"exec": [
+									"pm.variables.set(\"patient_id\", \"3\");",
+									"pm.variables.set(\"note_id\", \"4\");",
+									"",
+									"pm.variables.set(\"access_token\", \"{{token}}\");",
+									"pm.variables.set(\"Note\", \"Note for testing purposes with some added text\");",
+									"pm.variables.set(\"CreationDate\", \"2018:01:01\");",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "access_token",
+								"value": "{{access_token}}",
+								"description": "The token received from the login request. Necessary for authorization."
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Signals the body contains JSON data."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"note\": \"{{Note}}\",\n  \"created_at\": \"{{CreationDate}}\"\n}"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/accounts/patients/{{patient_id}}/notes/{{note_id}}",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"accounts",
+								"patients",
+								"{{patient_id}}",
+								"notes",
+								"{{note_id}}"
+							]
+						},
+						"description": "Updates the note specified by note_id, with the new information given in the body."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Note",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "cc0bfd76-fac7-4ce1-8b84-8754e6a5bac3",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200 (OK)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "19b87d7d-e67c-41a8-ba0a-89cc1a613d64",
+								"type": "text/javascript",
+								"exec": [
+									"pm.variables.set(\"patient_id\", \"3\");",
+									"pm.variables.set(\"note_id\", \"4\");",
+									"",
+									"pm.variables.set(\"access_token\", \"{{token}}\");",
+									"pm.variables.set(\"Note\", \"Note for testing purposes with some added text\");",
+									"pm.variables.set(\"CreationDate\", \"2018:01:01\");",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "access_token",
+								"value": "{{access_token}}",
+								"description": "The token received from the login request. Necessary for authorization."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/accounts/patients/{{patient_id}}/notes/{{note_id}}",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"accounts",
+								"patients",
+								"{{patient_id}}",
+								"notes",
+								"{{note_id}}"
+							]
+						},
+						"description": "Deletes the note specifying by note_id"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Dosages",
+			"description": "",
+			"item": [
+				{
+					"name": "Create Dosage",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "64ca34f0-125a-4a00-9a88-1aadcac673a6",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 201 (Created)\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "4b198588-d649-403c-85a6-5d51b677c368",
+								"type": "text/javascript",
+								"exec": [
+									"pm.variables.set(\"patient_id\", \"3\");",
+									"pm.variables.set(\"access_token\", \"{{token}}\");",
+									"pm.variables.set(\"IntakeAmount\", 10);",
+									"pm.variables.set(\"IntakeIntervalStart\", \"11:00:00\");",
+									"pm.variables.set(\"IntakeIntervalEnd\", \"14:00:00\");",
+									"",
+									"pm.variables.set(\"Medicine\", \"{\\\"name\\\":\\\"Pyrazinamide\\\"}\")"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "access_token",
+								"value": "{{access_token}}",
+								"description": "The token received from the login request. Necessary for authorization."
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Signals the body contains JSON data."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"intake_interval_start\": \"{{IntakeIntervalStart}}\",\n\t\"intake_interval_end\": \"{{IntakeIntervalEnd}}\",\n\t\"amount\": {{IntakeAmount}},\n\t\"medicine\": {{Medicine}}\n}"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/accounts/patients/{{patient_id}}/dosages",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"accounts",
+								"patients",
+								"{{patient_id}}",
+								"dosages"
+							]
+						},
+						"description": "Creates a new dosage for the specified patient. For adding actual scheduled dosages, see the 'Adding Scheduled Dosages' request."
+					},
+					"response": [
+						{
+							"id": "2fd6977b-870d-467d-8695-d5412db8cf52",
+							"name": "Successfull Creation (201 Created)",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "access_token",
+										"value": "{{example_access_token}}",
+										"description": "The token received from the login request. Necessary for authorization."
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"description": "Signals the body contains JSON data."
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"intake_interval_start\": \"{{example_intake_interval_start}}\",\n\t\"intake_interval_end\": \"{{example_intake_interval_end}}\",\n\t\"amount\": {{example_intake_amount}},\n\t\"medicine\": {{example_medicine}}\n}"
+								},
+								"url": {
+									"raw": "{{ip}}:{{port}}/api/accounts/patients/{{example_patient_id}}/dosages",
+									"host": [
+										"{{ip}}"
+									],
+									"port": "{{port}}",
+									"path": [
+										"api",
+										"accounts",
+										"patients",
+										"{{example_patient_id}}",
+										"dosages"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 201,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "0",
+									"name": "Content-Length",
+									"description": "The length of the response body in octets (8-bit bytes)"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 02 Jun 2018 15:54:03 GMT",
+									"name": "Date",
+									"description": "The date and time that the message was sent"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Retrieve Dosages",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "6e294194-3fcb-47e6-a702-75ec5cb77f10",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200 (OK)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "0f055f88-ca12-46a2-b789-7d114d4467b8",
+								"type": "text/javascript",
+								"exec": [
+									"pm.variables.set(\"patient_id\", \"3\");",
+									"pm.variables.set(\"access_token\", \"{{token}}\");"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "access_token",
+								"value": "{{access_token}}",
+								"description": "The token received from the login request. Necessary for authorization."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"intake_interval_start\": \"{{IntakeIntervalStart}}\",\n\t\"intake_interval_end\": \"{{IntakeIntervalEnd}}\",\n\t\"amount\": {{IntakeAmount}},\n\t\"medicine\": {{Medicine}}\n}"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/accounts/patients/{{patient_id}}/dosages",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"accounts",
+								"patients",
+								"{{patient_id}}",
+								"dosages"
+							]
+						},
+						"description": "Retrieves all Dosages from the patient."
+					},
+					"response": [
+						{
+							"id": "ec9a36eb-54b1-4aad-84d8-4f0dc988f3c2",
+							"name": "Successfull Creation (201 Created)",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "access_token",
+										"value": "{{example_access_token}}",
+										"description": "The token received from the login request. Necessary for authorization."
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"description": "Signals the body contains JSON data."
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"intake_interval_start\": \"{{example_intake_interval_start}}\",\n\t\"intake_interval_end\": \"{{example_intake_interval_end}}\",\n\t\"amount\": {{example_intake_amount}},\n\t\"medicine\": {{example_medicine}}\n}"
+								},
+								"url": {
+									"raw": "{{ip}}:{{port}}/api/accounts/patients/{{example_patient_id}}/dosages",
+									"host": [
+										"{{ip}}"
+									],
+									"port": "{{port}}",
+									"path": [
+										"api",
+										"accounts",
+										"patients",
+										"{{example_patient_id}}",
+										"dosages"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 201,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "0",
+									"name": "Content-Length",
+									"description": "The length of the response body in octets (8-bit bytes)"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 02 Jun 2018 15:54:03 GMT",
+									"name": "Date",
+									"description": "The date and time that the message was sent"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Update Dosage",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "9d2543c0-cb96-4f43-9bd1-de05a59a7d2d",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200 (OK)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "e1d89d4f-bd7d-485f-bd7b-7e44dc72d23c",
+								"type": "text/javascript",
+								"exec": [
+									"pm.variables.set(\"patient_id\", \"3\");",
+									"pm.variables.set(\"access_token\", \"{{token}}\");",
+									"",
+									"pm.variables.set(\"IntakeAmount\", 10);",
+									"pm.variables.set(\"IntakeIntervalStart\", \"11:00:00\");",
+									"pm.variables.set(\"IntakeIntervalEnd\", \"14:00:00\");",
+									"pm.variables.set(\"Medicine\", \"{\\\"name\\\":\\\"Pyrazinamide\\\"}\");",
+									"",
+									"pm.variables.set(\"UpdatedIntakeAmount\", 3);",
+									"pm.variables.set(\"UpdatedIntakeIntervalStart\", \"10:00:00\");",
+									"pm.variables.set(\"UpdatedIntakeIntervalEnd\", \"11:00:00\");",
+									"pm.variables.set(\"UpdatedMedicine\", \"{\\\"name\\\":\\\"Pyrazinamide\\\"}\");"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "access_token",
+								"value": "{{access_token}}",
+								"description": "The token received from the login request. Necessary for authorization."
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Signals the body contains JSON data."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"old_dosage\": {\n\t\t\"intake_interval_start\": \"{{IntakeIntervalStart}}\",\n\t\t\"intake_interval_end\": \"{{IntakeIntervalEnd}}\",\n\t\t\"amount\": {{IntakeAmount}},\n\t\t\"medicine\": {{Medicine}}\n\t},\n\t\"new_dosage\": {\n\t\t\"intake_interval_start\": \"{{UpdatedIntakeIntervalStart}}\",\n\t\t\"intake_interval_end\": \"{{UpdatedIntakeIntervalEnd}}\",\n\t\t\"amount\": {{UpdatedIntakeAmount}},\n\t\t\"medicine\": {{UpdatedMedicine}}\t\t\t\t\n\t}\n}"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/accounts/patients/{{patient_id}}/dosages",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"accounts",
+								"patients",
+								"{{patient_id}}",
+								"dosages"
+							]
+						},
+						"description": "Updates the given dosage to the updated given version."
+					},
+					"response": [
+						{
+							"id": "9b8e15aa-f5a2-4dae-a614-5803a8a83496",
+							"name": "Successfull Creation (201 Created)",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "access_token",
+										"value": "{{example_access_token}}",
+										"description": "The token received from the login request. Necessary for authorization."
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"description": "Signals the body contains JSON data."
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"intake_interval_start\": \"{{example_intake_interval_start}}\",\n\t\"intake_interval_end\": \"{{example_intake_interval_end}}\",\n\t\"amount\": {{example_intake_amount}},\n\t\"medicine\": {{example_medicine}}\n}"
+								},
+								"url": {
+									"raw": "{{ip}}:{{port}}/api/accounts/patients/{{example_patient_id}}/dosages",
+									"host": [
+										"{{ip}}"
+									],
+									"port": "{{port}}",
+									"path": [
+										"api",
+										"accounts",
+										"patients",
+										"{{example_patient_id}}",
+										"dosages"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 201,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "0",
+									"name": "Content-Length",
+									"description": "The length of the response body in octets (8-bit bytes)"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 02 Jun 2018 15:54:03 GMT",
+									"name": "Date",
+									"description": "The date and time that the message was sent"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Delete Dosage",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "aee94c86-b101-4960-bd3e-793d1df1c244",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200 (OK)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "02c105f4-b12d-4073-a07e-0af2cfecb234",
+								"type": "text/javascript",
+								"exec": [
+									"pm.variables.set(\"patient_id\", \"3\");",
+									"pm.variables.set(\"access_token\", \"{{token}}\");",
+									"",
+									"pm.variables.set(\"IntakeAmount\", 3);",
+									"pm.variables.set(\"IntakeIntervalStart\", \"10:00:00\");",
+									"pm.variables.set(\"IntakeIntervalEnd\", \"11:00:00\");",
+									"pm.variables.set(\"Medicine\", \"{\\\"name\\\":\\\"Pyrazinamide\\\"}\");"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "access_token",
+								"value": "{{access_token}}",
+								"description": "The token received from the login request. Necessary for authorization."
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Signals the body contains JSON data."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"intake_interval_start\": \"{{IntakeIntervalStart}}\",\n\t\"intake_interval_end\": \"{{IntakeIntervalEnd}}\",\n\t\"amount\": {{IntakeAmount}},\n\t\"medicine\": {{Medicine}}\n}"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/accounts/patients/{{patient_id}}/dosages",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"accounts",
+								"patients",
+								"{{patient_id}}",
+								"dosages"
+							]
+						},
+						"description": "The deletes the specified dosage."
+					},
+					"response": [
+						{
+							"id": "8757edd5-29b2-4de1-9d0d-f71d199f5bb4",
+							"name": "Successfull Creation (201 Created)",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "access_token",
+										"value": "{{example_access_token}}",
+										"description": "The token received from the login request. Necessary for authorization."
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"description": "Signals the body contains JSON data."
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"intake_interval_start\": \"{{example_intake_interval_start}}\",\n\t\"intake_interval_end\": \"{{example_intake_interval_end}}\",\n\t\"amount\": {{example_intake_amount}},\n\t\"medicine\": {{example_medicine}}\n}"
+								},
+								"url": {
+									"raw": "{{ip}}:{{port}}/api/accounts/patients/{{example_patient_id}}/dosages",
+									"host": [
+										"{{ip}}"
+									],
+									"port": "{{port}}",
+									"path": [
+										"api",
+										"accounts",
+										"patients",
+										"{{example_patient_id}}",
+										"dosages"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 201,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "0",
+									"name": "Content-Length",
+									"description": "The length of the response body in octets (8-bit bytes)"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 02 Jun 2018 15:54:03 GMT",
+									"name": "Date",
+									"description": "The date and time that the message was sent"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Scheduled Dosages",
+			"description": "Scheduled Dosages are basically an instance of Dosage. The Scheduled Dosage specifies when a dosage needs to be taken and whether it has been taken.",
+			"item": [
+				{
+					"name": "Create Scheduled Dosages",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "63b3bc28-de8f-443b-9e26-cd764d63e642",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 201 (Created)\", function() {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									""
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "26abd532-f0ff-4219-a6ae-998670a8d3c1",
+								"type": "text/javascript",
+								"exec": [
+									"pm.variables.set(\"patient_id\", \"3\");",
+									"pm.variables.set(\"access_token\", \"{{token}}\");",
+									"",
+									"pm.variables.set(\"Dosage\", \"{\\\"intake_interval_start\\\": \\\"10:00:00\\\", \\\"intake_interval_start\\\": \\\"12:00:00\\\",  \\\"amount\\\": 1, \\\"medicine\\\": { \\\"name\\\": \\\"Rifampicin\\\" }}\")",
+									"",
+									"pm.variables.set(\"ScheduledDaysList\", \"[\\\"2018-05-01\\\", \\\"2018-05-08\\\", \\\"2018-05-15\\\", \\\"2018-05-21\\\", \\\"2018-05-28\\\"]\");",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "access_token",
+								"value": "{{access_token}}",
+								"description": "The token received from the login request. Necessary for authorization."
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Signals the body contains JSON data."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"dosage\": {{Dosage}},\n\t\"days\": {{ScheduledDaysList}}\n}"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/accounts/patients/{{patient_id}}/dosages/scheduled",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"accounts",
+								"patients",
+								"{{patient_id}}",
+								"dosages",
+								"scheduled"
+							]
+						},
+						"description": "Creates the scheduled dosages for each given day."
+					},
+					"response": [
+						{
+							"id": "605ed4a8-155f-4f5e-a676-fa7bd802d5f4",
+							"name": "Successfull Creation (201 Created)",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "access_token",
+										"value": "{{example_access_token}}",
+										"description": "The token received from the login request. Necessary for authorization."
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"description": "Signals the body contains JSON data."
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"dosage\": {{example_dosage_1}},\n\t\"days\": {{example_days_list}}\n}"
+								},
+								"url": {
+									"raw": "{{ip}}:{{port}}/api/accounts/patients/{{example_patient_id}}/dosages/scheduled",
+									"host": [
+										"{{ip}}"
+									],
+									"port": "{{port}}",
+									"path": [
+										"api",
+										"accounts",
+										"patients",
+										"{{example_patient_id}}",
+										"dosages",
+										"scheduled"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "0",
+									"name": "Content-Length",
+									"description": "The length of the response body in octets (8-bit bytes)"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 May 2018 12:52:25 GMT",
+									"name": "Date",
+									"description": "The date and time that the message was sent"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Retieve Scheduled Dosages in Interval",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "80d48580-fa3a-4b14-a7fc-603cc14a8315",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status Code is 200 (OK)\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Header has Content-Type\", function() {",
+									"    pm.response.to.have.header(\"Content-Type\");",
+									"});",
+									"",
+									"pm.test(\"Dates for returned dosages are in correct interval\", function() {",
+									"    var from = new Date(pm.variables.get(\"from_date\"));",
+									"    var until = new Date(pm.variables.get(\"until_date\"));",
+									"    var jsonData = pm.response.json();",
+									"    for (var i in jsonData) {",
+									"        var date = new Date(jsonData[i].date);",
+									"        pm.expect(date).to.be.within(from, until);",
+									"    }        ",
+									"});"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "8131fad4-7f40-403b-8a64-52f37f81ce42",
+								"type": "text/javascript",
+								"exec": [
+									"pm.variables.set(\"patient_id\", \"3\");",
+									"pm.variables.set(\"from_date\", \"2018-05-01\");",
+									"pm.variables.set(\"until_date\", \"2018-10-01\");",
+									"",
+									"pm.variables.set(\"access_token\", \"{{token}}\");"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "access_token",
+								"value": "{{access_token}}",
+								"description": "The token received from the login request. Necessary for authorization."
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/accounts/patients/{{patient_id}}/dosages/scheduled?from={{from_date}}&until={{until_date}}",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"accounts",
+								"patients",
+								"{{patient_id}}",
+								"dosages",
+								"scheduled"
+							],
+							"query": [
+								{
+									"key": "from",
+									"value": "{{from_date}}"
+								},
+								{
+									"key": "until",
+									"value": "{{until_date}}"
+								}
+							]
+						},
+						"description": "Retrieves all (scheduled) dosages from a specified patient for the given interval [from, until]."
+					},
+					"response": [
+						{
+							"id": "6961ef95-a0ac-4495-827d-efe21d7e8b7d",
+							"name": "Retrieve Success (200 OK)",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"description": "Signals the body contains JSON data."
+									},
+									{
+										"key": "access_token",
+										"value": "{{example_access_token}}",
+										"description": "The token received from the login request. Necessary for authorization."
+									}
+								],
+								"body": {},
+								"url": {
+									"raw": "{{ip}}:{{port}}/api/accounts/patients/{{example_patient_id}}/dosages/scheduled?from={{example_from_date}}&until={{example_until_date}}",
+									"host": [
+										"{{ip}}"
+									],
+									"port": "{{port}}",
+									"path": [
+										"api",
+										"accounts",
+										"patients",
+										"{{example_patient_id}}",
+										"dosages",
+										"scheduled"
+									],
+									"query": [
+										{
+											"key": "from",
+											"value": "{{example_from_date}}"
+										},
+										{
+											"key": "until",
+											"value": "{{example_until_date}}"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "869",
+									"type": "text",
+									"enabled": true,
+									"name": "Content-Length",
+									"description": ""
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"type": "text",
+									"enabled": true,
+									"name": "Content-Type",
+									"description": ""
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 03 May 2018 12:53:14 GMT",
+									"type": "text",
+									"enabled": true,
+									"name": "Date",
+									"description": ""
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"dosage\": {\n            \"intake_interval_start\": \"10:00:00\",\n            \"intake_interval_end\": \"12:00:00\",\n            \"amount\": 1,\n            \"medicine\": {\n                \"name\": \"Highly experimental pills\"\n            }\n        },\n        \"date\": \"2018-05-01\",\n        \"taken\": false\n    },\n    {\n        \"dosage\": {\n            \"intake_interval_start\": \"10:00:00\",\n            \"intake_interval_end\": \"12:00:00\",\n            \"amount\": 1,\n            \"medicine\": {\n                \"name\": \"Highly experimental pills\"\n            }\n        },\n        \"date\": \"2018-05-08\",\n        \"taken\": false\n    },\n    {\n        \"dosage\": {\n            \"intake_interval_start\": \"10:00:00\",\n            \"intake_interval_end\": \"12:00:00\",\n            \"amount\": 1,\n            \"medicine\": {\n                \"name\": \"Highly experimental pills\"\n            }\n        },\n        \"date\": \"2018-05-15\",\n        \"taken\": false\n    },\n    {\n        \"dosage\": {\n            \"intake_interval_start\": \"10:00:00\",\n            \"intake_interval_end\": \"12:00:00\",\n            \"amount\": 1,\n            \"medicine\": {\n                \"name\": \"Highly experimental pills\"\n            }\n        },\n        \"date\": \"2018-05-21\",\n        \"taken\": true\n    },\n    {\n        \"dosage\": {\n            \"intake_interval_start\": \"10:00:00\",\n            \"intake_interval_end\": \"12:00:00\",\n            \"amount\": 1,\n            \"medicine\": {\n                \"name\": \"Highly experimental pills\"\n            }\n        },\n        \"date\": \"2018-05-28\",\n        \"taken\": true\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Update Scheduled Dosage Taken Status",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "75970e5d-5152-4375-8c24-688d861668d5",
+								"type": "text/javascript",
+								"exec": [
+									"pm.variables.set(\"patient_id\", \"3\");",
+									"pm.variables.set(\"access_token\", \"{{token}}\");",
+									"",
+									"pm.variables.set(\"Dosage1\", \"{\\\"intake_interval_start\\\": \\\"10:00:00\\\", \\\"intake_interval_end\\\": \\\"12:00:00\\\", \\\"amount\\\": 1, \\\"medicine\\\": { \\\"name\\\": \\\"Rifampicin\\\" }}\");",
+									"pm.variables.set(\"ScheduledDosageDate1\", \"2018-05-21\");",
+									"pm.variables.set(\"NewTakenStatus1\", \"true\");",
+									"",
+									"pm.variables.set(\"Dosage2\", \"{\\\"intake_interval_start\\\": \\\"10:00:00\\\", \\\"intake_interval_end\\\": \\\"12:00:00\\\", \\\"amount\\\": 1, \\\"medicine\\\": { \\\"name\\\": \\\"Rifampicin\\\" }}\");",
+									"pm.variables.set(\"ScheduledDosageDate2\", \"2018-05-28\");",
+									"pm.variables.set(\"NewTakenStatus2\", \"true\");"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "6af8af47-df24-452f-80de-db877c1bb7b0",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status Code is 200 (OK)\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "access_token",
+								"value": "{{access_token}}",
+								"description": "The token received from the login request. Necessary for authorization."
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Signals the body contains JSON data."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n\t{\n\t\t\"dosage\": {{Dosage1}},\n\t\t\"date\": \"{{ScheduledDosageDate1}}\",\n\t\t\"taken\": {{NewTakenStatus1}}\n\t},\n\t{\n\t\t\"dosage\": {{Dosage2}},\n\t\t\"date\": \"{{ScheduledDosageDate2}}\",\n\t\t\"taken\": {{NewTakenStatus2}}\n\t}\n]"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/accounts/patients/{{patient_id}}/dosages/scheduled",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"accounts",
+								"patients",
+								"{{patient_id}}",
+								"dosages",
+								"scheduled"
+							]
+						},
+						"description": "Change whether the scheduled dosage has been taken"
+					},
+					"response": [
+						{
+							"id": "51fd653b-b265-4739-8543-d739c5312b54",
+							"name": "Successfull Update (200 OK)",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "access_token",
+										"value": "{{example_access_token}}",
+										"description": "The token received from the login request. Necessary for authorization."
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"description": "Signals the body contains JSON data."
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\n\t{\n\t\t\"dosage\": {{example_dosage_1}},\n\t\t\"date\": \"{{example_scheduleddosage_date_1}}\",\n\t\t\"taken\": {{example_new_taken_status_1}}\n\t},\n\t{\n\t\t\"dosage\": {{example_dosage_2}},\n\t\t\"date\": \"{{example_scheduleddosage_date_2}}\",\n\t\t\"taken\": {{example_new_taken_status_2}}\n\t}\n]"
+								},
+								"url": {
+									"raw": "{{ip}}:{{port}}/api/accounts/patients/{{example_patient_id}}/dosages/scheduled",
+									"host": [
+										"{{ip}}"
+									],
+									"port": "{{port}}",
+									"path": [
+										"api",
+										"accounts",
+										"patients",
+										"{{example_patient_id}}",
+										"dosages",
+										"scheduled"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "0",
+									"name": "Content-Length",
+									"description": "The length of the response body in octets (8-bit bytes)"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 10 May 2018 14:09:18 GMT",
+									"name": "Date",
+									"description": "The date and time that the message was sent"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Delete Scheduled Dosage",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "88f72b2f-45b0-49a9-9baf-96ed4040ac2c",
+								"type": "text/javascript",
+								"exec": [
+									"pm.variables.set(\"access_token\", \"{{token}}\");",
+									"pm.variables.set(\"patient_id\", \"3\");",
+									"",
+									"pm.variables.set(\"Dosage\", \"{\\\"intake_interval_start\\\": \\\"10:00:00\\\", \\\"intake_interval_end\\\": \\\"12:00:00\\\", \\\"amount\\\": 1, \\\"medicine\\\": { \\\"name\\\": \\\"Rifampicin\\\" }}\");",
+									"pm.variables.set(\"ScheduledDosageDate\", \"2018-05-28\");",
+									"pm.variables.set(\"NewTakenStatus\", \"true\");"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Signals the body contains JSON data."
+							},
+							{
+								"key": "access_token",
+								"value": "{{access_token}}",
+								"description": "The token received from the login request. Necessary for authorization."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"dosage\": {{Dosage}},\n\t\"date\": \"{{ScheduledDosageDate}}\",\n\t\"taken\": {{NewTakenStatus}}\n}"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/accounts/patients/{{patient_id}}/dosages/scheduled",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"accounts",
+								"patients",
+								"{{patient_id}}",
+								"dosages",
+								"scheduled"
+							]
+						},
+						"description": "Deletes a scheduled dosage."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "FAQs",
+			"description": "",
+			"item": [
+				{
+					"name": "Create FAQ",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "4d5b8595-8b1c-4693-90a5-81fe1d05fc51",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 201 (Created)\", function() {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Signals the body contains JSON data."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"question\": \"What is the difference between active tuberculosis and latent tuberculosis?\",\n\t\"answer\": \"When a person has active tuberculosis the person feels sick and he or she can experience the following symptoms: a dry cough for longer than 3 weeks, night sweats, pain in the chest, coughing up blood or sputum, weakness, fatigue, weight loss, chills, no appetite or fever. With latent tuberculosis, the person does not experience symptoms and he or she does not feel sick. Furthermore, he or she will not be contagious and only needs treatment in certain circumstances. With active tuberculosis, a person is contagious and he or she always needs treatment.\",\n\t\"language\": \"EN\"\n}"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/admin/faqs",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"admin",
+								"faqs"
+							]
+						},
+						"description": "Request for adding a new FAQ to the database."
+					},
+					"response": [
+						{
+							"id": "feaa4d8e-91a7-428f-bf29-7c2a57fa8784",
+							"name": "Creating Succes (201 Created)",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"description": "Signals the body contains JSON data.",
+										"disabled": false
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"question\": \"Frequently Asked Question\",\n\t\"answer\": \"Answer to the Frequently Asked Question\",\n\t\"language\": \"EN\"\n}"
+								},
+								"url": {
+									"raw": "{{ip}}:{{port}}/api/admin/faq",
+									"host": [
+										"{{ip}}"
+									],
+									"port": "{{port}}",
+									"path": [
+										"api",
+										"admin",
+										"faq"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "0",
+									"name": "Content-Length",
+									"description": "The length of the response body in octets (8-bit bytes)"
+								},
+								{
+									"key": "Date",
+									"value": "Sun, 20 May 2018 15:32:49 GMT",
+									"name": "Date",
+									"description": "The date and time that the message was sent"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Retrieve FAQs",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "9e3c37e1-7090-4633-b89d-404717d32d5d",
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200 (OK)\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									""
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "2348135f-abfe-44fb-98b8-f63eb1cc487f",
+								"type": "text/javascript",
+								"exec": [
+									"pm.variables.set(\"language\", \"EN\");"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/general/faqs?language={{language}}",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"general",
+								"faqs"
+							],
+							"query": [
+								{
+									"key": "language",
+									"value": "{{language}}",
+									"description": "Specifies the language of the retrieved video. Must be one of 'EN', 'NL', 'DE' or 'RO'. Specifying nothing will select 'EN'."
+								}
+							]
+						},
+						"description": "Retrieves all Frequently Asked Questions and their answers"
+					},
+					"response": [
+						{
+							"id": "700bedb7-e2af-4ee9-bfc8-7e878aa2208d",
+							"name": "Retrieve Success (200 OK) ",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"body": {},
+								"url": {
+									"raw": "{{ip}}:{{port}}/api/general/faq?language={{example_faq_language}}",
+									"host": [
+										"{{ip}}"
+									],
+									"port": "{{port}}",
+									"path": [
+										"api",
+										"general",
+										"faq"
+									],
+									"query": [
+										{
+											"key": "language",
+											"value": "{{example_faq_language}}",
+											"description": "Specifies the language of the retrieved video. Must be one of 'EN', 'NL', 'DE' or 'RO'. Specifying nothing will select 'EN'."
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Length",
+									"value": "474",
+									"name": "Content-Length",
+									"description": "The length of the response body in octets (8-bit bytes)"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "The mime type of this content"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 15 May 2018 18:24:36 GMT",
+									"name": "Date",
+									"description": "The date and time that the message was sent"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"question\": \"What is tuberculosis?\",\n        \"answer\": \"Tuberculosis is a disease, caused by the bacterium called Mycobacterium tuberculosis. It can cause lung problems, like a dry cough, but it can also manifest with other symptoms.\",\n        \"language\": \"EN\"\n    },\n    {\n        \"question\": \"How do you get tuberculosis?\",\n        \"answer\": \"Tuberculosis is spread via the air. You can get it for example. when someone coughs or talks to you. The bacteria are present in small droplets in the air and you could inhale those droplets.\",\n        \"language\": \"EN\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Update FAQ",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "171fbf84-76ed-43ca-ba05-724608b4c212",
+								"type": "text/javascript",
+								"exec": [
+									"pm.variables.set(\"question\", \"What is tuberculosis?\")"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Signals the body contains JSON data."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"question\": \"What is tuberculosis?\",\n\t\"faq\":\t{\n\t\t\"question\": \"What is tuberculosis?\",\n    \t\"answer\": \"Tuberculosis is nothing\",\n\t\t\"language\": \"RO\"\n\t\t\n\t}\n}"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/admin/faqs",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"admin",
+								"faqs"
+							]
+						},
+						"description": "Update an FAQ."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete FAQ",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"description": "Signals the body contains JSON data."
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"question\": \"What is the difference between active tuberculosis and latent tuberculosis?\",\n\t\"answer\": \"When a person has active tuberculosis the person feels sick and he or she can experience the following symptoms: a dry cough for longer than 3 weeks, night sweats, pain in the chest, coughing up blood or sputum, weakness, fatigue, weight loss, chills, no appetite or fever. With latent tuberculosis, the person does not experience symptoms and he or she does not feel sick. Furthermore, he or she will not be contagious and only needs treatment in certain circumstances. With active tuberculosis, a person is contagious and he or she always needs treatment.\",\n\t\"language\": \"EN\"\n}"
+						},
+						"url": {
+							"raw": "{{ip}}:{{port}}/api/admin/faqs",
+							"host": [
+								"{{ip}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"api",
+								"admin",
+								"faqs"
+							]
+						},
+						"description": "Deletes an existing FAQ"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "24409d79-a0bd-4448-966e-57a9938fe6d3",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "a00cb264-5c86-4dd7-935f-f6cbb4e02dcf",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "8598b956-657a-4594-b1d4-49897ff8259a",
+			"key": "ip",
+			"value": "192.168.50.4",
+			"type": "string",
+			"description": ""
+		},
+		{
+			"id": "2b480818-514b-447a-bc54-8e14bac0395c",
+			"key": "port",
+			"value": "2002",
+			"type": "string",
+			"description": ""
+		},
+		{
+			"id": "02ad05a5-eed0-4a52-9eec-d127be705af5",
+			"key": "token",
+			"value": "oiTrlQmsYsTSEjS1XsScSxB5mMS6SuzHFMT9.oiTgIHXjn29iJMS6SxBvm3BpmQPjm3nfmwAsVMT1m2FilwPdJCS6Su5vn1LrnQvvlxAspA.aYBwKJLGQKkqav7SvVUTytaeOQO420NBNBuegj8jqaI",
+			"type": "string",
+			"description": ""
+		}
+	]
+}

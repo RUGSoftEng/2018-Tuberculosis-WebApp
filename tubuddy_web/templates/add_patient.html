@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+
+<form method="post">
+    {% csrf_token %}
+    <div class="jumbotron">
+        <div class="border row">
+          <div class="border col-sm-6 text-center">
+
+
+              <div class="fieldWrapper form-group">
+                <label for="{{ form.name.id_for_label }}">Enter name:</label>
+              </div>
+
+              <div class="fieldWrapper form-group">
+                <label for="{{ form.username.id_for_label }}">Enter username:</label>
+              </div>
+
+              <div class="fieldWrapper form-group">
+                <label for="{{ form.password.id_for_label }}">Set password:</label>
+              </div>
+
+
+
+          </div>
+
+           <div class="border col-sm-6 text-center">
+
+
+               <div class="fieldWrapper form-group">
+                   {{ form.name}}
+                </div>
+
+               <div class="fieldWrapper form-group">
+                {{ form.username }}
+                </div>
+
+               <div class="fieldWrapper form-group">
+                {{ form.password }}
+                </div>
+
+
+
+           </div>
+
+
+
+        </div>
+
+    <div class="border col-sm-11 text-center" align="center">
+            <button type="submit" class="btn btn-primary">
+          <i class="icon-user icon-white"></i>Add patient
+        </button>
+        </div>
+    </div>
+
+</form>
+
+
+{% endblock %}
